@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SysTechPro - HelpDesk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Vista de Login -->
+        <div id="login-view" class="view active">
+            <div class="login-background">
+                <!-- COMENTARIO: Cambia la ruta de la imagen de fondo en el archivo CSS (propiedad .login-background) -->
+            </div>
+
+            <div class="login-card">
+                <div class="login-header">
+                    <!-- COMENTARIO: Aquí debes poner la ruta de tu imagen de logo en el atributo src -->
+                    <img src="img/LogoFup.png" alt="SysTechPro Logo" class="login-logo">
+                    <h1 class="login-title">SysTechPro</h1>
+                    <p class="login-subtitle">Sistema de Gestión Tecnológica Profesional</p>
+                </div>
+
+                <form id="login-form" class="login-form">
+                    <div class="input-group">
+                        <i data-lucide="mail" class="input-icon"></i>
+                        <input type="email" id="correo" name="correo" placeholder="Correo electrónico" required>
+                    </div>
+
+                    <div class="input-group">
+                        <i data-lucide="lock" class="input-icon"></i>
+                        <input type="password" id="password" name="password" placeholder="Contraseña" required>
+                    </div>
+
+                    <div class="forgot-password">
+                        <a href="#">¿Olvidó su contraseña?</a>
+                    </div>
+
+                    <button type="submit" class="login-submit-btn">Ingresar</button>
+                    <p id="login-error" class="error"></p>
+                </form>
+
+                <footer class="login-footer">
+                    <p>© Fundación Universitaria de Popayán</p>
+                    <p>Ana Tulande - Yefry Astaiza - Peter Fernandez</p>
+                </footer>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard-view" class="view">
+            <header>
+                <h1>SysTechPro - HelpDesk</h1>
+                <div class="user-info">
+                    <span id="user-name"></span>
+                    <span id="user-role"></span>
+                    <button id="logout-btn">Cerrar Sesión</button>
+                </div>
+            </header>
+
+            <nav>
+                <button class="nav-btn active" data-view="dispositivos">Dispositivos</button>
+                <button class="nav-btn" data-view="prestamos">Préstamos</button>
+                <button class="nav-btn" data-view="mantenimientos">Mantenimientos</button>
+                <button class="nav-btn" data-view="usuarios" id="nav-usuarios">Usuarios</button>
+            </nav>
+
+            <!-- Dispositivos -->
+            <div id="dispositivos-panel" class="panel active">
+                <h2>Gestión de Dispositivos</h2>
+                <button id="add-dispositivo-btn" class="add-btn">+ Agregar Dispositivo</button>
+                <div id="dispositivos-list"></div>
+            </div>
+
+            <!-- Préstamos -->
+            <div id="prestamos-panel" class="panel">
+                <h2>Gestión de Préstamos</h2>
+                <button id="add-prestamo-btn" class="add-btn">+ Nuevo Préstamo</button>
+                <div id="prestamos-list"></div>
+            </div>
+
+            <!-- Mantenimientos -->
+            <div id="mantenimientos-panel" class="panel">
+                <h2>Gestión de Mantenimientos</h2>
+                <button id="add-mantenimiento-btn" class="add-btn">+ Nuevo Mantenimiento</button>
+                <div id="mantenimientos-list"></div>
+            </div>
+
+            <!-- Usuarios -->
+            <div id="usuarios-panel" class="panel">
+                <h2>Gestión de Usuarios</h2>
+                <button id="add-usuario-btn" class="add-btn">+ Agregar Usuario</button>
+                <div id="usuarios-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para formularios -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="modal-form"></div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // Inicializar iconos de Lucide
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
