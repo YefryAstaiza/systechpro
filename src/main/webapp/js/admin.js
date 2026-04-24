@@ -5,7 +5,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function() {
-            window.location.href = 'login.html';
+            const apiBase = window.location.origin + '/systechpro/api';
+            fetch(`${apiBase}/auth/logout`, {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(() => {
+                window.location.href = 'index.html';
+            })
+            .catch(() => {
+                window.location.href = 'index.html';
+            });
         });
     }
     // Aquí puedes agregar más lógica JS para la interfaz de admin

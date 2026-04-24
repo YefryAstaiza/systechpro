@@ -22,7 +22,11 @@ function checkSession() {
         .then(res => res.json())
         .then(data => {
             if (data.authenticated) {
-                showDashboard(data.usuario);
+                if (data.usuario && data.usuario.rol === 'ADMIN') {
+                    window.location.href = 'admin.html';
+                } else {
+                    showDashboard(data.usuario);
+                }
             } else {
                 showLogin();
             }
@@ -71,8 +75,8 @@ function handleLogin(e) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // Redirección a la interfaz de admin si el usuario es ADMINISTRADOR
-            if (data.usuario && data.usuario.rol === 'ADMINISTRADOR') {
+            // Redirección a la interfaz de admin si el usuario es ADMIN
+            if (data.usuario && data.usuario.rol === 'ADMIN') {
                 // TODO: Pruebas: Verificar que el admin es redirigido correctamente tras login
                 window.location.href = 'admin.html';
             } else {
@@ -90,7 +94,7 @@ function handleLogin(e) {
 // Logout
 function handleLogout() {
     fetch(`${API_BASE}/auth/logout`, {
-        method: 'POST',
+        method: 'GET',
         credentials: 'include'
     })
     .then(() => showLogin())
@@ -111,7 +115,7 @@ function showDashboard(usuario) {
     document.getElementById('user-role').textContent = usuario.rol;
     
     // Ocultar usuarios si no es admin
-    if (usuario.rol !== 'ADMINISTRADOR') {
+    if (usuario.rol !== 'ADMIN') {
         document.getElementById('nav-usuarios').style.display = 'none';
     }
     
@@ -549,9 +553,9 @@ function showUsuarioForm(usuario = null) {
             <div class="form-group">
                 <label>Rol:</label>
                 <select name="rol" required>
-                    <option value="ADMINISTRADOR" ${usuario?.rol === 'ADMINISTRADOR' ? 'selected' : ''}>Administrador</option>
+                    <option value="ADMIN" ${usuario?.rol === 'ADMIN' ? 'selected' : ''}>Administrador</option>
                     <option value="DOCENTE" ${usuario?.rol === 'DOCENTE' ? 'selected' : ''}>Docente</option>
-                    <option value="ESTUDIANTE" ${usuario?.rol === 'ESTUDIANTE' ? 'selected' : ''}>Estudiante</option>
+                    <option value="ADMINISTRATIVO" ${usuario?.rol === 'ADMINISTRATIVO' ? 'selected' : ''}>Administrativo</option>
                     <option value="TECNICO" ${usuario?.rol === 'TECNICO' ? 'selected' : ''}>Técnico</option>
                 </select>
             </div>
