@@ -1,24 +1,31 @@
 package com.systechpro.utils;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class Encriptador {
     
-    public static String encriptarMD5(String password) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(password.getBytes());
-            return Base64.getEncoder().encodeToString(digest);
-        } catch (NoSuchAlgorithmException e) {
-            System.err.println("Error al encriptar: " + e.getMessage());
+    /**
+     * Encripta una contraseña usando BCrypt.
+     */
+    public static String encriptarBCrypt(String password) {
+        if (password == null || password.isEmpty()) {
             return null;
         }
+        return BCrypt.hashpw(password, BCrypt.gensalt());
     }
     
+    /**
+     * Verifica una contraseña ingresada en texto plano contra un hash BCrypt almacenado.
+     */
     public static boolean verificarPassword(String passwordIngresada, String passwordAlmacenada) {
-        String passwordEncriptada = encriptarMD5(passwordIngresada);
-        return passwordEncriptada != null && passwordEncriptada.equals(passwordAlmacenada);
+        if (passwordIngresada == null || passwordAlmacenada == null || passwordAlmacenada.isEmpty()) {
+            return false;
+        }
+        try {
+            return BCrypt.checkpw(passwordIngresada, passwordAlmacenada);
+        } catch (Exception e) {
+            System.err.println("Error al verificar contraseña BCrypt: " + e.getMessage());
+            return false;
+        }
     }
 }

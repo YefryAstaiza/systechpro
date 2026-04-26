@@ -2,6 +2,7 @@ package com.systechpro.controllers;
 
 import com.systechpro.dao.UsuarioDAO;
 import com.systechpro.models.Usuario;
+import com.systechpro.utils.Encriptador;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,6 +18,15 @@ import java.util.Map;
 public class UsuarioController extends HttpServlet {
     private final UsuarioDAO usuarioDAO = new UsuarioDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private boolean validarRol(String rol) {
+        return "ADMINISTRADOR".equals(rol) || "DOCENTE".equals(rol) || 
+               "TECNICO".equals(rol) || "ADMINISTRATIVO".equals(rol);
+    }
+
+    private boolean validarCorreo(String correo) {
+        return correo != null && correo.matches("^[A-Za-z0-9+_.-]+@(.+)$");
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
@@ -44,6 +54,10 @@ public class UsuarioController extends HttpServlet {
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
                 List<Usuario> usuarios = usuarioDAO.listar();
+                // No enviar contraseñas al frontend
+                for (Usuario u : usuarios) {
+                    u.setContrasena(null);
+                }
                 objectMapper.writeValue(response.getWriter(), usuarios);
             } else {
                 String idStr = pathInfo.substring(1);
@@ -51,6 +65,7 @@ public class UsuarioController extends HttpServlet {
                 Usuario usuario = usuarioDAO.buscarPorId(id);
 
                 if (usuario != null) {
+                    usuario.setContrasena(null); // Seguridad
                     objectMapper.writeValue(response.getWriter(), usuario);
                 } else {
                     response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -90,21 +105,49 @@ public class UsuarioController extends HttpServlet {
         try {
             Usuario usuario = objectMapper.readValue(request.getInputStream(), Usuario.class);
 
-            if (usuario.getNombre() == null || usuario.getCorreo() == null || 
-                usuario.getContrasena() == null || usuario.getRol() == null) {
+            if (usuario.getNombre() == null || usuario.getNombre().trim().isEmpty() ||
+                usuario.getCorreo() == null || usuario.getContrasena() == null || 
+                usuario.getRol() == null) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Datos incompletos"));
                 return;
             }
 
+            if (!validarCorreo(usuario.getCorreo())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Formato de correo inválido"));
+                return;
+            }
+
+            if (usuarioDAO.correoExiste(usuario.getCorreo(), 0)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "El correo ya existe"));
+                return;
+            }
+
+            if (usuario.getContrasena().length() < 6) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "La contraseña debe tener mínimo 6 caracteres"));
+                return;
+            }
+
+            if (!validarRol(usuario.getRol())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Rol inválido"));
+                return;
+            }
+
+            // Encriptar con BCrypt
+            usuario.setContrasena(Encriptador.encriptarBCrypt(usuario.getContrasena()));
+
             boolean resultado = usuarioDAO.insertar(usuario);
 
             if (resultado) {
                 response.setStatus(HttpServletResponse.SC_CREATED);
-                objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Usuario registrado"));
+                objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Usuario registrado correctamente"));
             } else {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                objectMapper.writeValue(response.getWriter(), Map.of("error", "Error al registrar"));
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Error al registrar en BD"));
             }
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -148,10 +191,44 @@ public class UsuarioController extends HttpServlet {
             Usuario usuario = objectMapper.readValue(request.getInputStream(), Usuario.class);
             usuario.setIdUsuario(id);
 
+            if (usuario.getNombre() == null || usuario.getNombre().trim().isEmpty() ||
+                usuario.getCorreo() == null || usuario.getRol() == null) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Datos incompletos"));
+                return;
+            }
+
+            if (!validarCorreo(usuario.getCorreo())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Formato de correo inválido"));
+                return;
+            }
+
+            if (usuarioDAO.correoExiste(usuario.getCorreo(), id)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "El correo ya existe"));
+                return;
+            }
+
+            if (!validarRol(usuario.getRol())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Rol inválido"));
+                return;
+            }
+
+            if (usuario.getContrasena() != null && !usuario.getContrasena().trim().isEmpty()) {
+                if (usuario.getContrasena().length() < 6) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    objectMapper.writeValue(response.getWriter(), Map.of("error", "La contraseña debe tener mínimo 6 caracteres"));
+                    return;
+                }
+                usuario.setContrasena(Encriptador.encriptarBCrypt(usuario.getContrasena()));
+            }
+
             boolean resultado = usuarioDAO.actualizar(usuario);
 
             if (resultado) {
-                objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Usuario actualizado"));
+                objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Usuario actualizado correctamente"));
             } else {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Usuario no encontrado"));
@@ -194,11 +271,18 @@ public class UsuarioController extends HttpServlet {
 
             String idStr = pathInfo.substring(1);
             int id = Integer.parseInt(idStr);
+            
+            Usuario usuarioSesion = (Usuario) session.getAttribute("usuario");
+            if (usuarioSesion.getIdUsuario() == id) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "No puedes eliminar tu propio usuario"));
+                return;
+            }
 
             boolean resultado = usuarioDAO.eliminar(id);
 
             if (resultado) {
-                objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Usuario eliminado"));
+                objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Usuario eliminado correctamente"));
             } else {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Usuario no encontrado"));

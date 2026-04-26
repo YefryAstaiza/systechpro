@@ -8,20 +8,19 @@ import java.util.List;
 
 public class UsuarioDAO {
     
-    public Usuario login(String correo, String contrasena) {
-        String sql = "SELECT * FROM usuario WHERE correo = ? AND contrasena = ?";
+    public Usuario buscarPorCorreo(String correo) {
+        String sql = "SELECT * FROM usuario WHERE correo = ?";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, correo);
-            pstmt.setString(2, contrasena);
             
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return mapearUsuario(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Error en login: " + e.getMessage());
+            System.err.println("Error al buscar por correo: " + e.getMessage());
         }
         return null;
     }
@@ -61,20 +60,50 @@ public class UsuarioDAO {
     }
     
     public boolean actualizar(Usuario usuario) {
-        String sql = "UPDATE usuario SET nombre = ?, correo = ?, rol = ? WHERE id_usuario = ?";
+        String sql;
+        boolean updatePassword = usuario.getContrasena() != null && !usuario.getContrasena().trim().isEmpty();
+        
+        if (updatePassword) {
+            sql = "UPDATE usuario SET nombre = ?, correo = ?, rol = ?, contrasena = ? WHERE id_usuario = ?";
+        } else {
+            sql = "UPDATE usuario SET nombre = ?, correo = ?, rol = ? WHERE id_usuario = ?";
+        }
+        
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, usuario.getNombre());
             pstmt.setString(2, usuario.getCorreo());
             pstmt.setString(3, usuario.getRol());
-            pstmt.setInt(4, usuario.getIdUsuario());
+            
+            if (updatePassword) {
+                pstmt.setString(4, usuario.getContrasena());
+                pstmt.setInt(5, usuario.getIdUsuario());
+            } else {
+                pstmt.setInt(4, usuario.getIdUsuario());
+            }
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Error al actualizar usuario: " + e.getMessage());
             return false;
         }
+    }
+    
+    public boolean correoExiste(String correo, int excludeIdUsuario) {
+        String sql = "SELECT COUNT(*) FROM usuario WHERE correo = ? AND id_usuario != ?";
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, correo);
+            pstmt.setInt(2, excludeIdUsuario);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al verificar correo: " + e.getMessage());
+        }
+        return false;
     }
     
     public boolean eliminar(int id) {

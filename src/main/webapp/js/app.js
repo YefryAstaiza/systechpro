@@ -22,7 +22,7 @@ function checkSession() {
         .then(res => res.json())
         .then(data => {
             if (data.authenticated) {
-                if (data.usuario && data.usuario.rol === 'ADMIN') {
+                if (data.usuario && data.usuario.rol === 'ADMINISTRADOR') {
                     window.location.href = 'admin.html';
                 } else {
                     showDashboard(data.usuario);
@@ -75,8 +75,8 @@ function handleLogin(e) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // Redirección a la interfaz de admin si el usuario es ADMIN
-            if (data.usuario && data.usuario.rol === 'ADMIN') {
+            // Redirección a la interfaz de admin si el usuario es ADMINISTRADOR
+            if (data.usuario && data.usuario.rol === 'ADMINISTRADOR') {
                 // TODO: Pruebas: Verificar que el admin es redirigido correctamente tras login
                 window.location.href = 'admin.html';
             } else {
@@ -115,7 +115,7 @@ function showDashboard(usuario) {
     document.getElementById('user-role').textContent = usuario.rol;
     
     // Ocultar usuarios si no es admin
-    if (usuario.rol !== 'ADMIN') {
+    if (usuario.rol !== 'ADMINISTRADOR') {
         document.getElementById('nav-usuarios').style.display = 'none';
     }
     
@@ -553,7 +553,7 @@ function showUsuarioForm(usuario = null) {
             <div class="form-group">
                 <label>Rol:</label>
                 <select name="rol" required>
-                    <option value="ADMIN" ${usuario?.rol === 'ADMIN' ? 'selected' : ''}>Administrador</option>
+                    <option value="ADMINISTRADOR" ${usuario?.rol === 'ADMINISTRADOR' ? 'selected' : ''}>Administrador</option>
                     <option value="DOCENTE" ${usuario?.rol === 'DOCENTE' ? 'selected' : ''}>Docente</option>
                     <option value="ADMINISTRATIVO" ${usuario?.rol === 'ADMINISTRATIVO' ? 'selected' : ''}>Administrativo</option>
                     <option value="TECNICO" ${usuario?.rol === 'TECNICO' ? 'selected' : ''}>Técnico</option>

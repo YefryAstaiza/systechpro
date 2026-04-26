@@ -48,11 +48,10 @@ public class AuthController extends HttpServlet {
                 return;
             }
 
-            // Encriptar la contraseña recibida para comparar con la almacenada en BD
-            String passwordEncriptada = Encriptador.encriptarMD5(password);
-            Usuario usuario = usuarioDAO.login(correo, passwordEncriptada);
+            // Buscar usuario por correo y luego verificar la contraseña con BCrypt
+            Usuario usuario = usuarioDAO.buscarPorCorreo(correo);
 
-            if (usuario != null) {
+            if (usuario != null && Encriptador.verificarPassword(password, usuario.getContrasena())) {
                 HttpSession session = request.getSession();
                 session.setAttribute("usuario", usuario);
                 session.setAttribute("rol", usuario.getRol());
