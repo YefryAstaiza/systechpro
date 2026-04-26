@@ -50,4 +50,14 @@ public class Mantenimiento {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    // Propiedades para frontend
+    private String nombreDispositivo;
+    private String nombreUsuario;
+
+    public String getNombreDispositivo() { return nombreDispositivo; }
+    public void setNombreDispositivo(String nombreDispositivo) { this.nombreDispositivo = nombreDispositivo; }
+
+    public String getNombreUsuario() { return nombreUsuario; }
+    public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
 }

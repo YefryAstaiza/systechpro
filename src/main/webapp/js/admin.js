@@ -1,6 +1,8 @@
 // admin.js - Lógica para el panel de administración
 
 const apiBase = window.location.origin + '/systechpro/api';
+let rolGlobal = '';
+let idUsuarioGlobal = '';
 
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -10,10 +12,34 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.authenticated && data.usuario) {
                 document.getElementById('admin-user-name').textContent = data.usuario.nombre;
+                rolGlobal = data.usuario.rol;
+                idUsuarioGlobal = data.usuario.idUsuario;
+                aplicarPermisosPorRol();
+                // Inicializar datos al cargar la app
+                cargarDispositivos();
+                cargarPrestamos();
             } else {
                 window.location.href = 'index.html';
             }
         });
+
+    function aplicarPermisosPorRol() {
+        const esAdminOrTecnico = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
+        const esAdmin = (rolGlobal === 'ADMINISTRADOR');
+
+        if (!esAdmin) {
+            document.getElementById('nav-usuarios-btn').style.display = 'none';
+            document.getElementById('quick-add-user-btn').style.display = 'none';
+            document.getElementById('nav-auditoria-btn').style.display = 'none';
+            document.getElementById('nav-reportes-btn').style.display = 'none';
+        }
+        
+        if (!esAdminOrTecnico) {
+            document.getElementById('nav-dispositivos-btn').style.display = 'none';
+            document.getElementById('quick-add-dispositivo-btn').style.display = 'none';
+            document.getElementById('nav-mantenimientos-btn').style.display = 'none';
+        }
+    }
 
     // Lógica para cerrar sesión
     const logoutBtn = document.getElementById('btn-logout');
@@ -28,12 +54,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Navegación de vistas
     const navInicioBtn = document.getElementById('nav-inicio-btn');
     const navUsuariosBtn = document.getElementById('nav-usuarios-btn');
+    const navDispositivosBtn = document.getElementById('nav-dispositivos-btn');
+    
     const panelDashboard = document.getElementById('panel-dashboard');
     const panelUsuarios = document.getElementById('panel-usuarios');
+    const panelDispositivos = document.getElementById('panel-dispositivos');
+    const panelPrestamos = document.getElementById('panel-prestamos');
+    const panelMantenimientos = document.getElementById('panel-mantenimientos');
+    const panelAuditoria = document.getElementById('panel-auditoria');
+    const panelReportes = document.getElementById('panel-reportes');
+
+    const navPrestamosBtn = document.getElementById('nav-prestamos-btn');
+    const navMantenimientosBtn = document.getElementById('nav-mantenimientos-btn');
+    const navAuditoriaBtn = document.getElementById('nav-auditoria-btn');
+    const navReportesBtn = document.getElementById('nav-reportes-btn');
 
     function ocultarPaneles() {
         panelDashboard.style.display = 'none';
         panelUsuarios.style.display = 'none';
+        panelDispositivos.style.display = 'none';
+        if (panelPrestamos) panelPrestamos.style.display = 'none';
+        if (panelMantenimientos) panelMantenimientos.style.display = 'none';
+        if (panelAuditoria) panelAuditoria.style.display = 'none';
+        if (panelReportes) panelReportes.style.display = 'none';
         document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => link.classList.remove('active'));
     }
 
@@ -42,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ocultarPaneles();
         panelDashboard.style.display = 'block';
         navInicioBtn.classList.add('active');
+        cargarPrestamos(); // refrescar
     });
 
     navUsuariosBtn.addEventListener('click', (e) => {
@@ -59,6 +103,72 @@ document.addEventListener('DOMContentLoaded', function() {
         cargarUsuarios();
         abrirModalUsuario();
     });
+
+    navDispositivosBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        ocultarPaneles();
+        panelDispositivos.style.display = 'block';
+        navDispositivosBtn.classList.add('active');
+        cargarDispositivos();
+    });
+
+    if (navPrestamosBtn) {
+        navPrestamosBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            ocultarPaneles();
+            panelPrestamos.style.display = 'block';
+            navPrestamosBtn.classList.add('active');
+            cargarPrestamosPanelDedicado();
+        });
+    }
+
+    document.getElementById('quick-add-dispositivo-btn').addEventListener('click', () => {
+        ocultarPaneles();
+        panelDispositivos.style.display = 'block';
+        navDispositivosBtn.classList.add('active');
+        cargarDispositivos();
+        setTimeout(() => abrirFormDispositivo(null), 100);
+    });
+
+    const verSolicitudesBtn = document.getElementById('ver-solicitudes-btn');
+    if (verSolicitudesBtn) {
+        verSolicitudesBtn.addEventListener('click', () => {
+            ocultarPaneles();
+            panelPrestamos.style.display = 'block';
+            if (navPrestamosBtn) navPrestamosBtn.classList.add('active');
+            cargarPrestamosPanelDedicado();
+        });
+    }
+
+    if (navMantenimientosBtn) {
+        navMantenimientosBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            ocultarPaneles();
+            panelMantenimientos.style.display = 'block';
+            navMantenimientosBtn.classList.add('active');
+            cargarMantenimientos();
+        });
+    }
+
+    if (navAuditoriaBtn) {
+        navAuditoriaBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            ocultarPaneles();
+            panelAuditoria.style.display = 'block';
+            navAuditoriaBtn.classList.add('active');
+            cargarAuditoria();
+        });
+    }
+
+    if (navReportesBtn) {
+        navReportesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            ocultarPaneles();
+            panelReportes.style.display = 'block';
+            navReportesBtn.classList.add('active');
+            cargarReportes();
+        });
+    }
 
     // ---------------------------------------------
     // LOGICA CRUD USUARIOS
@@ -186,4 +296,834 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => alert('Error de conexión con el servidor'));
         }
     }
+
+    // ---------------------------------------------
+    // TOAST NOTIFICATIONS
+    // ---------------------------------------------
+    function showToast(message, type) {
+        type = type || 'success';
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        const colors = { success: '#22c55e', error: '#ef4444', info: '#3b82f6', warning: '#f59e0b' };
+        const icons = { success: '\u2713', error: '\u2715', info: '\u2139', warning: '\u26a0' };
+        const c = colors[type] || colors.info;
+        const ic = icons[type] || icons.info;
+        toast.style.cssText = 'background:white;border-left:4px solid ' + c + ';border-radius:8px;padding:12px 18px;box-shadow:0 4px 20px rgba(0,0,0,0.15);display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:#1e293b;pointer-events:all;min-width:260px;max-width:380px;animation:slideIn .3s ease;';
+        toast.innerHTML = '<span style="color:' + c + ';font-size:18px;font-weight:700;">' + ic + '</span><span>' + message + '</span>';
+        container.appendChild(toast);
+        setTimeout(function() {
+            toast.style.animation = 'fadeOut .3s ease';
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 3500);
+    }
+    var toastStyle = document.createElement('style');
+    toastStyle.textContent = '@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes fadeOut{from{opacity:1}to{opacity:0;transform:translateX(120%)}}';
+    document.head.appendChild(toastStyle);
+
+    // ---------------------------------------------
+    // LOGICA CRUD DISPOSITIVOS Y DASHBOARD
+    // ---------------------------------------------
+    const formDispositivo = document.getElementById('form-dispositivo');
+    const tablaDispositivosBody = document.getElementById('tabla-dispositivos-body');
+    var todosLosDispositivos = [];
+    var dispPaginaActual = 1;
+    var DISP_POR_PAGINA = 10;
+
+    document.getElementById('btn-nuevo-dispositivo').addEventListener('click', function() { abrirFormDispositivo(null); });
+    document.getElementById('btn-cancelar-dispositivo').addEventListener('click', resetFormDispositivo);
+    document.getElementById('disp-buscar').addEventListener('input', aplicarFiltrosDispositivos);
+    document.getElementById('disp-filtro-estado').addEventListener('change', aplicarFiltrosDispositivos);
+    document.getElementById('btn-disp-prev').addEventListener('click', function() {
+        if (dispPaginaActual > 1) { dispPaginaActual--; renderTablaDispositivos(); }
+    });
+    document.getElementById('btn-disp-next').addEventListener('click', function() {
+        var filtered = getDispositivosFiltrados();
+        if (dispPaginaActual < Math.ceil(filtered.length / DISP_POR_PAGINA)) { dispPaginaActual++; renderTablaDispositivos(); }
+    });
+
+    var selectSede = document.getElementById('disp-sede');
+    var selectSalon = document.getElementById('disp-salon');
+    var inputUbicacion = document.getElementById('disp-ubicacion-generada');
+
+    selectSede.addEventListener('change', function() {
+        var idSede = selectSede.value;
+        inputUbicacion.value = '';
+        if (!idSede) { selectSalon.innerHTML = '<option value="">Seleccione una sede primero</option>'; return; }
+        fetch(apiBase + '/sedes/' + idSede + '/salones')
+            .then(function(res) { return res.json(); })
+            .then(function(salones) {
+                selectSalon.innerHTML = '<option value="">Seleccione un sal\u00f3n</option>';
+                salones.forEach(function(s) {
+                    selectSalon.innerHTML += '<option value="' + s.idSalon + '" data-numero="' + s.numero + '">' + s.numero + '</option>';
+                });
+            });
+    });
+
+    selectSalon.addEventListener('change', function() {
+        var opt = selectSalon.options[selectSalon.selectedIndex];
+        var sedeOpt = selectSede.options[selectSede.selectedIndex];
+        var codigoSede = sedeOpt ? sedeOpt.getAttribute('data-codigo') : '';
+        var numSalon = opt ? opt.getAttribute('data-numero') : '';
+        inputUbicacion.value = (codigoSede && numSalon) ? (codigoSede + '-' + numSalon) : '';
+    });
+
+    function cargarSedes() {
+        selectSede.innerHTML = '<option value="">Cargando sedes...</option>';
+        fetch(apiBase + '/sedes')
+            .then(function(res) {
+                if (res.status === 401) { selectSede.innerHTML = '<option value="">Sin sesi\u00f3n activa</option>'; return null; }
+                return res.json();
+            })
+            .then(function(sedes) {
+                if (!sedes) return;
+                if (!Array.isArray(sedes) || sedes.length === 0) {
+                    selectSede.innerHTML = '<option value="">Sin sedes registradas</option>';
+                    return;
+                }
+                selectSede.innerHTML = '<option value="">Seleccione una sede...</option>';
+                sedes.forEach(function(s) {
+                    selectSede.innerHTML += '<option value="' + s.idSede + '" data-codigo="' + s.codigo + '">' + s.nombre + ' (' + s.codigo + ')</option>';
+                });
+            })
+            .catch(function(err) {
+                console.error('Error cargando sedes:', err);
+                selectSede.innerHTML = '<option value="">Error al cargar sedes</option>';
+            });
+    }
+
+    function abrirFormDispositivo(dispositivo) {
+        formDispositivo.reset();
+        document.getElementById('dispositivo-id').value = '';
+        document.getElementById('disp-form-titulo').textContent = dispositivo ? 'Editar Dispositivo' : 'Registrar Nuevo Dispositivo';
+        inputUbicacion.value = '';
+        selectSalon.innerHTML = '<option value="">Seleccione una sede primero</option>';
+        cargarSedes();
+        if (dispositivo) {
+            document.getElementById('dispositivo-id').value = dispositivo.idDispositivo;
+            document.getElementById('dispositivo-nombre').value = dispositivo.nombre;
+            document.getElementById('dispositivo-tipo').value = dispositivo.tipo;
+            document.getElementById('dispositivo-estado').value = dispositivo.estado;
+            document.getElementById('dispositivo-descripcion').value = dispositivo.descripcion || '';
+            if (dispositivo.ubicacion && dispositivo.ubicacion !== '\u2014') {
+                inputUbicacion.value = dispositivo.ubicacion;
+            }
+        }
+    }
+
+    function resetFormDispositivo() {
+        formDispositivo.reset();
+        document.getElementById('dispositivo-id').value = '';
+        document.getElementById('disp-form-titulo').textContent = 'Gesti\u00f3n Detallada del Dispositivo';
+        if(inputUbicacion) inputUbicacion.value = '';
+        if(selectSalon) selectSalon.innerHTML = '<option value="">Seleccione una sede primero</option>';
+    }
+
+    function actualizarDashboard(dispositivos) {
+        document.getElementById('dash-total').textContent = dispositivos.length;
+        document.getElementById('dash-available').textContent = dispositivos.filter(function(d) { return d.estado === 'DISPONIBLE'; }).length;
+        document.getElementById('dash-inuse').textContent = dispositivos.filter(function(d) { return d.estado === 'EN_USO'; }).length;
+        document.getElementById('dash-maintenance').textContent = dispositivos.filter(function(d) { return d.estado === 'MANTENIMIENTO'; }).length;
+    }
+
+    function getEstadoBadgeDisp(estado) {
+        var cfg = {
+            'DISPONIBLE':    { bg: '#dcfce7', color: '#16a34a', label: 'Disponible' },
+            'EN_USO':        { bg: '#fef9c3', color: '#ca8a04', label: 'En uso' },
+            'MANTENIMIENTO': { bg: '#f3f4f6', color: '#374151', label: 'Mantenimiento' }
+        };
+        var s = cfg[estado] || { bg: '#e2e8f0', color: '#475569', label: estado };
+        return '<span style="background:' + s.bg + ';color:' + s.color + ';padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;border-radius:50%;background:' + s.color + ';display:inline-block;"></span>' + s.label + '</span>';
+    }
+
+    function getEstadoBadge(estado) {
+        if(estado === 'DISPONIBLE' || estado === 'APROBADO') return '<span class="badge approved"><span class="dot"></span>' + estado + '</span>';
+        if(estado === 'EN_USO' || estado === 'PENDIENTE') return '<span class="badge pending"><span class="dot"></span>' + estado + '</span>';
+        if(estado === 'MANTENIMIENTO' || estado === 'RECHAZADO') return '<span class="badge rejected"><span class="dot"></span>' + estado + '</span>';
+        return estado;
+    }
+
+    function getDispositivosFiltrados() {
+        var buscar = (document.getElementById('disp-buscar').value || '').toLowerCase();
+        var estado = document.getElementById('disp-filtro-estado').value || '';
+        return todosLosDispositivos.filter(function(d) {
+            var codigo = 'D' + String(d.idDispositivo).padStart(3, '0');
+            var matchBuscar = !buscar || d.nombre.toLowerCase().includes(buscar) || codigo.toLowerCase().includes(buscar);
+            var matchEstado = !estado || d.estado === estado;
+            return matchBuscar && matchEstado;
+        });
+    }
+
+    function aplicarFiltrosDispositivos() {
+        dispPaginaActual = 1;
+        renderTablaDispositivos();
+    }
+
+    function renderTablaDispositivos() {
+        var filtered = getDispositivosFiltrados();
+        var total = filtered.length;
+        var totalPaginas = Math.max(1, Math.ceil(total / DISP_POR_PAGINA));
+        var inicio = (dispPaginaActual - 1) * DISP_POR_PAGINA;
+        var fin = Math.min(inicio + DISP_POR_PAGINA, total);
+        var pagina = filtered.slice(inicio, fin);
+
+        tablaDispositivosBody.innerHTML = '';
+        if (pagina.length === 0) {
+            tablaDispositivosBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron dispositivos</td></tr>';
+        } else {
+            pagina.forEach(function(d) {
+                var codigo = 'D' + String(d.idDispositivo).padStart(3, '0');
+                var tr = document.createElement('tr');
+                tr.style.cssText = 'border-bottom:1px solid #f1f5f9;transition:background .15s;';
+                tr.innerHTML = [
+                    '<td style="padding:12px 14px;font-weight:600;color:#64748b;">' + codigo + '</td>',
+                    '<td style="padding:12px 14px;font-weight:500;color:#1e293b;">' + d.nombre + '</td>',
+                    '<td style="padding:12px 14px;color:#475569;">' + d.tipo + '</td>',
+                    '<td style="padding:12px 14px;">' + getEstadoBadgeDisp(d.estado) + '</td>',
+                    '<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.ubicacion || '\u2014') + '</td>',
+                    '<td style="padding:12px 14px;text-align:center;">',
+                    '  <button class="btn-editar-disp" data-id="' + d.idDispositivo + '" title="Editar" style="background:none;border:none;cursor:pointer;padding:5px;color:#f59e0b;">',
+                    '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+                    '  </button>',
+                    '  <button class="btn-eliminar-disp" data-id="' + d.idDispositivo + '" title="Eliminar" style="background:none;border:none;cursor:pointer;padding:5px;color:#ef4444;">',
+                    '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+                    '  </button>',
+                    '</td>'
+                ].join('');
+                tablaDispositivosBody.appendChild(tr);
+            });
+
+            document.querySelectorAll('.btn-editar-disp').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    var id = e.currentTarget.getAttribute('data-id');
+                    var disp = todosLosDispositivos.find(function(d) { return d.idDispositivo == id; });
+                    if (disp) abrirFormDispositivo(disp);
+                });
+            });
+            document.querySelectorAll('.btn-eliminar-disp').forEach(function(btn) {
+                btn.addEventListener('click', function(e) { eliminarDispositivo(e.currentTarget.getAttribute('data-id')); });
+            });
+        }
+
+        var infoPagina = document.getElementById('disp-info-pagina');
+        var btnPrev = document.getElementById('btn-disp-prev');
+        var btnNext = document.getElementById('btn-disp-next');
+        if(infoPagina) infoPagina.textContent = total > 0 ? ('Mostrando ' + (inicio+1) + '\u2013' + fin + ' de ' + total + ' dispositivos') : 'Sin resultados';
+        if(btnPrev) { btnPrev.disabled = dispPaginaActual <= 1; btnPrev.style.opacity = dispPaginaActual <= 1 ? '0.4' : '1'; }
+        if(btnNext) { btnNext.disabled = dispPaginaActual >= totalPaginas; btnNext.style.opacity = dispPaginaActual >= totalPaginas ? '0.4' : '1'; }
+    }
+
+    function cargarDispositivos() {
+        fetch(apiBase + '/dispositivos')
+            .then(function(res) { return res.json(); })
+            .then(function(dispositivos) {
+                if (Array.isArray(dispositivos)) {
+                    todosLosDispositivos = dispositivos;
+                    actualizarDashboard(dispositivos);
+                    renderTablaDispositivos();
+                }
+            })
+            .catch(function(error) { console.error('Error cargando dispositivos:', error); });
+    }
+
+    formDispositivo.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var id = document.getElementById('dispositivo-id').value;
+        var payload = {
+            nombre: document.getElementById('dispositivo-nombre').value,
+            tipo: document.getElementById('dispositivo-tipo').value,
+            estado: document.getElementById('dispositivo-estado').value,
+            descripcion: document.getElementById('dispositivo-descripcion').value
+        };
+        var method = id ? 'PUT' : 'POST';
+        var url = id ? (apiBase + '/dispositivos/' + id) : (apiBase + '/dispositivos');
+        fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+            .then(function(res) { return res.json().then(function(data) { return { status: res.status, body: data }; }); })
+            .then(function(res) {
+                if (res.status >= 200 && res.status < 300) {
+                    showToast(res.body.mensaje || 'Dispositivo guardado correctamente', 'success');
+                    resetFormDispositivo();
+                    cargarDispositivos();
+                } else {
+                    showToast(res.body.error || 'Error al guardar dispositivo', 'error');
+                }
+            })
+            .catch(function() { showToast('Error de conexi\u00f3n con el servidor', 'error'); });
+    });
+
+    function eliminarDispositivo(id) {
+        var disp = todosLosDispositivos.find(function(d) { return d.idDispositivo == id; });
+        if (disp && disp.estado === 'EN_USO') {
+            showToast('No se puede eliminar un dispositivo que est\u00e1 EN USO', 'warning');
+            return;
+        }
+        if (!confirm('\u00bfEliminar el dispositivo "' + (disp ? disp.nombre : '') + '"? Esta acci\u00f3n no se puede deshacer.')) return;
+        fetch(apiBase + '/dispositivos/' + id, { method: 'DELETE' })
+            .then(function(res) { return res.json().then(function(data) { return { status: res.status, body: data }; }); })
+            .then(function(res) {
+                if (res.status >= 200 && res.status < 300) {
+                    showToast(res.body.mensaje || 'Dispositivo eliminado', 'success');
+                    cargarDispositivos();
+                } else {
+                    showToast(res.body.error || 'Error al eliminar dispositivo', 'error');
+                }
+            })
+            .catch(function() { showToast('Error de conexi\u00f3n con el servidor', 'error'); });
+    }
+
+
+    const tablaSolicitudesBody = document.getElementById('tabla-solicitudes-body');
+    const modalCrearPrestamo = document.getElementById('modal-crear-prestamo');
+    const formCrearPrestamo = document.getElementById('form-crear-prestamo');
+    const modalDetallePrestamo = document.getElementById('modal-detalle-prestamo');
+    
+    let prestamosActuales = [];
+
+    document.getElementById('btn-solicitar-prestamo-dash').addEventListener('click', abrirModalCrearPrestamo);
+    document.getElementById('btn-cancelar-prestamo').addEventListener('click', () => modalCrearPrestamo.style.display = 'none');
+    document.getElementById('btn-cerrar-detalle').addEventListener('click', () => modalDetallePrestamo.style.display = 'none');
+
+    function formatearFecha(timestamp) {
+        const d = new Date(timestamp);
+        return d.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+    }
+
+    function cargarPrestamos() {
+        fetch(`${apiBase}/prestamos`)
+            .then(res => res.json())
+            .then(prestamos => {
+                prestamosActuales = prestamos;
+                if(Array.isArray(prestamos)){
+                    tablaSolicitudesBody.innerHTML = '';
+                    prestamos.forEach(p => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${p.nombreUsuario}</td>
+                            <td>${p.nombreDispositivo}</td>
+                            <td>${formatearFecha(p.fechaInicio)}</td>
+                            <td>${getEstadoBadge(p.estado)}</td>
+                            <td><button class="view-btn btn-ver-prestamo" data-id="${p.idPrestamo}">Ver</button></td>
+                        `;
+                        tablaSolicitudesBody.appendChild(tr);
+                    });
+
+                    document.querySelectorAll('.btn-ver-prestamo').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const id = parseInt(e.target.getAttribute('data-id'));
+                            abrirModalDetallePrestamo(id);
+                        });
+                    });
+                }
+            })
+            .catch(error => console.error('Error cargando prestamos:', error));
+    }
+
+    // Panel dedicado de prestamos
+    function cargarPrestamosPanelDedicado() {
+        var filtroEstado = document.getElementById('prest-filtro-estado') ? document.getElementById('prest-filtro-estado').value : '';
+        var tbody = document.getElementById('tabla-prestamos-panel-body');
+        if (!tbody) return;
+
+        fetch(apiBase + '/prestamos')
+            .then(function(res) { return res.json(); })
+            .then(function(prestamos) {
+                prestamosActuales = prestamos;
+                tbody.innerHTML = '';
+                var lista = Array.isArray(prestamos) ? prestamos.filter(function(p) { return !filtroEstado || p.estado === filtroEstado; }) : [];
+                if (lista.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes de pr\u00e9stamo</td></tr>';
+                    return;
+                }
+                lista.forEach(function(p) {
+                    var esAdminTec = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
+                    var esPend = p.estado === 'PENDIENTE';
+                    var acciones = '';
+                    if (esAdminTec && esPend) {
+                        acciones += '<button onclick="aprobarPrestamoPanel(' + p.idPrestamo + ')" style="background:#22c55e;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;margin-right:4px;">\u2713 Aprobar</button>';
+                        acciones += '<button onclick="rechazarPrestamoPanel(' + p.idPrestamo + ')" style="background:#ef4444;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">\u2715 Rechazar</button>';
+                    } else if (esPend) {
+                        acciones += '<button onclick="cancelarPrestamoPanel(' + p.idPrestamo + ')" style="background:#64748b;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Cancelar</button>';
+                    } else {
+                        acciones = '<span style="color:#94a3b8;font-size:12px;">&mdash;</span>';
+                    }
+                    var salon = p.numeroSalon ? (p.nombreSede + ' - Sal\u00f3n ' + p.numeroSalon) : '&mdash;';
+                    var tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid #f1f5f9';
+                    tr.innerHTML = [
+                        '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
+                        '<td style="padding:11px 14px;">' + p.nombreUsuario + '</td>',
+                        '<td style="padding:11px 14px;font-weight:500;">' + p.nombreDispositivo + '</td>',
+                        '<td style="padding:11px 14px;color:#64748b;">' + salon + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
+                        '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
+                        '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
+                    ].join('');
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(function(error) { console.error('Error panel prestamos:', error); });
+    }
+
+    window.aprobarPrestamoPanel = function(id) {
+        fetch(apiBase + '/prestamos/' + id + '/estado', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: 'APROBADO' })
+        })
+            .then(function(res) { return res.json().then(function(d) { return { status: res.status, body: d }; }); })
+            .then(function(res) {
+                showToast(res.status < 300 ? (res.body.mensaje || 'Pr\u00e9stamo aprobado') : (res.body.error || 'Error'), res.status < 300 ? 'success' : 'error');
+                if (res.status < 300) { cargarPrestamosPanelDedicado(); cargarDispositivos(); cargarPrestamos(); }
+            });
+    };
+    window.rechazarPrestamoPanel = function(id) {
+        fetch(apiBase + '/prestamos/' + id + '/estado', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: 'RECHAZADO' })
+        })
+            .then(function(res) { return res.json().then(function(d) { return { status: res.status, body: d }; }); })
+            .then(function(res) {
+                showToast(res.status < 300 ? (res.body.mensaje || 'Pr\u00e9stamo rechazado') : (res.body.error || 'Error'), res.status < 300 ? 'info' : 'error');
+                if (res.status < 300) { cargarPrestamosPanelDedicado(); cargarDispositivos(); }
+            });
+    };
+    window.cancelarPrestamoPanel = function(id) {
+        if (!confirm('\u00bfCancelar esta solicitud de pr\u00e9stamo?')) return;
+        fetch(apiBase + '/prestamos/' + id, { method: 'DELETE' })
+            .then(function(res) { return res.json().then(function(d) { return { status: res.status, body: d }; }); })
+            .then(function(res) {
+                showToast(res.status < 300 ? 'Solicitud cancelada' : (res.body.error || 'Error'), res.status < 300 ? 'info' : 'error');
+                if (res.status < 300) cargarPrestamosPanelDedicado();
+            });
+    };
+    var btnNuevoPrestamoPanelBtn = document.getElementById('btn-nuevo-prestamo-panel');
+    if (btnNuevoPrestamoPanelBtn) btnNuevoPrestamoPanelBtn.addEventListener('click', abrirModalCrearPrestamo);
+    var pRestFiltro = document.getElementById('prest-filtro-estado');
+    if (pRestFiltro) pRestFiltro.addEventListener('change', cargarPrestamosPanelDedicado);
+
+
+    function abrirModalCrearPrestamo() {
+        formCrearPrestamo.reset();
+        
+        // Cargar dispositivos DISPONIBLES
+        fetch(`${apiBase}/dispositivos?estado=DISPONIBLE`)
+            .then(res => res.json())
+            .then(dispositivos => {
+                const selectD = document.getElementById('prestamo-dispositivo');
+                selectD.innerHTML = '<option value="">Seleccione un dispositivo...</option>';
+                dispositivos.forEach(d => {
+                    selectD.innerHTML += `<option value="${d.idDispositivo}">${d.nombre} (${d.tipo})</option>`;
+                });
+            });
+
+        // Cargar salones
+        fetch(`${apiBase}/salones`)
+            .then(res => res.json())
+            .then(salones => {
+                const selectS = document.getElementById('prestamo-salon');
+                selectS.innerHTML = '<option value="">Seleccione un salón...</option>';
+                salones.forEach(s => {
+                    selectS.innerHTML += `<option value="${s.idSalon}">Salón ${s.numero}</option>`;
+                });
+            });
+
+        modalCrearPrestamo.style.display = 'flex';
+    }
+
+    formCrearPrestamo.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const payload = {
+            idDispositivo: parseInt(document.getElementById('prestamo-dispositivo').value),
+            idSalon: parseInt(document.getElementById('prestamo-salon').value),
+            fechaInicio: document.getElementById('prestamo-inicio').value,
+            fechaFin: document.getElementById('prestamo-fin').value
+        };
+
+        fetch(`${apiBase}/prestamos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json().then(data => ({status: res.status, body: data})))
+        .then(res => {
+            if (res.status >= 200 && res.status < 300) {
+                alert(res.body.mensaje);
+                modalCrearPrestamo.style.display = 'none';
+                cargarPrestamos();
+            } else {
+                alert(res.body.error || 'Error al solicitar préstamo');
+            }
+        })
+        .catch(err => alert('Error de conexión con el servidor'));
+    });
+
+    let idPrestamoDetalle = null;
+
+    function abrirModalDetallePrestamo(id) {
+        const prestamo = prestamosActuales.find(p => p.idPrestamo === id);
+        if (!prestamo) return;
+
+        idPrestamoDetalle = id;
+
+        document.getElementById('det-prestamo-usuario').textContent = prestamo.nombreUsuario;
+        document.getElementById('det-prestamo-dispositivo').textContent = prestamo.nombreDispositivo;
+        document.getElementById('det-prestamo-salon').textContent = prestamo.numeroSalon + ' (' + prestamo.nombreSede + ')';
+        document.getElementById('det-prestamo-inicio').textContent = formatearFecha(prestamo.fechaInicio);
+        document.getElementById('det-prestamo-fin').textContent = formatearFecha(prestamo.fechaFin);
+        document.getElementById('det-prestamo-estado').innerHTML = getEstadoBadge(prestamo.estado);
+
+        const btnAprobar = document.getElementById('btn-aprobar-prestamo');
+        const btnRechazar = document.getElementById('btn-rechazar-prestamo');
+
+        // Solo Admin/Técnico pueden aprobar/rechazar solicitudes PENDIENTES
+        if ((rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO') && prestamo.estado === 'PENDIENTE') {
+            btnAprobar.style.display = 'inline-block';
+            btnRechazar.style.display = 'inline-block';
+        } else {
+            btnAprobar.style.display = 'none';
+            btnRechazar.style.display = 'none';
+        }
+
+        modalDetallePrestamo.style.display = 'flex';
+    }
+
+    document.getElementById('btn-aprobar-prestamo').addEventListener('click', () => {
+        cambiarEstadoPrestamo(idPrestamoDetalle, 'APROBADO');
+    });
+
+    document.getElementById('btn-rechazar-prestamo').addEventListener('click', () => {
+        cambiarEstadoPrestamo(idPrestamoDetalle, 'RECHAZADO');
+    });
+
+    function cambiarEstadoPrestamo(id, nuevoEstado) {
+        fetch(`${apiBase}/prestamos/${id}/estado`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: nuevoEstado })
+        })
+        .then(res => res.json().then(data => ({status: res.status, body: data})))
+        .then(res => {
+            if (res.status >= 200 && res.status < 300) {
+                alert(res.body.mensaje);
+                modalDetallePrestamo.style.display = 'none';
+                cargarPrestamos();
+                cargarDispositivos(); // Actualizar contadores del dashboard
+            } else {
+                alert(res.body.error || 'Error al cambiar estado');
+            }
+        })
+        .catch(err => alert('Error de conexión con el servidor'));
+    }
+    // ---------------------------------------------
+    // LOGICA CRUD MANTENIMIENTOS
+    // ---------------------------------------------
+    const tablaMantenimientosBody = document.getElementById('tabla-mantenimientos-body');
+    const modalCrearMantenimiento = document.getElementById('modal-crear-mantenimiento');
+    const formCrearMantenimiento = document.getElementById('form-crear-mantenimiento');
+    const modalDetalleMantenimiento = document.getElementById('modal-detalle-mantenimiento');
+    
+    let mantenimientosActuales = [];
+
+    const btnNuevoMantenimiento = document.getElementById('btn-nuevo-mantenimiento');
+    if (btnNuevoMantenimiento) {
+        btnNuevoMantenimiento.addEventListener('click', abrirModalCrearMantenimiento);
+    }
+    
+    const btnCancelarMant = document.getElementById('btn-cancelar-mantenimiento');
+    if(btnCancelarMant) btnCancelarMant.addEventListener('click', () => modalCrearMantenimiento.style.display = 'none');
+    
+    const btnCerrarMant = document.getElementById('btn-cerrar-detalle-mant');
+    if(btnCerrarMant) btnCerrarMant.addEventListener('click', () => modalDetalleMantenimiento.style.display = 'none');
+
+    function cargarMantenimientos() {
+        if (!tablaMantenimientosBody) return;
+        fetch(apiBase + '/mantenimientos')
+            .then(res => res.json())
+            .then(mantenimientos => {
+                mantenimientosActuales = mantenimientos;
+                if(Array.isArray(mantenimientos)){
+                    tablaMantenimientosBody.innerHTML = '';
+                    mantenimientos.forEach(m => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${m.nombreDispositivo}</td>
+                            <td>${m.nombreUsuario}</td>
+                            <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                            <td>${formatearFecha(m.fechaInicio)}</td>
+                            <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                            <td><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                        `;
+                        tablaMantenimientosBody.appendChild(tr);
+                    });
+
+                    document.querySelectorAll('.btn-ver-mantenimiento').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const id = parseInt(e.target.getAttribute('data-id'));
+                            abrirModalDetalleMantenimiento(id);
+                        });
+                    });
+                }
+            })
+            .catch(error => console.error('Error cargando mantenimientos:', error));
+    }
+
+    function getEstadoBadgeMantenimiento(estado) {
+        if(estado === 'FINALIZADO') return '<span class="badge approved"><span class="dot"></span>Finalizado</span>';
+        if(estado === 'EN_PROCESO') return '<span class="badge pending"><span class="dot"></span>En Proceso</span>';
+        return estado;
+    }
+
+    function abrirModalCrearMantenimiento() {
+        if(formCrearMantenimiento) formCrearMantenimiento.reset();
+        
+        fetch(apiBase + '/dispositivos?estado=DISPONIBLE')
+            .then(res => res.json())
+            .then(dispositivos => {
+                const selectD = document.getElementById('mantenimiento-dispositivo');
+                if(selectD) {
+                    selectD.innerHTML = '<option value="">Seleccione un dispositivo...</option>';
+                    dispositivos.forEach(d => {
+                        selectD.innerHTML += `<option value="${d.idDispositivo}">${d.nombre} (${d.tipo})</option>`;
+                    });
+                }
+            });
+
+        if(modalCrearMantenimiento) modalCrearMantenimiento.style.display = 'flex';
+    }
+
+    if(formCrearMantenimiento) {
+        formCrearMantenimiento.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const payload = {
+                idDispositivo: parseInt(document.getElementById('mantenimiento-dispositivo').value),
+                tipo: document.getElementById('mantenimiento-tipo').value,
+                descripcion: document.getElementById('mantenimiento-descripcion').value
+            };
+
+            fetch(apiBase + '/mantenimientos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json().then(data => ({status: res.status, body: data})))
+            .then(res => {
+                if (res.status >= 200 && res.status < 300) {
+                    alert(res.body.mensaje);
+                    modalCrearMantenimiento.style.display = 'none';
+                    cargarMantenimientos();
+                    cargarDispositivos();
+                } else {
+                    alert(res.body.error || 'Error al registrar mantenimiento');
+                }
+            })
+            .catch(err => alert('Error de conexión con el servidor'));
+        });
+    }
+
+    let idMantenimientoDetalle = null;
+
+    function abrirModalDetalleMantenimiento(id) {
+        const mant = mantenimientosActuales.find(m => m.idMantenimiento === id);
+        if (!mant) return;
+
+        idMantenimientoDetalle = id;
+
+        document.getElementById('det-mantenimiento-dispositivo').textContent = mant.nombreDispositivo;
+        document.getElementById('det-mantenimiento-usuario').textContent = mant.nombreUsuario;
+        document.getElementById('det-mantenimiento-tipo').textContent = mant.tipo;
+        document.getElementById('det-mantenimiento-inicio').textContent = formatearFecha(mant.fechaInicio);
+        document.getElementById('det-mantenimiento-fin').textContent = mant.fechaFin ? formatearFecha(mant.fechaFin) : 'No finalizado';
+        document.getElementById('det-mantenimiento-descripcion').textContent = mant.descripcion;
+        document.getElementById('det-mantenimiento-estado').innerHTML = getEstadoBadgeMantenimiento(mant.estado);
+
+        const btnFinalizar = document.getElementById('btn-finalizar-mantenimiento');
+
+        if ((rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO') && mant.estado === 'EN_PROCESO') {
+            btnFinalizar.style.display = 'inline-block';
+        } else {
+            btnFinalizar.style.display = 'none';
+        }
+
+        modalDetalleMantenimiento.style.display = 'flex';
+    }
+
+    const btnFinalizarMantenimiento = document.getElementById('btn-finalizar-mantenimiento');
+    if (btnFinalizarMantenimiento) {
+        btnFinalizarMantenimiento.addEventListener('click', () => {
+            fetch(apiBase + '/mantenimientos/' + idMantenimientoDetalle, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado: 'FINALIZADO' })
+            })
+            .then(res => res.json().then(data => ({status: res.status, body: data})))
+            .then(res => {
+                if (res.status >= 200 && res.status < 300) {
+                    alert(res.body.mensaje);
+                    modalDetalleMantenimiento.style.display = 'none';
+                    cargarMantenimientos();
+                    cargarDispositivos(); 
+                } else {
+                    alert(res.body.error || 'Error al finalizar mantenimiento');
+                }
+            })
+            .catch(err => alert('Error de conexión con el servidor'));
+        });
+    }
+
+    // ---------------------------------------------
+    // LOGICA AUDITORIA
+    // ---------------------------------------------
+    const tablaAuditoriaBody = document.getElementById('tabla-auditoria-body');
+    
+    function cargarAuditoria() {
+        if (!tablaAuditoriaBody) return;
+        fetch(apiBase + '/auditoria')
+            .then(res => res.json())
+            .then(logs => {
+                if(Array.isArray(logs)){
+                    tablaAuditoriaBody.innerHTML = '';
+                    logs.forEach(log => {
+                        let badgeColor = '#3498db'; // Default blue (LOGIN, etc)
+                        if (log.accion === 'INSERT') badgeColor = '#2ecc71'; // Green
+                        else if (log.accion === 'UPDATE') badgeColor = '#f39c12'; // Orange
+                        else if (log.accion === 'DELETE') badgeColor = '#e74c3c'; // Red
+                        
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${formatearFecha(log.fechaEvento)}</td>
+                            <td>${log.nombreUsuario}</td>
+                            <td><span class="badge" style="background:${badgeColor}; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${log.accion}</span></td>
+                            <td>${log.tablaAfectada}</td>
+                            <td>${log.descripcion}</td>
+                            <td>${log.ip}</td>
+                        `;
+                        tablaAuditoriaBody.appendChild(tr);
+                    });
+                }
+            })
+            .catch(error => console.error('Error cargando auditoria:', error));
+    }
+
+    // ---------------------------------------------
+    // LOGICA REPORTES
+    // ---------------------------------------------
+    let chartDispositivos = null;
+    let chartMantenimientos = null;
+
+    function cargarReportes() {
+        fetch(apiBase + '/reportes/resumen')
+            .then(res => res.json())
+            .then(data => {
+                if(data.error) {
+                    console.error('Error cargando reportes:', data.error);
+                    return;
+                }
+                renderChartDispositivos(data.dispositivos);
+                renderChartMantenimientos(data.mantenimientos);
+            })
+            .catch(error => console.error('Error cargando reportes:', error));
+    }
+
+    function renderChartDispositivos(dataDisp) {
+        const ctx = document.getElementById('chart-dispositivos');
+        if (!ctx) return;
+        
+        if (chartDispositivos) {
+            chartDispositivos.destroy();
+        }
+
+        const labels = Object.keys(dataDisp);
+        const values = Object.values(dataDisp);
+        const bgColors = labels.map(l => l === 'DISPONIBLE' ? '#2ecc71' : (l === 'EN_USO' ? '#3498db' : '#e74c3c'));
+
+        chartDispositivos = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: bgColors
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    function renderChartMantenimientos(dataMant) {
+        const ctx = document.getElementById('chart-mantenimientos');
+        if (!ctx) return;
+
+        if (chartMantenimientos) {
+            chartMantenimientos.destroy();
+        }
+
+        const labels = Object.keys(dataMant);
+        const values = Object.values(dataMant);
+        const bgColors = labels.map(l => l === 'PREVENTIVO' ? '#f39c12' : '#8e44ad');
+
+        chartMantenimientos = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: bgColors
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    const btnExportarCSV = document.getElementById('btn-exportar-csv');
+    if (btnExportarCSV) {
+        btnExportarCSV.addEventListener('click', exportarInventarioCSV);
+    }
+
+    function exportarInventarioCSV() {
+        fetch(apiBase + '/dispositivos')
+            .then(res => res.json())
+            .then(dispositivos => {
+                if (!Array.isArray(dispositivos) || dispositivos.length === 0) {
+                    alert('No hay dispositivos para exportar');
+                    return;
+                }
+
+                const headers = ['ID', 'Nombre', 'Tipo', 'Estado', 'Descripción', 'Fecha Creación'];
+                const rows = dispositivos.map(d => [
+                    d.idDispositivo,
+                    `"${d.nombre}"`,
+                    d.tipo,
+                    d.estado,
+                    `"${(d.descripcion || '').replace(/"/g, '""')}"`,
+                    formatearFecha(d.fechaCreacion)
+                ]);
+
+                let csvContent = "data:text/csv;charset=utf-8," 
+                    + headers.join(",") + "\n"
+                    + rows.map(e => e.join(",")).join("\n");
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "inventario_systechpro.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            })
+            .catch(error => alert('Error al exportar inventario'));
+    }
+
 });

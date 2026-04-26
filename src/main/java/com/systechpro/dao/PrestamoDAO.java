@@ -7,6 +7,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PrestamoDAO {
+
+    // Base query that joins the tables for frontend visualization
+    private static final String BASE_QUERY_JOIN = 
+        "SELECT p.*, " +
+        "u.nombre AS nombre_usuario, " +
+        "d.nombre AS nombre_dispositivo, " +
+        "s.numero AS numero_salon, " +
+        "se.nombre AS nombre_sede " +
+        "FROM prestamo p " +
+        "JOIN usuario u ON p.id_usuario = u.id_usuario " +
+        "JOIN dispositivo d ON p.id_dispositivo = d.id_dispositivo " +
+        "JOIN salon s ON p.id_salon = s.id_salon " +
+        "JOIN sede se ON s.id_sede = se.id_sede ";
     
     public boolean insertar(Prestamo prestamo) {
         String sql = "INSERT INTO prestamo (id_usuario, id_dispositivo, id_salon, fecha_inicio, fecha_fin, estado) VALUES (?, ?, ?, ?, ?, ?)";
@@ -29,14 +42,14 @@ public class PrestamoDAO {
     
     public List<Prestamo> listar() {
         List<Prestamo> prestamos = new ArrayList<>();
-        String sql = "SELECT * FROM prestamo ORDER BY fecha_inicio DESC";
+        String sql = BASE_QUERY_JOIN + "ORDER BY p.fecha_inicio DESC";
         
         try (Connection conn = GestorJDBC.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                prestamos.add(mapearPrestamo(rs));
+                prestamos.add(mapearPrestamoJoin(rs));
             }
         } catch (SQLException e) {
             System.err.println("Error al listar préstamos: " + e.getMessage());
@@ -46,7 +59,7 @@ public class PrestamoDAO {
     
     public List<Prestamo> listarPorUsuario(int idUsuario) {
         List<Prestamo> prestamos = new ArrayList<>();
-        String sql = "SELECT * FROM prestamo WHERE id_usuario = ? ORDER BY fecha_inicio DESC";
+        String sql = BASE_QUERY_JOIN + "WHERE p.id_usuario = ? ORDER BY p.fecha_inicio DESC";
         
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -55,7 +68,7 @@ public class PrestamoDAO {
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
-                prestamos.add(mapearPrestamo(rs));
+                prestamos.add(mapearPrestamoJoin(rs));
             }
         } catch (SQLException e) {
             System.err.println("Error al listar préstamos por usuario: " + e.getMessage());
@@ -65,7 +78,7 @@ public class PrestamoDAO {
     
     public List<Prestamo> listarPorEstado(String estado) {
         List<Prestamo> prestamos = new ArrayList<>();
-        String sql = "SELECT * FROM prestamo WHERE estado = ? ORDER BY fecha_inicio DESC";
+        String sql = BASE_QUERY_JOIN + "WHERE p.estado = ? ORDER BY p.fecha_inicio DESC";
         
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -74,7 +87,7 @@ public class PrestamoDAO {
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
-                prestamos.add(mapearPrestamo(rs));
+                prestamos.add(mapearPrestamoJoin(rs));
             }
         } catch (SQLException e) {
             System.err.println("Error al listar préstamos por estado: " + e.getMessage());
@@ -98,14 +111,14 @@ public class PrestamoDAO {
     }
     
     public Prestamo buscarPorId(int id) {
-        String sql = "SELECT * FROM prestamo WHERE id_prestamo = ?";
+        String sql = BASE_QUERY_JOIN + "WHERE p.id_prestamo = ?";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                return mapearPrestamo(rs);
+                return mapearPrestamoJoin(rs);
             }
         } catch (SQLException e) {
             System.err.println("Error al buscar préstamo: " + e.getMessage());
@@ -113,7 +126,7 @@ public class PrestamoDAO {
         return null;
     }
     
-    private Prestamo mapearPrestamo(ResultSet rs) throws SQLException {
+    private Prestamo mapearPrestamoJoin(ResultSet rs) throws SQLException {
         Prestamo p = new Prestamo();
         p.setIdPrestamo(rs.getInt("id_prestamo"));
         p.setIdUsuario(rs.getInt("id_usuario"));
@@ -122,6 +135,13 @@ public class PrestamoDAO {
         p.setFechaInicio(rs.getTimestamp("fecha_inicio"));
         p.setFechaFin(rs.getTimestamp("fecha_fin"));
         p.setEstado(rs.getString("estado"));
+        
+        // Propiedades adicionales del JOIN
+        p.setNombreUsuario(rs.getString("nombre_usuario"));
+        p.setNombreDispositivo(rs.getString("nombre_dispositivo"));
+        p.setNumeroSalon(String.valueOf(rs.getInt("numero_salon")));
+        p.setNombreSede(rs.getString("nombre_sede"));
+        
         return p;
     }
 }

@@ -1,6 +1,8 @@
 package com.systechpro.controllers;
 
 import com.systechpro.dao.UsuarioDAO;
+import com.systechpro.dao.AuditoriaDAO;
+import com.systechpro.models.Auditoria;
 import com.systechpro.models.Usuario;
 import com.systechpro.utils.Encriptador;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +19,7 @@ import java.util.Map;
 @WebServlet(name = "AuthController", urlPatterns = {"/api/auth/*"})
 public class AuthController extends HttpServlet {
     private final UsuarioDAO usuarioDAO = new UsuarioDAO();
+    private final AuditoriaDAO auditoriaDAO = new AuditoriaDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -55,6 +58,11 @@ public class AuthController extends HttpServlet {
                 HttpSession session = request.getSession();
                 session.setAttribute("usuario", usuario);
                 session.setAttribute("rol", usuario.getRol());
+                
+                // Registrar auditoria
+                String ip = request.getRemoteAddr();
+                Auditoria audit = new Auditoria(usuario.getIdUsuario(), "usuario", "LOGIN", usuario.getIdUsuario(), "Inicio de sesión", ip);
+                auditoriaDAO.insertar(audit);
                 
                 Map<String, Object> respuesta = new HashMap<>();
                 respuesta.put("success", true);

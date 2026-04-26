@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - Admin</title>
-    <link rel="stylesheet" href="css/styles.css?v=5">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Dashboard - SysTechPro</title>
+    <link rel="stylesheet" href="css/styles.css?v=6">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Force styling directly in HTML to bypass any browser cache */
         .sidebar-nav .nav-link {
@@ -32,15 +32,15 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     Inicio
                 </a>
-                <a href="#" class="nav-link">
+                <a href="#" class="nav-link" id="nav-dispositivos-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                     Dispositivos
                 </a>
-                <a href="#" class="nav-link">
+                <a href="#" class="nav-link" id="nav-prestamos-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     Préstamos
                 </a>
-                <a href="#" class="nav-link">
+                <a href="#" class="nav-link" id="nav-mantenimientos-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
                     Mantenimiento
                 </a>
@@ -48,14 +48,21 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     Usuarios
                 </a>
-                <a href="#" class="nav-link">
+                <a href="#" class="nav-link" id="nav-auditoria-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Auditoría
+                </a>
+                <a href="#" class="nav-link" id="nav-reportes-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                     Reportes
                 </a>
             </nav>
             <footer class="sidebar-footer">© SysTechPro</footer>
         </aside>
         <main class="main-content">
+            <!-- Toast container -->
+            <div id="toast-container" style="position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;"></div>
+
             <header class="admin-header">
                 <div></div>
                 <div class="user-info">
@@ -71,34 +78,37 @@
                         <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>
                         <div class="card-info">
                             <div class="card-label">Total de dispositivos</div>
-                            <div class="card-value">120</div>
+                            <div class="card-value" id="dash-total">0</div>
                         </div>
                     </div>
                     <div class="dashboard-card available">
                         <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
                         <div class="card-info">
                             <div class="card-label">Disponibles</div>
-                            <div class="card-value">65</div>
+                            <div class="card-value" id="dash-available">0</div>
                         </div>
                     </div>
                     <div class="dashboard-card inuse">
                         <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></div>
                         <div class="card-info">
                             <div class="card-label">En uso</div>
-                            <div class="card-value">40</div>
+                            <div class="card-value" id="dash-inuse">0</div>
                         </div>
                     </div>
                     <div class="dashboard-card maintenance">
                         <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></div>
                         <div class="card-info">
                             <div class="card-label">En mantenimiento</div>
-                            <div class="card-value">15</div>
+                            <div class="card-value" id="dash-maintenance">0</div>
                         </div>
                     </div>
                 </div>
                 <div class="dashboard-bottom">
                     <div class="recent-requests">
-                        <h3>Solicitudes recientes</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>Solicitudes recientes</h3>
+                            <button class="add-btn" id="btn-solicitar-prestamo-dash" style="background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">+ Solicitar Préstamo</button>
+                        </div>
                         <table class="requests-table">
                             <thead>
                                 <tr>
@@ -109,34 +119,14 @@
                                     <th>Acción</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Juan Pérez</td>
-                                    <td>Proyector</td>
-                                    <td>12/04</td>
-                                    <td><span class="badge pending"><span class="dot"></span>Pendiente</span></td>
-                                    <td><button class="view-btn">Ver</button></td>
-                                </tr>
-                                <tr>
-                                    <td>Ana López</td>
-                                    <td>Laptop</td>
-                                    <td>11/04</td>
-                                    <td><span class="badge approved"><span class="dot"></span>Aprobado</span></td>
-                                    <td><button class="view-btn">Ver</button></td>
-                                </tr>
-                                <tr>
-                                    <td>Carlos Gómez</td>
-                                    <td>Cámara</td>
-                                    <td>10/04</td>
-                                    <td><span class="badge rejected"><span class="dot"></span>Rechazado</span></td>
-                                    <td><button class="view-btn">Ver</button></td>
-                                </tr>
+                            <tbody id="tabla-solicitudes-body">
+                                <!-- Dinámico -->
                             </tbody>
                         </table>
                     </div>
                     <div class="quick-access">
                         <h3>Accesos rápidos</h3>
-                        <button class="quick-btn">
+                        <button class="quick-btn" id="quick-add-dispositivo-btn">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                             Registrar dispositivo
                         </button>
@@ -144,7 +134,7 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                             Crear usuario
                         </button>
-                        <button class="quick-btn">
+                        <button class="quick-btn" id="ver-solicitudes-btn">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
                             Ver solicitudes
                         </button>
@@ -217,8 +207,364 @@
                 </div>
             </div>
 
+            <!-- SECCION: DISPOSITIVOS (REDISEÑADO) -->
+            <section class="dashboard-panel" id="panel-dispositivos" style="display: none;">
+                <h2 style="margin-bottom: 18px; font-size: 1.4rem; font-weight: 700;">Gestión de Dispositivos</h2>
+                <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: nowrap;">
+
+                    <!-- COLUMNA IZQUIERDA 70% -->
+                    <div style="flex: 7; min-width: 0;">
+
+                        <!-- Barra de acciones -->
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
+                            <div style="position: relative; flex: 1; min-width: 180px;">
+                                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.5;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <input type="text" id="disp-buscar" placeholder="Buscar por nombre o código..." style="width:100%;padding:9px 9px 9px 34px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;">
+                            </div>
+                            <select id="disp-filtro-estado" style="padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:white;cursor:pointer;">
+                                <option value="">Todos los estados</option>
+                                <option value="DISPONIBLE">Disponible</option>
+                                <option value="EN_USO">En uso</option>
+                                <option value="MANTENIMIENTO">Mantenimiento</option>
+                            </select>
+                            <button id="btn-nuevo-dispositivo" style="display:flex;align-items:center;gap:6px;padding:9px 16px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Agregar dispositivo
+                            </button>
+                        </div>
+
+                        <!-- Tabla -->
+                        <div style="overflow-x:auto; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.07);">
+                            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                                <thead>
+                                    <tr style="background:#f1f5f9;">
+                                        <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;white-space:nowrap;">Código</th>
+                                        <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Nombre</th>
+                                        <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>
+                                        <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>
+                                        <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Ubicación</th>
+                                        <th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-dispositivos-body">
+                                    <!-- Dinámico -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginación -->
+                        <div id="disp-paginacion" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:13px;color:#64748b;">
+                            <span id="disp-info-pagina"></span>
+                            <div style="display:flex;gap:6px;">
+                                <button id="btn-disp-prev" style="padding:6px 14px;border:1.5px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">&#8592; Anterior</button>
+                                <button id="btn-disp-next" style="padding:6px 14px;border:1.5px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente &#8594;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUMNA DERECHA 30% -->
+                    <div id="disp-form-panel" style="flex: 3; min-width: 280px; max-width: 380px; background:white; border-radius:12px; box-shadow:0 4px 18px rgba(0,0,0,0.09); padding:22px;">
+                        <h3 id="disp-form-titulo" style="margin:0 0 18px 0;font-size:1.05rem;font-weight:700;color:#1e293b;">Gestión Detallada del Dispositivo</h3>
+                        <form id="form-dispositivo">
+                            <input type="hidden" id="dispositivo-id">
+
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block;margin-bottom:5px;font-size:13px;font-weight:600;color:#374151;">Nombre del dispositivo</label>
+                                <input type="text" id="dispositivo-nombre" required placeholder="Ej: Proyector Epson" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:14px;box-sizing:border-box;outline:none;">
+                            </div>
+
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block;margin-bottom:5px;font-size:13px;font-weight:600;color:#374151;">Tipo</label>
+                                <select id="dispositivo-tipo" required style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:14px;background:white;box-sizing:border-box;">
+                                    <option value="">Computador, Proyector, Cámara, Acces...</option>
+                                    <option value="COMPUTADOR">Computador</option>
+                                    <option value="PROYECTOR">Proyector</option>
+                                    <option value="IMPRESORA">Impresora</option>
+                                    <option value="TABLET">Tablet</option>
+                                    <option value="OTRO">Otro</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block;margin-bottom:5px;font-size:13px;font-weight:600;color:#374151;">Estado</label>
+                                <select id="dispositivo-estado" required style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:14px;background:white;box-sizing:border-box;">
+                                    <option value="">Disponible, En uso, Mantenimiento</option>
+                                    <option value="DISPONIBLE">Disponible</option>
+                                    <option value="EN_USO">En uso</option>
+                                    <option value="MANTENIMIENTO">Mantenimiento</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block;margin-bottom:5px;font-size:13px;font-weight:600;color:#374151;">Descripción (opcional)</label>
+                                <textarea id="dispositivo-descripcion" rows="3" placeholder="Descripción del equipo..." style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:14px;box-sizing:border-box;resize:vertical;"></textarea>
+                            </div>
+
+                            <!-- SECCION UBICACION -->
+                            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:16px;">
+                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#374151;margin-bottom:12px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    Ubicación
+                                </label>
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b;">1. Sede (lista desplegable obligatoria)</label>
+                                    <select id="disp-sede" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
+                                        <option value="">Cargando sedes...</option>
+                                    </select>
+                                </div>
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b;">2. Número de salón</label>
+                                    <select id="disp-salon" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
+                                        <option value="">Seleccione una sede primero</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b;">3. Ubicación generada automáticamente</label>
+                                    <input type="text" id="disp-ubicacion-generada" readonly placeholder="Ej: SJ-217" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#eef2ff;box-sizing:border-box;font-weight:600;color:#2563eb;">
+                                </div>
+                            </div>
+
+                            <div style="display:flex;gap:10px;">
+                                <button type="submit" style="flex:1;padding:10px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                    Guardar
+                                </button>
+                                <button type="button" id="btn-cancelar-dispositivo" style="flex:1;padding:10px;background:#f1f5f9;color:#374151;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
+                                    &#10005; Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Panel Mantenimientos -->
+            <section class="dashboard-panel" id="panel-mantenimientos" style="display: none;">
+                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Gestión de Mantenimientos</h2>
+                    <button class="add-btn" id="btn-nuevo-mantenimiento" style="background: #e67e22; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">+ Registrar Mantenimiento</button>
+                </div>
+                
+                <table class="requests-table">
+                    <thead>
+                        <tr>
+                            <th>Dispositivo</th>
+                            <th>Técnico</th>
+                            <th>Tipo</th>
+                            <th>Inicio</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-mantenimientos-body">
+                        <!-- Dinámico -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Panel Auditoría -->
+            <section class="dashboard-panel" id="panel-auditoria" style="display: none;">
+                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Registro de Auditoría</h2>
+                </div>
+                
+                <table class="requests-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Tabla</th>
+                            <th>Descripción</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-auditoria-body">
+                        <!-- Dinámico -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Panel Reportes -->
+            <section class="dashboard-panel" id="panel-reportes" style="display: none;">
+                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Análisis y Reportes</h2>
+                    <button class="primary-btn" id="btn-exportar-csv">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Exportar Inventario (CSV)
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex: 1; min-width: 300px; max-width: 45%;">
+                        <h3 style="text-align: center; margin-bottom: 15px; color: var(--text-color);">Distribución de Dispositivos</h3>
+                        <canvas id="chart-dispositivos"></canvas>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex: 1; min-width: 300px; max-width: 45%;">
+                        <h3 style="text-align: center; margin-bottom: 15px; color: var(--text-color);">Tipos de Mantenimiento</h3>
+                        <canvas id="chart-mantenimientos"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel Préstamos (dedicado) -->
+            <section class="dashboard-panel" id="panel-prestamos" style="display: none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h2>Gestión de Préstamos</h2>
+                    <button class="add-btn" id="btn-nuevo-prestamo-panel" style="background:#3498db;color:white;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Solicitar Préstamo
+                    </button>
+                </div>
+
+                <!-- Filtros -->
+                <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+                    <select id="prest-filtro-estado" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:white;">
+                        <option value="">Todos los estados</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="APROBADO">Aprobado</option>
+                        <option value="RECHAZADO">Rechazado</option>
+                    </select>
+                </div>
+
+                <div style="overflow-x:auto;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);">
+                    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                        <thead>
+                            <tr style="background:#f1f5f9;">
+                                <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>
+                                <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Usuario</th>
+                                <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>
+                                <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Salón</th>
+                                <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Inicio</th>
+                                <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>
+                                <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>
+                                <th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-prestamos-panel-body">
+                            <!-- Dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Modal para Crear Solicitud de Préstamo -->
+            <div id="modal-crear-prestamo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                <div style="background: white; width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top: 0;">Solicitar Préstamo</h3>
+                    <form id="form-crear-prestamo">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;">Dispositivo Disponible</label>
+                            <select id="prestamo-dispositivo" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                <!-- Dinámico -->
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;">Salón / Ubicación</label>
+                            <select id="prestamo-salon" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                <!-- Dinámico -->
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;">Fecha de Inicio</label>
+                            <input type="datetime-local" id="prestamo-inicio" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px;">Fecha de Fin (Estimada)</label>
+                            <input type="datetime-local" id="prestamo-fin" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" id="btn-cancelar-prestamo" style="padding: 8px 15px; background: #ddd; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                            <button type="submit" style="padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">Solicitar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal para Detalle de Préstamo (Admin/Técnico) -->
+            <div id="modal-detalle-prestamo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                <div style="background: white; width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Detalle de Solicitud</h3>
+                    
+                    <div style="margin-bottom: 15px; line-height: 1.6;">
+                        <p><strong>Usuario:</strong> <span id="det-prestamo-usuario"></span></p>
+                        <p><strong>Dispositivo:</strong> <span id="det-prestamo-dispositivo"></span></p>
+                        <p><strong>Salón:</strong> <span id="det-prestamo-salon"></span></p>
+                        <p><strong>Inicio:</strong> <span id="det-prestamo-inicio"></span></p>
+                        <p><strong>Fin:</strong> <span id="det-prestamo-fin"></span></p>
+                        <p><strong>Estado Actual:</strong> <span id="det-prestamo-estado"></span></p>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee; padding-top: 15px;">
+                        <button type="button" id="btn-cerrar-detalle" style="padding: 8px 15px; background: #ddd; border: none; border-radius: 4px; cursor: pointer;">Cerrar</button>
+                        <button type="button" id="btn-rechazar-prestamo" style="display: none; padding: 8px 15px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer;">Rechazar</button>
+                        <button type="button" id="btn-aprobar-prestamo" style="display: none; padding: 8px 15px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer;">Aprobar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para Crear Mantenimiento -->
+            <div id="modal-crear-mantenimiento" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                <div style="background: white; width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top: 0;">Registrar Mantenimiento</h3>
+                    <form id="form-crear-mantenimiento">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;">Dispositivo Disponible</label>
+                            <select id="mantenimiento-dispositivo" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                <!-- Dinámico -->
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;">Tipo de Mantenimiento</label>
+                            <select id="mantenimiento-tipo" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                <option value="PREVENTIVO">PREVENTIVO</option>
+                                <option value="CORRECTIVO">CORRECTIVO</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px;">Descripción del Problema/Trabajo</label>
+                            <textarea id="mantenimiento-descripcion" required rows="3" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" id="btn-cancelar-mantenimiento" style="padding: 8px 15px; background: #ddd; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                            <button type="submit" style="padding: 8px 15px; background: #e67e22; color: white; border: none; border-radius: 4px; cursor: pointer;">Registrar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal Detalle Mantenimiento -->
+            <div id="modal-detalle-mantenimiento" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                <div style="background: white; width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Detalle de Mantenimiento</h3>
+                    
+                    <div style="margin-bottom: 15px; line-height: 1.6;">
+                        <p><strong>Dispositivo:</strong> <span id="det-mantenimiento-dispositivo"></span></p>
+                        <p><strong>Técnico:</strong> <span id="det-mantenimiento-usuario"></span></p>
+                        <p><strong>Tipo:</strong> <span id="det-mantenimiento-tipo"></span></p>
+                        <p><strong>Inicio:</strong> <span id="det-mantenimiento-inicio"></span></p>
+                        <p><strong>Fin:</strong> <span id="det-mantenimiento-fin"></span></p>
+                        <p><strong>Descripción:</strong> <span id="det-mantenimiento-descripcion"></span></p>
+                        <p><strong>Estado:</strong> <span id="det-mantenimiento-estado"></span></p>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee; padding-top: 15px;">
+                        <button type="button" id="btn-cerrar-detalle-mant" style="padding: 8px 15px; background: #ddd; border: none; border-radius: 4px; cursor: pointer;">Cerrar</button>
+                        <button type="button" id="btn-finalizar-mantenimiento" style="display: none; padding: 8px 15px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer;">Finalizar Mantenimiento</button>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
-    <script src="js/admin.js?v=3"></script>
+    <script src="js/admin.js?v=6"></script>
 </body>
 </html>

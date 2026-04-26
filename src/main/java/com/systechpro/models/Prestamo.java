@@ -45,4 +45,22 @@ public class Prestamo {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    // Propiedades adicionales para frontend
+    private String nombreUsuario;
+    private String nombreDispositivo;
+    private String numeroSalon;
+    private String nombreSede;
+
+    public String getNombreUsuario() { return nombreUsuario; }
+    public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
+
+    public String getNombreDispositivo() { return nombreDispositivo; }
+    public void setNombreDispositivo(String nombreDispositivo) { this.nombreDispositivo = nombreDispositivo; }
+
+    public String getNumeroSalon() { return numeroSalon; }
+    public void setNumeroSalon(String numeroSalon) { this.numeroSalon = numeroSalon; }
+
+    public String getNombreSede() { return nombreSede; }
+    public void setNombreSede(String nombreSede) { this.nombreSede = nombreSede; }
 }

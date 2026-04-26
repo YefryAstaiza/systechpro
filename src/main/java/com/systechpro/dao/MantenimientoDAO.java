@@ -7,6 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MantenimientoDAO {
+
+    private static final String BASE_QUERY_JOIN = 
+        "SELECT m.*, d.nombre AS nombre_dispositivo, u.nombre AS nombre_usuario " +
+        "FROM mantenimiento m " +
+        "JOIN dispositivo d ON m.id_dispositivo = d.id_dispositivo " +
+        "JOIN usuario u ON m.id_usuario = u.id_usuario ";
     
     public boolean insertar(Mantenimiento mantenimiento) {
         String sql = "INSERT INTO mantenimiento (id_dispositivo, id_usuario, tipo, fecha_inicio, descripcion, estado) VALUES (?, ?, ?, ?, ?, ?)";
@@ -29,7 +35,7 @@ public class MantenimientoDAO {
     
     public List<Mantenimiento> listar() {
         List<Mantenimiento> mantenimientos = new ArrayList<>();
-        String sql = "SELECT * FROM mantenimiento ORDER BY fecha_inicio DESC";
+        String sql = BASE_QUERY_JOIN + "ORDER BY m.fecha_inicio DESC";
         
         try (Connection conn = GestorJDBC.getConnection();
              Statement stmt = conn.createStatement();
@@ -46,7 +52,7 @@ public class MantenimientoDAO {
     
     public List<Mantenimiento> listarPorDispositivo(int idDispositivo) {
         List<Mantenimiento> mantenimientos = new ArrayList<>();
-        String sql = "SELECT * FROM mantenimiento WHERE id_dispositivo = ? ORDER BY fecha_inicio DESC";
+        String sql = BASE_QUERY_JOIN + "WHERE m.id_dispositivo = ? ORDER BY m.fecha_inicio DESC";
         
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -82,7 +88,7 @@ public class MantenimientoDAO {
     }
     
     public Mantenimiento buscarPorId(int id) {
-        String sql = "SELECT * FROM mantenimiento WHERE id_mantenimiento = ?";
+        String sql = BASE_QUERY_JOIN + "WHERE m.id_mantenimiento = ?";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
@@ -107,6 +113,10 @@ public class MantenimientoDAO {
         m.setFechaFin(rs.getTimestamp("fecha_fin"));
         m.setDescripcion(rs.getString("descripcion"));
         m.setEstado(rs.getString("estado"));
+        
+        m.setNombreDispositivo(rs.getString("nombre_dispositivo"));
+        m.setNombreUsuario(rs.getString("nombre_usuario"));
+        
         return m;
     }
 }

@@ -1,6 +1,8 @@
 package com.systechpro.controllers;
 
 import com.systechpro.dao.UsuarioDAO;
+import com.systechpro.dao.AuditoriaDAO;
+import com.systechpro.models.Auditoria;
 import com.systechpro.models.Usuario;
 import com.systechpro.utils.Encriptador;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +19,7 @@ import java.util.Map;
 @WebServlet(name = "UsuarioController", urlPatterns = {"/api/usuarios/*"})
 public class UsuarioController extends HttpServlet {
     private final UsuarioDAO usuarioDAO = new UsuarioDAO();
+    private final AuditoriaDAO auditoriaDAO = new AuditoriaDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private boolean validarRol(String rol) {
@@ -143,6 +146,10 @@ public class UsuarioController extends HttpServlet {
             boolean resultado = usuarioDAO.insertar(usuario);
 
             if (resultado) {
+                Usuario usuarioActual = usuarioDAO.buscarPorCorreo(usuario.getCorreo());
+                int idUsuarioSesion = ((Usuario) session.getAttribute("usuario")).getIdUsuario();
+                auditoriaDAO.insertar(new Auditoria(idUsuarioSesion, "usuario", "INSERT", usuarioActual.getIdUsuario(), "Usuario creado: " + usuario.getCorreo(), request.getRemoteAddr()));
+                
                 response.setStatus(HttpServletResponse.SC_CREATED);
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Usuario registrado correctamente"));
             } else {
@@ -228,6 +235,9 @@ public class UsuarioController extends HttpServlet {
             boolean resultado = usuarioDAO.actualizar(usuario);
 
             if (resultado) {
+                int idUsuarioSesion = ((Usuario) session.getAttribute("usuario")).getIdUsuario();
+                auditoriaDAO.insertar(new Auditoria(idUsuarioSesion, "usuario", "UPDATE", id, "Usuario editado: " + usuario.getCorreo(), request.getRemoteAddr()));
+
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Usuario actualizado correctamente"));
             } else {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -282,6 +292,9 @@ public class UsuarioController extends HttpServlet {
             boolean resultado = usuarioDAO.eliminar(id);
 
             if (resultado) {
+                int idUsuarioSesion = ((Usuario) session.getAttribute("usuario")).getIdUsuario();
+                auditoriaDAO.insertar(new Auditoria(idUsuarioSesion, "usuario", "DELETE", id, "Usuario eliminado ID: " + id, request.getRemoteAddr()));
+
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Usuario eliminado correctamente"));
             } else {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
