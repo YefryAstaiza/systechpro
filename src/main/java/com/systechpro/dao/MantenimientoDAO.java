@@ -1,5 +1,7 @@
 package com.systechpro.dao;
 
+import com.systechpro.dao.DispositivoDAO;
+import com.systechpro.models.Dispositivo;
 import com.systechpro.models.Mantenimiento;
 import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
@@ -7,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MantenimientoDAO {
+
+    private final DispositivoDAO dispositivoDAO = new DispositivoDAO();
 
     private static final String BASE_QUERY_JOIN = 
         "SELECT m.*, d.nombre AS nombre_dispositivo, u.nombre AS nombre_usuario " +
@@ -116,6 +120,11 @@ public class MantenimientoDAO {
         
         m.setNombreDispositivo(rs.getString("nombre_dispositivo"));
         m.setNombreUsuario(rs.getString("nombre_usuario"));
+
+        Dispositivo dispositivo = dispositivoDAO.buscarPorId(m.getIdDispositivo());
+        if (dispositivo != null) {
+            m.setUbicacion(dispositivo.getUbicacion());
+        }
         
         return m;
     }

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SysTechPro - Técnico</title>
+    <link rel="stylesheet" href="css/styles.css?v=7">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .tecnico-header { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+        .tecnico-header h1 { margin:0; font-size:1.8rem; }
+        .tecnico-buttons { display:flex; gap:10px; flex-wrap:wrap; }
+        .tecnico-card-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px; }
+        .tecnico-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:20px; min-height:120px; box-shadow:0 6px 18px rgba(15, 23, 42, 0.04); }
+        .tecnico-card h3 { margin:0 0 12px; font-size:1rem; color:#475569; }
+        .tecnico-card .value { font-size:2rem; font-weight:700; color:#0f172a; }
+        .table-responsive { overflow-x:auto; }
+        .tecnico-table { width:100%; border-collapse:collapse; margin-top:16px; }
+        .tecnico-table th, .tecnico-table td { padding:14px 12px; border-bottom:1px solid #e2e8f0; text-align:left; font-size:0.95rem; }
+        .tecnico-table th { background:#f8fafc; font-weight:700; color:#334155; }
+        .status-pill { display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; font-size:0.82rem; font-weight:600; color:#ffffff; }
+        .status-en-proceso { background:#f59e0b; }
+        .status-finalizado { background:#10b981; }
+        .btn-primary { background:#2563eb; color:#fff; border:none; padding:10px 18px; border-radius:12px; cursor:pointer; font-weight:600; }
+        .btn-secondary { background:#e2e8f0; color:#0f172a; border:none; padding:10px 18px; border-radius:12px; cursor:pointer; }
+        .sidebar-nav .nav-link.active { background: rgba(59, 130, 246, 0.1); }
+        .panel { display:none; }
+        .panel.active { display:block; }
+        .section-card { display:grid; grid-template-columns: 1fr; gap:18px; }
+        .form-panel { background:#fff; border:1px solid #e2e8f0; padding:20px; border-radius:16px; box-shadow:0 6px 18px rgba(15, 23, 42, 0.04); }
+        .form-field { margin-bottom:16px; }
+        .form-field label { display:block; margin-bottom:8px; font-weight:600; color:#334155; }
+        .form-field input, .form-field select, .form-field textarea { width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:12px; font-size:0.95rem; }
+        .form-field textarea { min-height:100px; resize:vertical; }
+        .modal-content { max-width:540px; width:100%; padding:24px; border-radius:16px; background:#ffffff; }
+        .modal-body dt { font-weight:700; margin-top:16px; }
+        .modal-body dd { margin:6px 0 0 0; color:#475569; }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: #f8fafc;
+            padding: 8px 16px;
+            border-radius: 40px;
+        }
+        .user-label {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        #tecnico-user-name {
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .logout-btn {
+            background: #fff !important;
+            color: #a94442 !important;
+            border: 2px solid #a94442 !important;
+            border-radius: 6px !important;
+            padding: 7px 18px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            margin-left: 12px !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+        }
+        .logout-btn:hover {
+            background: #fdf2f2 !important;
+            color: white!important;
+            border: 2px solid #a94442 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="logo-section">
+                <img src="img/LogoFup.png" alt="Logo FUP" class="logo-fup">
+                <span class="logo-title">FUNDACIÓN UNIVERSITARIA DE POPAYÁN</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-link active" id="nav-inicio-btn">
+                    <span>Inicio</span>
+                </a>
+                <a href="#" class="nav-link" id="nav-mantenimiento-btn">
+                    <span>Mantenimiento</span>
+                </a>
+                <a href="#" class="nav-link" id="nav-historial-btn">
+                    <span>Historial</span>
+                </a>
+            </nav>
+            <footer class="sidebar-footer">© SysTechPro</footer>
+        </aside>
+        <main class="main-content">
+            <header class="admin-header">
+                <div></div>
+                <div class="user-info">
+                    <span class="user-label">Usuario:</span> 
+                    <span id="tecnico-user-name">Técnico</span>
+                    <button class="logout-btn" id="btn-logout">Cerrar sesión</button>
+                </div>
+            </header>
+
+            <section id="panel-inicio" class="dashboard-panel active panel">
+                <div class="tecnico-header">
+                    <h2 style="margin:0;">Inicio</h2>
+                    <div class="tecnico-buttons">
+                        <button class="btn-primary" id="btn-registrar-mantenimiento">Registrar mantenimiento</button>
+                        <button class="btn-secondary" id="btn-ver-historial">Ver historial de mantenimientos</button>
+                    </div>
+                </div>
+
+                <div class="tecnico-card-grid">
+                    <div class="tecnico-card">
+                        <h3>Dispositivos en mantenimiento</h3>
+                        <div class="value" id="card-dispositivos-mantenimiento">0</div>
+                    </div>
+                    <div class="tecnico-card">
+                        <h3>Mantenimientos en proceso</h3>
+                        <div class="value" id="card-mantenimientos-proceso">0</div>
+                    </div>
+                    <div class="tecnico-card">
+                        <h3>Mantenimientos finalizados</h3>
+                        <div class="value" id="card-mantenimientos-finalizados">0</div>
+                    </div>
+                </div>
+
+                <div style="margin-top:24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                        <div>
+                            <h3 style="margin:0;">Mantenimientos recientes</h3>
+                            <p style="margin:6px 0 0; color:#64748b;">Últimos registros extraídos de la base de datos.</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="tecnico-table" id="tabla-recientes">
+                            <thead>
+                                <tr>
+                                    <th>Dispositivo</th>
+                                    <th>Tipo</th>
+                                    <th>Ubicación</th>
+                                    <th>Fecha de inicio</th>
+                                    <th>Fecha fin</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="panel-mantenimiento" class="dashboard-panel panel">
+                <div class="tecnico-header">
+                    <h2 style="margin:0;">Mantenimiento</h2>
+                </div>
+                <div class="section-card">
+                    <div class="form-panel">
+                        <h3 style="margin-top:0;">Registrar nuevo mantenimiento</h3>
+                        <form id="form-mantenimiento">
+                            <div class="form-field">
+                                <label for="mantenimiento-dispositivo">Dispositivo</label>
+                                <select id="mantenimiento-dispositivo" required></select>
+                            </div>
+                            <div class="form-field">
+                                <label for="mantenimiento-tipo">Tipo de mantenimiento</label>
+                                <select id="mantenimiento-tipo" required>
+                                    <option value="PREVENTIVO">Preventivo</option>
+                                    <option value="CORRECTIVO">Correctivo</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="mantenimiento-descripcion">Descripción</label>
+                                <textarea id="mantenimiento-descripcion" placeholder="Describe el trabajo a realizar" required></textarea>
+                            </div>
+                            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                                <button type="submit" class="btn-primary">Guardar mantenimiento</button>
+                                <button type="button" class="btn-secondary" id="btn-cancelar-mantenimiento">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="form-panel">
+                        <h3 style="margin-top:0;">Mantenimientos en proceso</h3>
+                        <div class="table-responsive">
+                            <table class="tecnico-table" id="tabla-proceso">
+                                <thead>
+                                    <tr>
+                                        <th>Dispositivo</th>
+                                        <th>Tipo</th>
+                                        <th>Ubicación</th>
+                                        <th>Fecha de inicio</th>
+                                        <th>Fecha fin</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="panel-historial" class="dashboard-panel panel">
+                <div class="tecnico-header">
+                    <h2 style="margin:0;">Historial</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="tecnico-table" id="tabla-historial">
+                        <thead>
+                            <tr>
+                                <th>Dispositivo</th>
+                                <th>Tipo</th>
+                                <th>Ubicación</th>
+                                <th>Fecha de inicio</th>
+                                <th>Fecha fin</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-detail" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body" id="modal-detail-body"></div>
+        </div>
+    </div>
+
+    <script src="js/tecnico.js?v=4"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
