@@ -18,12 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Verificar sesión
 function checkSession() {
-    fetch(`${API_BASE}/auth/sesion`)
+    fetch(`${API_BASE}/auth/sesion`, { credentials: 'include' })
         .then(res => res.json())
         .then(data => {
-            if (data.authenticated) {
-                if (data.usuario && data.usuario.rol === 'ADMINISTRADOR') {
-                    window.location.href = 'admin.html';
+            if (data.authenticated && data.usuario) {
+                const rol = String(data.usuario.rol || '').trim().toUpperCase();
+                if (rol === 'ADMINISTRADOR') {
+                    window.location.href = window.location.origin + '/systechpro/admin.html';
+                } else if (rol === 'TECNICO') {
+                    window.location.href = window.location.origin + '/systechpro/tecnico.html';
                 } else {
                     showDashboard(data.usuario);
                 }
@@ -74,11 +77,12 @@ function handleLogin(e) {
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success) {
-            // Redirección a la interfaz de admin si el usuario es ADMINISTRADOR
-            if (data.usuario && data.usuario.rol === 'ADMINISTRADOR') {
-                // TODO: Pruebas: Verificar que el admin es redirigido correctamente tras login
-                window.location.href = 'admin.html';
+        if (data.success && data.usuario) {
+            const rol = String(data.usuario.rol || '').trim().toUpperCase();
+            if (rol === 'ADMINISTRADOR') {
+                window.location.replace(window.location.origin + '/systechpro/admin.html');
+            } else if (rol === 'TECNICO') {
+                window.location.replace(window.location.origin + '/systechpro/tecnico.html');
             } else {
                 showDashboard(data.usuario);
             }
