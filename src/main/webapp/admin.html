@@ -8,15 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Force styling directly in HTML to bypass any browser cache */
-        .sidebar-nav .nav-link {
-            color: #ffffff !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
         .sidebar-nav .nav-link svg {
             stroke: #ffffff !important;
             opacity: 1 !important;
+        }
+        .dashboard-panel {
+            display: none;
         }
     </style>
 </head>
@@ -25,7 +22,6 @@
         <aside class="sidebar">
             <div class="logo-section">
                 <img src="img/LogoFup.png" alt="Logo FUP" class="logo-fup">
-                <span class="logo-title">FUNDACIÓN UNIVERSITARIA DE POPAYÁN</span>
             </div>
             <nav class="sidebar-nav">
                 <a href="#" class="nav-link active" id="nav-inicio-btn">
@@ -39,6 +35,14 @@
                 <a href="#" class="nav-link" id="nav-prestamos-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     Préstamos
+                </a>
+                <a href="#" class="nav-link" id="nav-mis-solicitudes-btn" style="display:none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M8 7h8M8 11h8M8 15h5"></path></svg>
+                    Mis Solicitudes
+                </a>
+                <a href="#" class="nav-link" id="nav-historial-btn" style="display:none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"></path><path d="M8 7h8M8 11h8M8 15h8"></path></svg>
+                    Historial
                 </a>
                 <a href="#" class="nav-link" id="nav-mantenimientos-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
@@ -449,6 +453,73 @@
                 </div>
             </section>
 
+            <section class="dashboard-panel panel" id="panel-inicio-tecnico" style="display:none;">
+                <div class="tecnico-header">
+                    <h2>Inicio Técnico</h2>
+                    <div class="tecnico-buttons">
+                        <button class="btn-primary" id="btn-registrar-mantenimiento">Registrar mantenimiento</button>
+                        <button class="btn-secondary" id="btn-ver-historial">Ver historial</button>
+                    </div>
+                </div>
+
+                <div class="tecnico-card-grid">
+                    <div class="tecnico-card">
+                        <h3>Dispositivos en mantenimiento</h3>
+                        <div class="value" id="card-dispositivos-mantenimiento">0</div>
+                    </div>
+                    <div class="tecnico-card">
+                        <h3>Mantenimientos en proceso</h3>
+                        <div class="value" id="card-mantenimientos-proceso">0</div>
+                    </div>
+                    <div class="tecnico-card">
+                        <h3>Mantenimientos finalizados</h3>
+                        <div class="value" id="card-mantenimientos-finalizados">0</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                        <div>
+                            <h3 style="margin:0;">Mantenimientos recientes</h3>
+                            <p style="margin:6px 0 0; color:#64748b;">Últimos registros extraídos de la base de datos.</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="tecnico-table" id="tabla-recientes">
+                            <thead>
+                                <tr>
+                                    <th>Dispositivo</th>
+                                    <th>Tipo</th>
+                                    <th>Ubicación</th>
+                                    <th>Fecha de inicio</th>
+                                    <th>Fecha fin</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="dashboard-panel panel" id="panel-inicio-docente" style="display:none;">
+                <div class="tecnico-header">
+                    <h2 id="titulo-inicio">Inicio</h2>
+                    <div class="tecnico-buttons">
+                        <button class="btn-primary" id="btn-crear-prestamo-docente">Solicitar préstamo</button>
+                        <button class="btn-secondary" id="btn-ver-solicitudes-docente">Ver mis solicitudes</button>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <div class="form-panel">
+                        <h3 style="margin-top:0;">Bienvenido al panel de solicitudes</h3>
+                        <p>Desde aquí puedes consultar la disponibilidad, reservar dispositivos y seguir el estado de tus préstamos.</p>
+                        <p>Presiona “Solicitar préstamo” para crear una nueva solicitud o “Ver mis solicitudes” para revisar tus registros.</p>
+                    </div>
+                </div>
+            </section>
+
             <!-- Modal para Crear Solicitud de Préstamo -->
             <div id="modal-crear-prestamo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
                 <div style="background: white; width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -565,6 +636,7 @@
 
         </main>
     </div>
+    <script src="js/auth.js?v=1"></script>
     <script src="js/admin.js?v=6"></script>
 </body>
 </html>

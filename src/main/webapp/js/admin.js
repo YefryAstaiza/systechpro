@@ -4,6 +4,107 @@ const apiBase = window.location.origin + '/systechpro/api';
 let rolGlobal = '';
 let idUsuarioGlobal = '';
 
+const permisos = {
+    ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes'],
+    TECNICO: ['inicio','mantenimientos','historial'],
+    DOCENTE: ['inicio','mis-solicitudes'],
+    ADMINISTRATIVO: ['inicio','mis-solicitudes']
+};
+
+const modulos = {
+    inicio: 'nav-inicio-btn',
+    usuarios: 'nav-usuarios-btn',
+    dispositivos: 'nav-dispositivos-btn',
+    prestamos: 'nav-prestamos-btn',
+    mantenimientos: 'nav-mantenimientos-btn',
+    auditoria: 'nav-auditoria-btn',
+    reportes: 'nav-reportes-btn',
+    historial: 'nav-historial-btn',
+    'mis-solicitudes': 'nav-mis-solicitudes-btn'
+};
+
+const panelInicioByRol = {
+    ADMINISTRADOR: 'panel-dashboard',
+    TECNICO: 'panel-inicio-tecnico',
+    DOCENTE: 'panel-inicio-docente',
+    ADMINISTRATIVO: 'panel-inicio-docente'
+};
+
+function aplicarPermisosPorRol(rol) {
+    const permitidos = permisos[rol] || [];
+
+    Object.values(modulos).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+
+    permitidos.forEach(mod => {
+        const id = modulos[mod];
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'flex';
+    });
+}
+
+function ocultarTodosLosPaneles() {
+    document.querySelectorAll('.dashboard-panel').forEach(panel => panel.style.display = 'none');
+    document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => link.classList.remove('active'));
+}
+
+function getNavIdForSection(sectionId) {
+    const map = {
+        'panel-dashboard': 'nav-inicio-btn',
+        'panel-inicio-tecnico': 'nav-inicio-btn',
+        'panel-inicio-docente': 'nav-inicio-btn',
+        'panel-usuarios': 'nav-usuarios-btn',
+        'panel-dispositivos': 'nav-dispositivos-btn',
+        'panel-prestamos': 'nav-prestamos-btn',
+        'panel-mantenimientos': 'nav-mantenimientos-btn',
+        'panel-auditoria': 'nav-auditoria-btn',
+        'panel-reportes': 'nav-reportes-btn'
+    };
+    return map[sectionId] || null;
+}
+
+function mostrarPanel(sectionId, activeNavId = null) {
+    ocultarTodosLosPaneles();
+    const section = document.getElementById(sectionId);
+    if (section) section.style.display = 'block';
+
+    const navId = activeNavId || getNavIdForSection(sectionId);
+    if (navId) {
+        const nav = document.getElementById(navId);
+        if (nav) nav.classList.add('active');
+    }
+}
+
+function cargarPanelInicial(rol) {
+    if (rol === 'ADMINISTRADOR') {
+        mostrarPanel('panel-dashboard');
+    } else if (rol === 'TECNICO') {
+        mostrarPanel('panel-inicio-tecnico');
+    } else {
+        mostrarPanel('panel-inicio-docente');
+    }
+}
+
+function actualizarTituloInicio(rol) {
+    const titulo = document.getElementById('titulo-inicio');
+    if (!titulo) return;
+
+    if (rol === 'TECNICO') {
+        titulo.textContent = 'Inicio Técnico';
+    } else {
+        titulo.textContent = 'Inicio';
+    }
+}
+
+function renderLayoutByRole() {
+    if (!rolGlobal) return;
+    aplicarPermisosPorRol(rolGlobal);
+    actualizarTituloInicio(rolGlobal);
+    cargarPanelInicial(rolGlobal);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar sesión (Opcional, pero recomendado para obtener nombre del admin)
@@ -11,35 +112,27 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(res => res.json())
         .then(data => {
             if (data.authenticated && data.usuario) {
-                document.getElementById('admin-user-name').textContent = data.usuario.nombre;
+                // Guardar usuario en localStorage para que auth.js pueda accederlo
+                localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                
+                const userNameEl = document.getElementById('admin-user-name');
+                if (userNameEl) userNameEl.textContent = data.usuario.nombre;
                 rolGlobal = data.usuario.rol;
                 idUsuarioGlobal = data.usuario.idUsuario;
-                aplicarPermisosPorRol();
-                // Inicializar datos al cargar la app
-                cargarDispositivos();
-                cargarPrestamos();
+                renderLayoutByRole();
+
+                if (rolGlobal === 'ADMINISTRADOR') {
+                    cargarDispositivos();
+                    cargarPrestamos();
+                } else if (rolGlobal === 'TECNICO') {
+                    cargarMantenimientos();
+                } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+                    cargarMisSolicitudes();
+                }
             } else {
                 window.location.href = 'index.html';
             }
         });
-
-    function aplicarPermisosPorRol() {
-        const esAdminOrTecnico = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
-        const esAdmin = (rolGlobal === 'ADMINISTRADOR');
-
-        if (!esAdmin) {
-            document.getElementById('nav-usuarios-btn').style.display = 'none';
-            document.getElementById('quick-add-user-btn').style.display = 'none';
-            document.getElementById('nav-auditoria-btn').style.display = 'none';
-            document.getElementById('nav-reportes-btn').style.display = 'none';
-        }
-        
-        if (!esAdminOrTecnico) {
-            document.getElementById('nav-dispositivos-btn').style.display = 'none';
-            document.getElementById('quick-add-dispositivo-btn').style.display = 'none';
-            document.getElementById('nav-mantenimientos-btn').style.display = 'none';
-        }
-    }
 
     // Lógica para cerrar sesión
     const logoutBtn = document.getElementById('btn-logout');
@@ -65,76 +158,102 @@ document.addEventListener('DOMContentLoaded', function() {
     const panelReportes = document.getElementById('panel-reportes');
 
     const navPrestamosBtn = document.getElementById('nav-prestamos-btn');
+    const navMisSolicitudesBtn = document.getElementById('nav-mis-solicitudes-btn');
+    const navHistorialBtn = document.getElementById('nav-historial-btn');
     const navMantenimientosBtn = document.getElementById('nav-mantenimientos-btn');
     const navAuditoriaBtn = document.getElementById('nav-auditoria-btn');
     const navReportesBtn = document.getElementById('nav-reportes-btn');
 
     function ocultarPaneles() {
-        panelDashboard.style.display = 'none';
-        panelUsuarios.style.display = 'none';
-        panelDispositivos.style.display = 'none';
-        if (panelPrestamos) panelPrestamos.style.display = 'none';
-        if (panelMantenimientos) panelMantenimientos.style.display = 'none';
-        if (panelAuditoria) panelAuditoria.style.display = 'none';
-        if (panelReportes) panelReportes.style.display = 'none';
-        document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => link.classList.remove('active'));
+        ocultarTodosLosPaneles();
     }
 
     navInicioBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        ocultarPaneles();
-        panelDashboard.style.display = 'block';
-        navInicioBtn.classList.add('active');
-        cargarPrestamos(); // refrescar
+        renderLayoutByRole();
     });
 
     navUsuariosBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        ocultarPaneles();
-        panelUsuarios.style.display = 'block';
-        navUsuariosBtn.classList.add('active');
+        mostrarPanel('panel-usuarios');
         cargarUsuarios();
     });
 
     document.getElementById('quick-add-user-btn').addEventListener('click', () => {
-        ocultarPaneles();
-        panelUsuarios.style.display = 'block';
-        navUsuariosBtn.classList.add('active');
+        mostrarPanel('panel-usuarios');
         cargarUsuarios();
         abrirModalUsuario();
     });
 
     navDispositivosBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        ocultarPaneles();
-        panelDispositivos.style.display = 'block';
-        navDispositivosBtn.classList.add('active');
+        mostrarPanel('panel-dispositivos');
         cargarDispositivos();
     });
 
     if (navPrestamosBtn) {
         navPrestamosBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ocultarPaneles();
-            panelPrestamos.style.display = 'block';
-            navPrestamosBtn.classList.add('active');
+            mostrarPanel('panel-prestamos');
             cargarPrestamosPanelDedicado();
         });
     }
 
+    if (navMisSolicitudesBtn) {
+        navMisSolicitudesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarPanel('panel-prestamos', 'nav-mis-solicitudes-btn');
+            cargarPrestamosPanelDedicado();
+        });
+    }
+
+    if (navHistorialBtn) {
+        navHistorialBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarPanel('panel-mantenimientos', 'nav-historial-btn');
+            cargarMantenimientos();
+        });
+    }
+
     document.getElementById('quick-add-dispositivo-btn').addEventListener('click', () => {
-        ocultarPaneles();
-        panelDispositivos.style.display = 'block';
-        navDispositivosBtn.classList.add('active');
+        mostrarPanel('panel-dispositivos');
         cargarDispositivos();
         setTimeout(() => abrirFormDispositivo(null), 100);
     });
 
+    const btnRegistrarMantenimiento = document.getElementById('btn-registrar-mantenimiento');
+    const btnVerHistorial = document.getElementById('btn-ver-historial');
+    const btnCrearPrestamoDocente = document.getElementById('btn-crear-prestamo-docente');
+    const btnVerSolicitudesDocente = document.getElementById('btn-ver-solicitudes-docente');
+
+    if (btnRegistrarMantenimiento) {
+        btnRegistrarMantenimiento.addEventListener('click', abrirModalCrearMantenimiento);
+    }
+
+    if (btnVerHistorial) {
+        btnVerHistorial.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarPanel('panel-mantenimientos', 'nav-historial-btn');
+            cargarMantenimientos();
+        });
+    }
+
+    if (btnCrearPrestamoDocente) {
+        btnCrearPrestamoDocente.addEventListener('click', abrirModalCrearPrestamo);
+    }
+
+    if (btnVerSolicitudesDocente) {
+        btnVerSolicitudesDocente.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarPanel('panel-prestamos', 'nav-mis-solicitudes-btn');
+            cargarPrestamosPanelDedicado();
+        });
+    }
+
     const verSolicitudesBtn = document.getElementById('ver-solicitudes-btn');
     if (verSolicitudesBtn) {
         verSolicitudesBtn.addEventListener('click', () => {
-            ocultarPaneles();
-            panelPrestamos.style.display = 'block';
+            mostrarPanel('panel-prestamos');
             if (navPrestamosBtn) navPrestamosBtn.classList.add('active');
             cargarPrestamosPanelDedicado();
         });
@@ -143,9 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (navMantenimientosBtn) {
         navMantenimientosBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ocultarPaneles();
-            panelMantenimientos.style.display = 'block';
-            navMantenimientosBtn.classList.add('active');
+            mostrarPanel('panel-mantenimientos');
             cargarMantenimientos();
         });
     }
@@ -153,9 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (navAuditoriaBtn) {
         navAuditoriaBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ocultarPaneles();
-            panelAuditoria.style.display = 'block';
-            navAuditoriaBtn.classList.add('active');
+            mostrarPanel('panel-auditoria');
             cargarAuditoria();
         });
     }
@@ -163,9 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (navReportesBtn) {
         navReportesBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ocultarPaneles();
-            panelReportes.style.display = 'block';
-            navReportesBtn.classList.add('active');
+            mostrarPanel('panel-reportes');
             cargarReportes();
         });
     }
@@ -615,6 +728,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => console.error('Error cargando prestamos:', error));
+    }
+
+    function cargarMisSolicitudes() {
+        // El backend devuelve solo las solicitudes del usuario logueado
+        cargarPrestamos();
     }
 
     // Panel dedicado de prestamos

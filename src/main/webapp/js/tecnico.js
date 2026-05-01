@@ -1,105 +1,33 @@
 const API_BASE = window.location.origin + '/systechpro/api';
-let usuarioActual = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-    checkSession();
-    setupEventListeners();
-});
-
-function checkSession() {
-    fetch(`${API_BASE}/auth/sesion`, { credentials: 'include' })
-        .then(res => res.json())
-        .then(data => {
-            if (data.authenticated && data.usuario) {
-                usuarioActual = data.usuario;
-                const rol = data.usuario.rol;
-                if (rol !== 'TECNICO') {
-                    if (rol === 'ADMINISTRADOR') {
-                        window.location.href = 'admin.html';
-                    } else {
-                        window.location.href = 'index.html';
-                    }
-                } else {
-                    document.getElementById('tecnico-user-name').textContent = data.usuario.nombre;
-                    loadDashboard();
-                }
-            } else {
-                window.location.href = 'index.html';
-            }
-        })
-        .catch(() => window.location.href = 'index.html');
-}
-
-function setupEventListeners() {
-    document.getElementById('btn-logout').addEventListener('click', handleLogout);
-    document.getElementById('nav-inicio-btn').addEventListener('click', (e) => { e.preventDefault(); showSection('inicio'); });
-    document.getElementById('nav-mantenimiento-btn').addEventListener('click', (e) => { e.preventDefault(); showSection('mantenimiento'); });
-    document.getElementById('nav-historial-btn').addEventListener('click', (e) => { e.preventDefault(); showSection('historial'); });
-    document.getElementById('btn-registrar-mantenimiento').addEventListener('click', () => showSection('mantenimiento'));
-    document.getElementById('btn-ver-historial').addEventListener('click', () => showSection('historial'));
-    document.getElementById('btn-cancelar-mantenimiento').addEventListener('click', () => showSection('inicio'));
-
-    const form = document.getElementById('form-mantenimiento');
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        registrarMantenimiento();
-    });
-
-    document.querySelector('.close-modal').addEventListener('click', closeModal);
-    document.getElementById('modal-detail').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('modal-detail')) closeModal();
-    });
-}
-
-function handleLogout() {
-    fetch(`${API_BASE}/auth/logout`, { method: 'GET', credentials: 'include' })
-        .then(() => window.location.href = 'index.html')
-        .catch(() => window.location.href = 'index.html');
-}
-
-function showSection(section) {
-    document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
-    document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => link.classList.remove('active'));
-
-    if (section === 'inicio') {
-        document.getElementById('panel-inicio').classList.add('active');
-        document.getElementById('nav-inicio-btn').classList.add('active');
-        loadDashboard();
-    } else if (section === 'mantenimiento') {
-        document.getElementById('panel-mantenimiento').classList.add('active');
-        document.getElementById('nav-mantenimiento-btn').classList.add('active');
-        loadMantenimientoPanel();
-    } else if (section === 'historial') {
-        document.getElementById('panel-historial').classList.add('active');
-        document.getElementById('nav-historial-btn').classList.add('active');
-        loadHistorial();
-    }
-}
-
-function loadDashboard() {
+function tecnicoLoadDashboard() {
     fetch(`${API_BASE}/mantenimientos`, { credentials: 'include' })
         .then(res => res.json())
         .then(data => {
             const mantenimientos = Array.isArray(data) ? data : [];
-            
             const dispositivosEnMantenimiento = mantenimientos.filter(m => m.estado === 'EN_PROCESO').length;
             const mantenimientosEnProceso = mantenimientos.filter(m => m.estado === 'EN_PROCESO').length;
             const mantenimientosFinalizados = mantenimientos.filter(m => m.estado === 'FINALIZADO').length;
-            
-            document.getElementById('card-dispositivos-mantenimiento').textContent = dispositivosEnMantenimiento;
-            document.getElementById('card-mantenimientos-proceso').textContent = mantenimientosEnProceso;
-            document.getElementById('card-mantenimientos-finalizados').textContent = mantenimientosFinalizados;
-            
+
+            const cardDisp = document.getElementById('card-dispositivos-mantenimiento');
+            const cardProceso = document.getElementById('card-mantenimientos-proceso');
+            const cardFinalizados = document.getElementById('card-mantenimientos-finalizados');
+
+            if (cardDisp) cardDisp.textContent = dispositivosEnMantenimiento;
+            if (cardProceso) cardProceso.textContent = mantenimientosEnProceso;
+            if (cardFinalizados) cardFinalizados.textContent = mantenimientosFinalizados;
+
             const recientes = [...mantenimientos].sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio)).slice(0, 5);
-            renderRecientes(recientes);
+            tecnicoRenderRecientes(recientes);
         })
         .catch(err => {
-            console.error('Error cargando dashboard:', err);
+            console.error('Error cargando dashboard t閏nico:', err);
         });
 }
 
-function renderRecientes(items) {
+function tecnicoRenderRecientes(items) {
     const tbody = document.querySelector('#tabla-recientes tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     if (!items.length) {
@@ -110,7 +38,6 @@ function renderRecientes(items) {
     items.forEach(item => {
         const estadoTexto = item.estado === 'EN_PROCESO' ? 'En proceso' : 'Finalizado';
         const estadoClass = item.estado === 'EN_PROCESO' ? 'status-en-proceso' : 'status-finalizado';
-        
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${item.nombreDispositivo || 'ID: ' + item.idDispositivo}</td>
@@ -125,13 +52,14 @@ function renderRecientes(items) {
     });
 }
 
-function loadMantenimientoPanel() {
-    cargarDispositivos();
-    cargarMantenimientosEnProceso();
+function tecnicoLoadMantenimientoPanel() {
+    tecnicoLoadDispositivosDisponibles();
+    tecnicoLoadMantenimientosEnProceso();
 }
 
-function cargarDispositivos() {
-    const select = document.getElementById('mantenimiento-dispositivo');
+function tecnicoLoadDispositivosDisponibles() {
+    const select = document.getElementById('mantenimiento-tecnico-dispositivo');
+    if (!select) return;
     select.innerHTML = '<option value="">Cargando dispositivos...</option>';
 
     fetch(`${API_BASE}/dispositivos`, { credentials: 'include' })
@@ -151,25 +79,26 @@ function cargarDispositivos() {
             });
         })
         .catch(err => {
-            console.error('Error cargando dispositivos:', err);
+            console.error('Error cargando dispositivos para t閏nico:', err);
             select.innerHTML = '<option value="">Error cargando dispositivos</option>';
         });
 }
 
-function cargarMantenimientosEnProceso() {
+function tecnicoLoadMantenimientosEnProceso() {
     fetch(`${API_BASE}/mantenimientos`, { credentials: 'include' })
         .then(res => res.json())
         .then(data => {
             const items = Array.isArray(data) ? data.filter(m => m.estado === 'EN_PROCESO') : [];
-            renderMantenimientoProceso(items);
+            tecnicoRenderMantenimientoProceso(items);
         })
         .catch(err => {
-            console.error('Error cargando mantenimientos:', err);
+            console.error('Error cargando mantenimientos en proceso:', err);
         });
 }
 
-function renderMantenimientoProceso(items) {
+function tecnicoRenderMantenimientoProceso(items) {
     const tbody = document.querySelector('#tabla-proceso tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     if (!items.length) {
@@ -195,20 +124,21 @@ function renderMantenimientoProceso(items) {
     });
 }
 
-function loadHistorial() {
+function tecnicoLoadHistorial() {
     fetch(`${API_BASE}/mantenimientos`, { credentials: 'include' })
         .then(res => res.json())
         .then(data => {
             const items = Array.isArray(data) ? data.filter(m => m.estado === 'FINALIZADO') : [];
-            renderHistorial(items);
+            tecnicoRenderHistorial(items);
         })
         .catch(err => {
-            console.error('Error cargando historial:', err);
+            console.error('Error cargando historial t閏nico:', err);
         });
 }
 
-function renderHistorial(items) {
+function tecnicoRenderHistorial(items) {
     const tbody = document.querySelector('#tabla-historial tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     if (!items.length) {
@@ -232,34 +162,23 @@ function renderHistorial(items) {
 }
 
 function registrarMantenimiento() {
-    const idDispositivo = Number(document.getElementById('mantenimiento-dispositivo').value);
-    const tipo = document.getElementById('mantenimiento-tipo').value;
-    const descripcion = document.getElementById('mantenimiento-descripcion').value.trim();
+    const idDispositivo = Number(document.getElementById('mantenimiento-tecnico-dispositivo').value);
+    const tipo = document.getElementById('mantenimiento-tecnico-tipo').value;
+    const descripcion = document.getElementById('mantenimiento-tecnico-descripcion').value.trim();
 
     if (!idDispositivo || !tipo || !descripcion) {
         alert('Completa todos los campos antes de guardar.');
         return;
     }
 
-    if (!usuarioActual || !usuarioActual.idUsuario) {
-        alert('Error: No se pudo identificar al t茅cnico.');
-        return;
-    }
-
     const ahora = new Date();
-    const fechaInicio = ahora.getFullYear() + '-' + 
-                       String(ahora.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(ahora.getDate()).padStart(2, '0') + ' ' +
-                       String(ahora.getHours()).padStart(2, '0') + ':' +
-                       String(ahora.getMinutes()).padStart(2, '0') + ':' +
-                       String(ahora.getSeconds()).padStart(2, '0');
+    const fechaInicio = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')} ${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}:${String(ahora.getSeconds()).padStart(2, '0')}`;
 
     const data = {
         idDispositivo: idDispositivo,
-        idUsuario: usuarioActual.idUsuario,
+        fechaInicio: fechaInicio,
         tipo: tipo,
         descripcion: descripcion,
-        fechaInicio: fechaInicio,
         estado: 'EN_PROCESO'
     };
 
@@ -270,62 +189,52 @@ function registrarMantenimiento() {
         body: JSON.stringify(data)
     })
     .then(res => res.json())
-    .then(data => {
-        if (data.idMantenimiento || data.success) {
+    .then(response => {
+        if (response.idMantenimiento || response.success) {
             alert('Mantenimiento registrado correctamente.');
             document.getElementById('form-mantenimiento').reset();
-            loadDashboard();
-            cargarMantenimientosEnProceso();
-            showSection('inicio');
+            tecnicoLoadDashboard();
+            tecnicoLoadMantenimientosEnProceso();
+            showSection('panel-inicio');
         } else {
-            alert(data.error || 'Error al registrar mantenimiento.');
+            alert(response.error || 'Error al registrar mantenimiento.');
         }
     })
     .catch(err => {
         console.error('Error registrando mantenimiento:', err);
-        alert('Error de conexi贸n al registrar mantenimiento.');
+        alert('Error de conexi髇 al registrar mantenimiento.');
     });
 }
 
 function finalizarMantenimiento(id) {
-    if (!confirm('驴Est谩s seguro de finalizar este mantenimiento?')) {
+    if (!confirm('縀st醩 seguro de finalizar este mantenimiento?')) {
         return;
     }
 
     const ahora = new Date();
-    const fechaFin = ahora.getFullYear() + '-' + 
-                    String(ahora.getMonth() + 1).padStart(2, '0') + '-' + 
-                    String(ahora.getDate()).padStart(2, '0') + ' ' +
-                    String(ahora.getHours()).padStart(2, '0') + ':' +
-                    String(ahora.getMinutes()).padStart(2, '0') + ':' +
-                    String(ahora.getSeconds()).padStart(2, '0');
-
-    const data = {
-        estado: 'FINALIZADO',
-        fechaFin: fechaFin
-    };
+    const fechaFin = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')} ${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}:${String(ahora.getSeconds()).padStart(2, '0')}`;
 
     fetch(`${API_BASE}/mantenimientos/${id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ estado: 'FINALIZADO', fechaFin: fechaFin })
     })
     .then(res => res.json())
-    .then(data => {
-        if (data.success || data.idMantenimiento) {
+    .then(response => {
+        if (response.success || response.idMantenimiento) {
             alert('Mantenimiento finalizado correctamente.');
-            loadDashboard();
-            cargarMantenimientosEnProceso();
-            loadHistorial();
-            showSection('inicio');
+            tecnicoLoadDashboard();
+            tecnicoLoadMantenimientosEnProceso();
+            tecnicoLoadHistorial();
+            showSection('panel-inicio');
         } else {
-            alert(data.error || 'Error al finalizar mantenimiento.');
+            alert(response.error || 'Error al finalizar mantenimiento.');
         }
     })
     .catch(err => {
         console.error('Error finalizando mantenimiento:', err);
-        alert('Error de conexi贸n al finalizar mantenimiento.');
+        alert('Error de conexi髇 al finalizar mantenimiento.');
     });
 }
 
@@ -346,6 +255,8 @@ function verDetalle(id) {
 
 function showModalDetalle(data) {
     const body = document.getElementById('modal-detail-body');
+    if (!body) return;
+
     const estadoTexto = data.estado === 'FINALIZADO' ? 'Finalizado' : 'En proceso';
     const tipoTexto = data.tipo === 'CORRECTIVO' ? 'Correctivo' : 'Preventivo';
 
@@ -354,18 +265,20 @@ function showModalDetalle(data) {
         <dl>
             <dt>Dispositivo</dt><dd>${data.nombreDispositivo || 'ID: ' + data.idDispositivo}</dd>
             <dt>Tipo</dt><dd>${tipoTexto}</dd>
-            <dt>Ubicaci贸n</dt><dd>${data.ubicacion || 'N/A'}</dd>
+            <dt>Ubicaci髇</dt><dd>${data.ubicacion || 'N/A'}</dd>
             <dt>Fecha de inicio</dt><dd>${formatFecha(data.fechaInicio)}</dd>
-            <dt>Fecha de finalizaci贸n</dt><dd>${data.fechaFin ? formatFecha(data.fechaFin) : 'En curso'}</dd>
+            <dt>Fecha de finalizaci髇</dt><dd>${data.fechaFin ? formatFecha(data.fechaFin) : 'En curso'}</dd>
             <dt>Estado</dt><dd>${estadoTexto}</dd>
-            <dt>Descripci贸n</dt><dd>${data.descripcion || 'Sin descripci贸n'}</dd>
+            <dt>Descripci髇</dt><dd>${data.descripcion || 'Sin descripci髇'}</dd>
         </dl>
     `;
-    document.getElementById('modal-detail').classList.add('active');
+    const modal = document.getElementById('modal-detail');
+    if (modal) modal.classList.add('active');
 }
 
 function closeModal() {
-    document.getElementById('modal-detail').classList.remove('active');
+    const modal = document.getElementById('modal-detail');
+    if (modal) modal.classList.remove('active');
 }
 
 function formatFecha(value) {
@@ -382,7 +295,7 @@ function formatFecha(value) {
         if (isNaN(date.getTime())) return value;
         return date.toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' }) +
                ' ' + date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-    } catch(e) {
+    } catch (e) {
         return value;
     }
 }
