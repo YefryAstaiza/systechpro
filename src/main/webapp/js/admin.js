@@ -594,81 +594,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (dispPaginaActual < Math.ceil(filtered.length / DISP_POR_PAGINA)) { dispPaginaActual++; renderTablaDispositivos(); }
     });
 
-    var selectSede = document.getElementById('disp-sede');
-    var selectSalon = document.getElementById('disp-salon');
-    var inputUbicacion = document.getElementById('disp-ubicacion-generada');
-
-    selectSede.addEventListener('change', function() {
-        var idSede = selectSede.value;
-        inputUbicacion.value = '';
-        if (!idSede) { selectSalon.innerHTML = '<option value="">Seleccione una sede primero</option>'; return; }
-        fetch(apiBase + '/sedes/' + idSede + '/salones')
-            .then(function(res) { return res.json(); })
-            .then(function(salones) {
-                selectSalon.innerHTML = '<option value="">Seleccione un sal\u00f3n</option>';
-                salones.forEach(function(s) {
-                    selectSalon.innerHTML += '<option value="' + s.idSalon + '" data-numero="' + s.numero + '">' + s.numero + '</option>';
-                });
-            });
-    });
-
-    selectSalon.addEventListener('change', function() {
-        var opt = selectSalon.options[selectSalon.selectedIndex];
-        var sedeOpt = selectSede.options[selectSede.selectedIndex];
-        var codigoSede = sedeOpt ? sedeOpt.getAttribute('data-codigo') : '';
-        var numSalon = opt ? opt.getAttribute('data-numero') : '';
-        inputUbicacion.value = (codigoSede && numSalon) ? (codigoSede + '-' + numSalon) : '';
-    });
-
-    function cargarSedes() {
-        selectSede.innerHTML = '<option value="">Cargando sedes...</option>';
-        fetch(apiBase + '/sedes')
-            .then(function(res) {
-                if (res.status === 401) { selectSede.innerHTML = '<option value="">Sin sesi\u00f3n activa</option>'; return null; }
-                return res.json();
-            })
-            .then(function(sedes) {
-                if (!sedes) return;
-                if (!Array.isArray(sedes) || sedes.length === 0) {
-                    selectSede.innerHTML = '<option value="">Sin sedes registradas</option>';
-                    return;
-                }
-                selectSede.innerHTML = '<option value="">Seleccione una sede...</option>';
-                sedes.forEach(function(s) {
-                    selectSede.innerHTML += '<option value="' + s.idSede + '" data-codigo="' + s.codigo + '">' + s.nombre + ' (' + s.codigo + ')</option>';
-                });
-            })
-            .catch(function(err) {
-                console.error('Error cargando sedes:', err);
-                selectSede.innerHTML = '<option value="">Error al cargar sedes</option>';
-            });
-    }
-
     function abrirFormDispositivo(dispositivo) {
         formDispositivo.reset();
         document.getElementById('dispositivo-id').value = '';
         document.getElementById('disp-form-titulo').textContent = dispositivo ? 'Editar Dispositivo' : 'Registrar Nuevo Dispositivo';
-        inputUbicacion.value = '';
-        selectSalon.innerHTML = '<option value="">Seleccione una sede primero</option>';
-        cargarSedes();
         if (dispositivo) {
             document.getElementById('dispositivo-id').value = dispositivo.idDispositivo;
             document.getElementById('dispositivo-nombre').value = dispositivo.nombre;
             document.getElementById('dispositivo-tipo').value = dispositivo.tipo;
             document.getElementById('dispositivo-estado').value = dispositivo.estado;
             document.getElementById('dispositivo-descripcion').value = dispositivo.descripcion || '';
-            if (dispositivo.ubicacion && dispositivo.ubicacion !== '\u2014') {
-                inputUbicacion.value = dispositivo.ubicacion;
-            }
         }
     }
 
     function resetFormDispositivo() {
         formDispositivo.reset();
         document.getElementById('dispositivo-id').value = '';
-        document.getElementById('disp-form-titulo').textContent = 'Gesti\u00f3n Detallada del Dispositivo';
-        if(inputUbicacion) inputUbicacion.value = '';
-        if(selectSalon) selectSalon.innerHTML = '<option value="">Seleccione una sede primero</option>';
+        document.getElementById('disp-form-titulo').textContent = 'Gestión Detallada del Dispositivo';
     }
 
     function actualizarDashboard(dispositivos) {
@@ -722,10 +664,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tablaDispositivosBody.innerHTML = '';
         if (pagina.length === 0) {
-            var colspan = rol === 'ADMINISTRADOR' ? 7 : 6;
-            tablaDispositivosBody.innerHTML = '<tr><td colspan="' + colspan + '" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron dispositivos</td></tr>';
+            tablaDispositivosBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron dispositivos</td></tr>';
         } else {
-            var rol = obtenerRolActual();
             pagina.forEach(function(d) {
                 var codigo = 'D' + String(d.idDispositivo).padStart(3, '0');
                 var tr = document.createElement('tr');
@@ -734,14 +674,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<td style="padding:12px 14px;font-weight:600;color:#64748b;">' + codigo + '</td>',
                     '<td style="padding:12px 14px;font-weight:500;color:#1e293b;">' + d.nombre + '</td>',
                     '<td style="padding:12px 14px;color:#475569;">' + d.tipo + '</td>',
-                    '<td style="padding:12px 14px;">' + getEstadoBadgeDisp(d.estado) + '</td>'
+                    '<td style="padding:12px 14px;">' + getEstadoBadgeDisp(d.estado) + '</td>',
+                    '<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.fechaCreacion ? formatearFecha(d.fechaCreacion) : '\u2014') + '</td>'
                 ];
-                if (rol === 'TECNICO') {
-                    fila.push('<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.descripcion || '\u2014') + '</td>');
-                } else {
-                    fila.push('<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.ubicacion || '\u2014') + '</td>');
-                    fila.push('<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.fechaCreacion ? formatearFecha(d.fechaCreacion) : '\u2014') + '</td>');
-                }
                 fila.push(
                     '<td style="padding:12px 14px;text-align:center;">',
                     '  <button class="btn-editar-disp" data-id="' + d.idDispositivo + '" title="Editar" style="background:none;border:none;cursor:pointer;padding:5px;color:#f59e0b;">',
@@ -1231,6 +1166,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function abrirModalCrearPrestamo() {
         formCrearPrestamo.reset();
         
+        // Limpiar campos de ubicación
+        const prestamoSede = document.getElementById('prestamo-sede');
+        const prestamoSalon = document.getElementById('prestamo-salon');
+        const prestanoUbicacion = document.getElementById('prestamo-ubicacion-generada');
+        
+        prestamoSalon.innerHTML = '<option value="">Seleccione una sede primero</option>';
+        prestanoUbicacion.value = '';
+        
         // Cargar dispositivos DISPONIBLES
         fetch(`${apiBase}/dispositivos?estado=DISPONIBLE`)
             .then(res => res.json())
@@ -1242,19 +1185,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-        // Cargar salones
-        fetch(`${apiBase}/salones`)
+        // Cargar sedes
+        prestamoSede.innerHTML = '<option value="">Cargando sedes...</option>';
+        fetch(`${apiBase}/sedes`)
             .then(res => res.json())
-            .then(salones => {
-                const selectS = document.getElementById('prestamo-salon');
-                selectS.innerHTML = '<option value="">Seleccione un salón...</option>';
-                salones.forEach(s => {
-                    selectS.innerHTML += `<option value="${s.idSalon}">Salón ${s.numero}</option>`;
+            .then(sedes => {
+                prestamoSede.innerHTML = '<option value="">Seleccione una sede...</option>';
+                sedes.forEach(s => {
+                    prestamoSede.innerHTML += `<option value="${s.idSede}" data-codigo="${s.codigo}">${s.nombre} (${s.codigo})</option>`;
                 });
             });
 
         modalCrearPrestamo.style.display = 'flex';
     }
+
+    // Evento para cuando cambia la sede en el formulario de préstamo
+    document.getElementById('prestamo-sede').addEventListener('change', function() {
+        const salonSelect = document.getElementById('prestamo-salon');
+        const ubicacionInput = document.getElementById('prestamo-ubicacion-generada');
+        const sedeId = this.value;
+        
+        ubicacionInput.value = '';
+        
+        if (!sedeId) {
+            salonSelect.innerHTML = '<option value="">Seleccione una sede primero</option>';
+            return;
+        }
+        
+        // Cargar salones de esa sede
+        fetch(`${apiBase}/sedes/${sedeId}/salones`)
+            .then(res => res.json())
+            .then(salones => {
+                salonSelect.innerHTML = '<option value="">Seleccione un salón...</option>';
+                salones.forEach(s => {
+                    salonSelect.innerHTML += `<option value="${s.idSalon}" data-numero="${s.numero}">${s.numero}</option>`;
+                });
+            })
+            .catch(err => console.error('Error cargando salones:', err));
+    });
+
+    // Evento para cuando cambia el salón en el formulario de préstamo
+    document.getElementById('prestamo-salon').addEventListener('change', function() {
+        const ubicacionInput = document.getElementById('prestamo-ubicacion-generada');
+        const sedeSelect = document.getElementById('prestamo-sede');
+        const salonOpt = this.options[this.selectedIndex];
+        
+        if (!salonOpt.value) {
+            ubicacionInput.value = '';
+            return;
+        }
+        
+        const sedeOpt = sedeSelect.options[sedeSelect.selectedIndex];
+        const codigoSede = sedeOpt ? sedeOpt.getAttribute('data-codigo') : '';
+        const numSalon = salonOpt ? salonOpt.getAttribute('data-numero') : '';
+        
+        ubicacionInput.value = (codigoSede && numSalon) ? (codigoSede + '-' + numSalon) : '';
+    });
 
     formCrearPrestamo.addEventListener('submit', function(e) {
         e.preventDefault();

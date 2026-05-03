@@ -256,7 +256,7 @@
                                         <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Nombre</th>
                                         <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>
                                         <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>
-                                        <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Ubicación</th>
+                                        <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Creación</th>
                                         <th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>
                                     </tr>
                                 </thead>
@@ -312,30 +312,6 @@
                             <div style="margin-bottom:14px;">
                                 <label style="display:block;margin-bottom:5px;font-size:13px;font-weight:600;color:#374151;">Descripción (opcional)</label>
                                 <textarea id="dispositivo-descripcion" rows="3" placeholder="Descripción del equipo..." style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:14px;box-sizing:border-box;resize:vertical;"></textarea>
-                            </div>
-
-                            <!-- SECCION UBICACION -->
-                            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:16px;">
-                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#374151;margin-bottom:12px;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    Ubicación
-                                </label>
-                                <div style="margin-bottom:10px;">
-                                    <label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b;">1. Sede (lista desplegable obligatoria)</label>
-                                    <select id="disp-sede" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
-                                        <option value="">Cargando sedes...</option>
-                                    </select>
-                                </div>
-                                <div style="margin-bottom:10px;">
-                                    <label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b;">2. Número de salón</label>
-                                    <select id="disp-salon" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
-                                        <option value="">Seleccione una sede primero</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b;">3. Ubicación generada automáticamente</label>
-                                    <input type="text" id="disp-ubicacion-generada" readonly placeholder="Ej: SJ-217" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#eef2ff;box-sizing:border-box;font-weight:600;color:#2563eb;">
-                                </div>
                             </div>
 
                             <div style="display:flex;gap:10px;">
@@ -617,11 +593,28 @@
                             </select>
                         </div>
                         
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px;">Salón / Ubicación</label>
-                            <select id="prestamo-salon" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-                                <!-- Dinámico -->
-                            </select>
+                        <!-- SECCION UBICACIÓN PRESTAMO -->
+                        <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:15px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#374151;margin-bottom:10px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                Ubicación
+                            </label>
+                            <div style="margin-bottom:8px;">
+                                <label style="display:block;margin-bottom:3px;font-size:12px;color:#64748b;">1. Sede (obligatoria)</label>
+                                <select id="prestamo-sede" required style="width:100%;padding:7px 9px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
+                                    <option value="">Cargando sedes...</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <label style="display:block;margin-bottom:3px;font-size:12px;color:#64748b;">2. Número de salón</label>
+                                <select id="prestamo-salon" required style="width:100%;padding:7px 9px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
+                                    <option value="">Seleccione una sede primero</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block;margin-bottom:3px;font-size:12px;color:#64748b;">3. Ubicación generada automáticamente</label>
+                                <input type="text" id="prestamo-ubicacion-generada" readonly placeholder="Ej: SJ-217" style="width:100%;padding:7px 9px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#eef2ff;box-sizing:border-box;font-weight:600;color:#2563eb;">
+                            </div>
                         </div>
 
                         <div style="margin-bottom: 15px;">
