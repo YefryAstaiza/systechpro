@@ -3,10 +3,22 @@
 const apiBase = window.location.origin + '/systechpro/api';
 let rolGlobal = '';
 let idUsuarioGlobal = '';
+let prestamosDashboard = [];
+let dashSolicitudesPage = 1;
+const DASH_SOLICITUDES_PER_PAGE = 5;
+let tecnicoRecientesPage = 1;
+const TECNICO_RECIENTES_PER_PAGE = 5;
+let usuariosActuales = [];
+let usuariosPage = 1;
+let auditoriaActuales = [];
+let auditoriaPage = 1;
+let prestamosPanelPage = 1;
+let mantenimientosPage = 1;
+const PANEL_PAGE_SIZE = 10;
 
 const permisos = {
     ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes'],
-    TECNICO: ['inicio','mantenimientos','historial'],
+    TECNICO: ['inicio','mantenimientos'],
     DOCENTE: ['inicio','mis-solicitudes'],
     ADMINISTRATIVO: ['inicio','mis-solicitudes']
 };
@@ -104,6 +116,12 @@ function renderLayoutByRole() {
     actualizarTituloInicio(rolGlobal);
     cargarPanelInicial(rolGlobal);
     actualizarEncabezadosTablasPorRol();
+    if (rolGlobal !== 'ADMINISTRADOR') {
+        const panelUsuarios = document.getElementById('panel-usuarios');
+        if (panelUsuarios) panelUsuarios.style.display = 'none';
+        const panelAuditoria = document.getElementById('panel-auditoria');
+        if (panelAuditoria) panelAuditoria.style.display = 'none';
+    }
 }
 
 function obtenerRolActual() {
@@ -147,6 +165,7 @@ function actualizarEncabezadoDispositivos() {
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Ubicación</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Creación</th>',
             '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
         ].join('');
     }
@@ -159,7 +178,7 @@ function actualizarEncabezadoPrestamosPanel() {
     const headerRow = table.querySelector('thead tr');
     if (!headerRow) return;
 
-    if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
+    if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO' || rol === 'TECNICO') {
         headerRow.innerHTML = [
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>',
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
@@ -199,6 +218,19 @@ function actualizarEncabezadoMantenimientos() {
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>',
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Descripción</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acción</th>'
+        ].join('');
+    } else if (rol === 'ADMINISTRADOR') {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Técnico</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Descripción</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Creación</th>',
             '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acción</th>'
         ].join('');
     } else {
@@ -690,7 +722,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tablaDispositivosBody.innerHTML = '';
         if (pagina.length === 0) {
-            tablaDispositivosBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron dispositivos</td></tr>';
+            var colspan = rol === 'ADMINISTRADOR' ? 7 : 6;
+            tablaDispositivosBody.innerHTML = '<tr><td colspan="' + colspan + '" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron dispositivos</td></tr>';
         } else {
             var rol = obtenerRolActual();
             pagina.forEach(function(d) {
@@ -707,6 +740,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     fila.push('<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.descripcion || '\u2014') + '</td>');
                 } else {
                     fila.push('<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.ubicacion || '\u2014') + '</td>');
+                    fila.push('<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.fechaCreacion ? formatearFecha(d.fechaCreacion) : '\u2014') + '</td>');
                 }
                 fila.push(
                     '<td style="padding:12px 14px;text-align:center;">',
@@ -802,6 +836,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     const tablaSolicitudesBody = document.getElementById('tabla-solicitudes-body');
+    const tablaRecientesBody = document.getElementById('tabla-recientes-body');
+    const tablaPrestamosPanelBody = document.getElementById('tabla-prestamos-panel-body');
     const modalCrearPrestamo = document.getElementById('modal-crear-prestamo');
     const formCrearPrestamo = document.getElementById('form-crear-prestamo');
     const modalDetallePrestamo = document.getElementById('modal-detalle-prestamo');
@@ -817,32 +853,314 @@ document.addEventListener('DOMContentLoaded', function() {
         return d.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
     }
 
+    function renderTablaSolicitudesDashboard() {
+        if (!tablaSolicitudesBody) return;
+        const lista = Array.isArray(prestamosDashboard) ? prestamosDashboard.slice() : [];
+        lista.sort((a, b) => new Date(b.fechaInicio || b.fechaCreacion || 0) - new Date(a.fechaInicio || a.fechaCreacion || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / DASH_SOLICITUDES_PER_PAGE));
+        if (dashSolicitudesPage > totalPages) dashSolicitudesPage = totalPages;
+        const inicio = (dashSolicitudesPage - 1) * DASH_SOLICITUDES_PER_PAGE;
+        const pagina = lista.slice(inicio, inicio + DASH_SOLICITUDES_PER_PAGE);
+        tablaSolicitudesBody.innerHTML = '';
+        if (pagina.length === 0) {
+            tablaSolicitudesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes</td></tr>';
+        } else {
+            pagina.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.nombreUsuario}</td>
+                    <td>${p.nombreDispositivo}</td>
+                    <td>${formatearFecha(p.fechaInicio)}</td>
+                    <td>${getEstadoBadge(p.estado)}</td>
+                    <td><button class="view-btn btn-ver-prestamo" data-id="${p.idPrestamo}">Ver</button></td>
+                `;
+                tablaSolicitudesBody.appendChild(tr);
+            });
+            document.querySelectorAll('.btn-ver-prestamo').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    abrirModalDetallePrestamo(id);
+                });
+            });
+        }
+        const pageLabel = document.getElementById('dash-solicitudes-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + dashSolicitudesPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-dash-solicitudes-prev');
+        const btnNext = document.getElementById('btn-dash-solicitudes-next');
+        if (btnPrev) btnPrev.disabled = dashSolicitudesPage <= 1;
+        if (btnNext) btnNext.disabled = dashSolicitudesPage >= totalPages;
+    }
+
+    function renderTablaRecientesTecnico() {
+        if (!tablaRecientesBody) return;
+        const lista = Array.isArray(mantenimientosActuales) ? mantenimientosActuales.slice() : [];
+        lista.sort((a, b) => new Date(b.fechaInicio || 0) - new Date(a.fechaInicio || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / TECNICO_RECIENTES_PER_PAGE));
+        if (tecnicoRecientesPage > totalPages) tecnicoRecientesPage = totalPages;
+        const inicio = (tecnicoRecientesPage - 1) * TECNICO_RECIENTES_PER_PAGE;
+        const pagina = lista.slice(inicio, inicio + TECNICO_RECIENTES_PER_PAGE);
+        tablaRecientesBody.innerHTML = '';
+        if (pagina.length === 0) {
+            tablaRecientesBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">No hay mantenimientos recientes</td></tr>';
+        } else {
+            pagina.forEach(m => {
+                const ubicacion = m.ubicacion || (m.nombreSede ? m.nombreSede + (m.numeroSalon ? ' - Salón ' + m.numeroSalon : '') : '-');
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                    <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                    <td>${ubicacion}</td>
+                    <td>${formatearFecha(m.fechaInicio)}</td>
+                    <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                    <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                    <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                `;
+                tablaRecientesBody.appendChild(tr);
+            });
+            document.querySelectorAll('.btn-ver-mantenimiento').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    abrirModalDetalleMantenimiento(id);
+                });
+            });
+        }
+        const pageLabel = document.getElementById('recientes-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + tecnicoRecientesPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-recientes-prev');
+        const btnNext = document.getElementById('btn-recientes-next');
+        if (btnPrev) btnPrev.disabled = tecnicoRecientesPage <= 1;
+        if (btnNext) btnNext.disabled = tecnicoRecientesPage >= totalPages;
+    }
+
+    function renderTablaUsuarios() {
+        const tbody = document.getElementById('tabla-usuarios-body');
+        if (!tbody) return;
+        const lista = Array.isArray(usuariosActuales) ? usuariosActuales.slice() : [];
+        lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+        if (usuariosPage > totalPages) usuariosPage = totalPages;
+        const inicio = (usuariosPage - 1) * PANEL_PAGE_SIZE;
+        const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
+        tbody.innerHTML = '';
+        if (pagina.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron usuarios</td></tr>';
+        } else {
+            pagina.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${u.nombre}</td>
+                    <td>${u.correo}</td>
+                    <td><span class="badge" style="background:#2c3e50; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${u.rol}</span></td>
+                    <td>
+                        <button class="btn-editar" data-id="${u.idUsuario}" style="background:#f39c12; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px; margin-right:5px;">Editar</button>
+                        <button class="btn-eliminar" data-id="${u.idUsuario}" style="background:#e74c3c; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.querySelectorAll('.btn-editar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    const usuario = usuariosActuales.find(user => user.idUsuario == id);
+                    if (usuario) abrirModalUsuario(usuario);
+                });
+            });
+            document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    eliminarUsuario(id);
+                });
+            });
+        }
+        const pageLabel = document.getElementById('usuarios-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + usuariosPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-usuarios-prev');
+        const btnNext = document.getElementById('btn-usuarios-next');
+        if (btnPrev) btnPrev.disabled = usuariosPage <= 1;
+        if (btnNext) btnNext.disabled = usuariosPage >= totalPages;
+    }
+
+    function renderTablaAuditoria() {
+        const tbody = document.getElementById('tabla-auditoria-body');
+        if (!tbody) return;
+        const lista = Array.isArray(auditoriaActuales) ? auditoriaActuales.slice() : [];
+        lista.sort((a, b) => new Date(b.fechaEvento || 0) - new Date(a.fechaEvento || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+        if (auditoriaPage > totalPages) auditoriaPage = totalPages;
+        const inicio = (auditoriaPage - 1) * PANEL_PAGE_SIZE;
+        const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
+        tbody.innerHTML = '';
+        if (pagina.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron registros de auditoría</td></tr>';
+        } else {
+            pagina.forEach(log => {
+                let badgeColor = '#3498db';
+                if (log.accion === 'INSERT') badgeColor = '#2ecc71';
+                else if (log.accion === 'UPDATE') badgeColor = '#f39c12';
+                else if (log.accion === 'DELETE') badgeColor = '#e74c3c';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatearFecha(log.fechaEvento)}</td>
+                    <td>${log.nombreUsuario}</td>
+                    <td><span class="badge" style="background:${badgeColor}; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${log.accion}</span></td>
+                    <td>${log.tablaAfectada}</td>
+                    <td>${log.descripcion}</td>
+                    <td>${log.ip}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        const pageLabel = document.getElementById('auditoria-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + auditoriaPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-auditoria-prev');
+        const btnNext = document.getElementById('btn-auditoria-next');
+        if (btnPrev) btnPrev.disabled = auditoriaPage <= 1;
+        if (btnNext) btnNext.disabled = auditoriaPage >= totalPages;
+    }
+
+    function renderTablaMantenimientosPanel() {
+        if (!tablaMantenimientosBody) return;
+        const lista = Array.isArray(mantenimientosActuales) ? mantenimientosActuales.slice() : [];
+        lista.sort((a, b) => new Date(b.fechaInicio || 0) - new Date(a.fechaInicio || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+        if (mantenimientosPage > totalPages) mantenimientosPage = totalPages;
+        const inicio = (mantenimientosPage - 1) * PANEL_PAGE_SIZE;
+        const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
+        tablaMantenimientosBody.innerHTML = '';
+        const rol = obtenerRolActual();
+        if (pagina.length === 0) {
+            tablaMantenimientosBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron mantenimientos</td></tr>';
+        } else {
+            pagina.forEach(m => {
+                const tr = document.createElement('tr');
+                if (rol === 'TECNICO') {
+                    tr.innerHTML = `
+                        <td>#${m.idMantenimiento}</td>
+                        <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                        <td>${formatearFecha(m.fechaInicio)}</td>
+                        <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                        <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                        <td>${m.descripcion || '-'}</td>
+                        <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                    `;
+                } else if (rol === 'ADMINISTRADOR') {
+                    tr.innerHTML = `
+                        <td>#${m.idMantenimiento}</td>
+                        <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                        <td>${m.nombreUsuario || '-'}</td>
+                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                        <td>${formatearFecha(m.fechaInicio)}</td>
+                        <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                        <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                        <td>${m.descripcion || '-'}</td>
+                        <td>${m.fechaCreacion ? formatearFecha(m.fechaCreacion) : '-'}</td>
+                        <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                    `;
+                } else {
+                    tr.innerHTML = `
+                        <td>${m.nombreDispositivo}</td>
+                        <td>${m.nombreUsuario}</td>
+                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                        <td>${formatearFecha(m.fechaInicio)}</td>
+                        <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                        <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                    `;
+                }
+                tablaMantenimientosBody.appendChild(tr);
+            });
+            document.querySelectorAll('.btn-ver-mantenimiento').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    abrirModalDetalleMantenimiento(id);
+                });
+            });
+        }
+        const pageLabel = document.getElementById('mantenimientos-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + mantenimientosPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-mantenimientos-prev');
+        const btnNext = document.getElementById('btn-mantenimientos-next');
+        if (btnPrev) btnPrev.disabled = mantenimientosPage <= 1;
+        if (btnNext) btnNext.disabled = mantenimientosPage >= totalPages;
+    }
+
+    function renderTablaPrestamosPanel() {
+        if (!tablaPrestamosPanelBody) return;
+        const rol = obtenerRolActual();
+        let lista = Array.isArray(prestamosActuales) ? prestamosActuales.slice() : [];
+        if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
+            lista = lista.filter(function(p) { return p.idUsuario == idUsuarioGlobal; });
+        }
+        lista.sort((a, b) => new Date(b.fechaInicio || 0) - new Date(a.fechaInicio || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+        if (prestamosPanelPage > totalPages) prestamosPanelPage = totalPages;
+        const inicio = (prestamosPanelPage - 1) * PANEL_PAGE_SIZE;
+        const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
+        tablaPrestamosPanelBody.innerHTML = '';
+        if (pagina.length === 0) {
+            const colspan = rol === 'DOCENTE' || rol === 'ADMINISTRATIVO' ? 7 : 8;
+            tablaPrestamosPanelBody.innerHTML = '<tr><td colspan="' + colspan + '" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes de préstamo</td></tr>';
+        } else {
+            pagina.forEach(function(p) {
+                const esAdminTec = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
+                const esPend = p.estado === 'PENDIENTE';
+                let acciones = '';
+                if (esAdminTec && esPend) {
+                    acciones += '<button onclick="aprobarPrestamoPanel(' + p.idPrestamo + ')" style="background:#22c55e;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;margin-right:4px;">✓ Aprobar</button>';
+                    acciones += '<button onclick="rechazarPrestamoPanel(' + p.idPrestamo + ')" style="background:#ef4444;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">✕ Rechazar</button>';
+                } else if (esPend) {
+                    acciones += '<button onclick="cancelarPrestamoPanel(' + p.idPrestamo + ')" style="background:#64748b;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Cancelar</button>';
+                } else {
+                    acciones = '<span style="color:#94a3b8;font-size:12px;">—</span>';
+                }
+                const salon = p.numeroSalon ? (p.nombreSede + ' - Salón ' + p.numeroSalon) : '—';
+                const tr = document.createElement('tr');
+                if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
+                    tr.innerHTML = [
+                        '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
+                        '<td style="padding:11px 14px;font-weight:500;">' + (p.nombreDispositivo || p.idDispositivo || '-') + '</td>',
+                        '<td style="padding:11px 14px;color:#64748b;">' + (p.idSalon || '-') + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
+                        '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
+                        '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
+                    ].join('');
+                } else {
+                    tr.innerHTML = [
+                        '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
+                        '<td style="padding:11px 14px;">' + p.nombreUsuario + '</td>',
+                        '<td style="padding:11px 14px;font-weight:500;">' + p.nombreDispositivo + '</td>',
+                        '<td style="padding:11px 14px;color:#64748b;">' + salon + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
+                        '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
+                        '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
+                    ].join('');
+                }
+                tablaPrestamosPanelBody.appendChild(tr);
+            });
+        }
+        const pageLabel = document.getElementById('prestamos-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + prestamosPanelPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-prestamos-prev');
+        const btnNext = document.getElementById('btn-prestamos-next');
+        if (btnPrev) btnPrev.disabled = prestamosPanelPage <= 1;
+        if (btnNext) btnNext.disabled = prestamosPanelPage >= totalPages;
+    }
+
     function cargarPrestamos() {
         fetch(`${apiBase}/prestamos`)
             .then(res => res.json())
             .then(prestamos => {
                 prestamosActuales = prestamos;
-                if(Array.isArray(prestamos)){
-                    tablaSolicitudesBody.innerHTML = '';
-                    prestamos.forEach(p => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${p.nombreUsuario}</td>
-                            <td>${p.nombreDispositivo}</td>
-                            <td>${formatearFecha(p.fechaInicio)}</td>
-                            <td>${getEstadoBadge(p.estado)}</td>
-                            <td><button class="view-btn btn-ver-prestamo" data-id="${p.idPrestamo}">Ver</button></td>
-                        `;
-                        tablaSolicitudesBody.appendChild(tr);
-                    });
-
-                    document.querySelectorAll('.btn-ver-prestamo').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const id = parseInt(e.target.getAttribute('data-id'));
-                            abrirModalDetallePrestamo(id);
-                        });
-                    });
-                }
+                prestamosDashboard = Array.isArray(prestamos) ? prestamos : [];
+                renderTablaSolicitudesDashboard();
             })
             .catch(error => console.error('Error cargando prestamos:', error));
     }
@@ -861,55 +1179,12 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(apiBase + '/prestamos')
             .then(function(res) { return res.json(); })
             .then(function(prestamos) {
-                prestamosActuales = prestamos;
-                actualizarEncabezadoPrestamosPanel();
-                tbody.innerHTML = '';
-                var rol = obtenerRolActual();
-                var esDocenteAdministrativo = rol === 'DOCENTE' || rol === 'ADMINISTRATIVO';
-                var lista = Array.isArray(prestamos) ? prestamos.filter(function(p) { return !filtroEstado || p.estado === filtroEstado; }) : [];
-                if (lista.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes de pr\u00e9stamo</td></tr>';
-                    return;
+                prestamosActuales = Array.isArray(prestamos) ? prestamos : [];
+                if (filtroEstado) {
+                    prestamosActuales = prestamosActuales.filter(function(p) { return p.estado === filtroEstado; });
                 }
-                lista.forEach(function(p) {
-                    var esAdminTec = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
-                    var esPend = p.estado === 'PENDIENTE';
-                    var acciones = '';
-                    if (esAdminTec && esPend) {
-                        acciones += '<button onclick="aprobarPrestamoPanel(' + p.idPrestamo + ')" style="background:#22c55e;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;margin-right:4px;">\u2713 Aprobar</button>';
-                        acciones += '<button onclick="rechazarPrestamoPanel(' + p.idPrestamo + ')" style="background:#ef4444;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">\u2715 Rechazar</button>';
-                    } else if (esPend) {
-                        acciones += '<button onclick="cancelarPrestamoPanel(' + p.idPrestamo + ')" style="background:#64748b;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Cancelar</button>';
-                    } else {
-                        acciones = '<span style="color:#94a3b8;font-size:12px;">&mdash;</span>';
-                    }
-                    var salon = p.numeroSalon ? (p.nombreSede + ' - Sal\u00f3n ' + p.numeroSalon) : '&mdash;';
-                    var tr = document.createElement('tr');
-                    tr.style.borderBottom = '1px solid #f1f5f9';
-                    if (esDocenteAdministrativo) {
-                        tr.innerHTML = [
-                            '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
-                            '<td style="padding:11px 14px;font-weight:500;">' + (p.idDispositivo || '-') + '</td>',
-                            '<td style="padding:11px 14px;color:#64748b;">' + (p.idSalon || '-') + '</td>',
-                            '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
-                            '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
-                            '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
-                            '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
-                        ].join('');
-                    } else {
-                        tr.innerHTML = [
-                            '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
-                            '<td style="padding:11px 14px;">' + p.nombreUsuario + '</td>',
-                            '<td style="padding:11px 14px;font-weight:500;">' + p.nombreDispositivo + '</td>',
-                            '<td style="padding:11px 14px;color:#64748b;">' + salon + '</td>',
-                            '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
-                            '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
-                            '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
-                            '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
-                        ].join('');
-                    }
-                    tbody.appendChild(tr);
-                });
+                actualizarEncabezadoPrestamosPanel();
+                renderTablaPrestamosPanel();
             })
             .catch(function(error) { console.error('Error panel prestamos:', error); });
     }
@@ -1100,25 +1375,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     var esTecnico = rol === 'TECNICO';
                     mantenimientos.forEach(m => {
                         const tr = document.createElement('tr');
-                        if (esTecnico) {
+                        if (rol === 'TECNICO') {
                             tr.innerHTML = `
-                                <td>#${m.idMantenimiento}</td>
-                                <td>${m.idDispositivo || '-'}</td>
-                                <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
-                                <td>${formatearFecha(m.fechaInicio)}</td>
-                                <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
-                                <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
-                                <td>${m.descripcion || '-'}</td>
-                                <td><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                                <td style="padding:12px 14px;color:#64748b;font-weight:600;">#${m.idMantenimiento}</td>
+                                <td style="padding:12px 14px;font-weight:500;">${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                                <td style="padding:12px 14px;"><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                                <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
+                                <td style="padding:12px 14px;color:#64748b;font-size:13px;">${m.descripcion || '-'}</td>
+                                <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                            `;
+                        } else if (rol === 'ADMINISTRADOR') {
+                            tr.innerHTML = `
+                                <td style="padding:12px 14px;color:#64748b;font-weight:600;">#${m.idMantenimiento}</td>
+                                <td style="padding:12px 14px;font-weight:500;">${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                                <td style="padding:12px 14px;">${m.nombreUsuario || '-'}</td>
+                                <td style="padding:12px 14px;"><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                                <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
+                                <td style="padding:12px 14px;color:#64748b;font-size:13px;">${m.descripcion || '-'}</td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${m.fechaCreacion ? formatearFecha(m.fechaCreacion) : '-'}</td>
+                                <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
                             `;
                         } else {
                             tr.innerHTML = `
-                                <td>${m.nombreDispositivo}</td>
-                                <td>${m.nombreUsuario}</td>
-                                <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
-                                <td>${formatearFecha(m.fechaInicio)}</td>
-                                <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
-                                <td><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                                <td style="padding:12px 14px;font-weight:500;">${m.nombreDispositivo}</td>
+                                <td style="padding:12px 14px;">${m.nombreUsuario}</td>
+                                <td style="padding:12px 14px;"><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
+                                <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
+                                <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
                             `;
                         }
                         tablaMantenimientosBody.appendChild(tr);
