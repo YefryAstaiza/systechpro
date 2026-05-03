@@ -244,6 +244,76 @@
     border-color: #14477b;
 }
 
+.tecnico-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.tecnico-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #14477b;
+    color: #fff;
+}
+
+.btn-secondary {
+    background: #fff;
+    color: #14477b;
+    border: 1px solid #dbe6f6;
+}
+
+.btn-secondary:hover {
+    background: #f8fafe;
+}
+
+.tecnico-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.tecnico-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    min-height: 140px;
+}
+
+.tecnico-card h3 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    color: #334155;
+}
+
+.tecnico-card .value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.1;
+}
+
 .requests-table {
     width: 100%;
     border-collapse: collapse;

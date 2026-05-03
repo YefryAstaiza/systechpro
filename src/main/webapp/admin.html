@@ -21,7 +21,7 @@
     <div class="admin-container">
         <aside class="sidebar">
             <div class="logo-section">
-                <img src="img/LogoFup.png" alt="Logo FUP" class="logo-fup">
+                <img src="img/fup.png" alt="Logo FUP" class="logo-fup">
             </div>
             <nav class="sidebar-nav">
                 <a href="#" class="nav-link active" id="nav-inicio-btn">
@@ -239,7 +239,7 @@
 
                         <!-- Tabla -->
                         <div style="overflow-x:auto; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.07);">
-                            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                            <table id="tabla-dispositivos" class="requests-table" style="width:100%;border-collapse:collapse;font-size:14px;">
                                 <thead>
                                     <tr style="background:#f1f5f9;">
                                         <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;white-space:nowrap;">Código</th>
@@ -433,7 +433,7 @@
                 </div>
 
                 <div style="overflow-x:auto;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);">
-                    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                    <table id="tabla-prestamos-panel" class="requests-table" style="width:100%;border-collapse:collapse;font-size:14px;">
                         <thead>
                             <tr style="background:#f1f5f9;">
                                 <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>
@@ -462,18 +462,34 @@
                     </div>
                 </div>
 
-                <div class="tecnico-card-grid">
-                    <div class="tecnico-card">
-                        <h3>Dispositivos en mantenimiento</h3>
-                        <div class="value" id="card-dispositivos-mantenimiento">0</div>
+                <div class="dashboard-cards">
+                    <div class="dashboard-card total">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Dispositivos en mantenimiento</div>
+                            <div class="card-value" id="card-dispositivos-mantenimiento">0</div>
+                        </div>
                     </div>
-                    <div class="tecnico-card">
-                        <h3>Mantenimientos en proceso</h3>
-                        <div class="value" id="card-mantenimientos-proceso">0</div>
+                    <div class="dashboard-card available">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Mantenimientos en proceso</div>
+                            <div class="card-value" id="card-mantenimientos-proceso">0</div>
+                        </div>
                     </div>
-                    <div class="tecnico-card">
-                        <h3>Mantenimientos finalizados</h3>
-                        <div class="value" id="card-mantenimientos-finalizados">0</div>
+                    <div class="dashboard-card inuse">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Mantenimientos finalizados</div>
+                            <div class="card-value" id="card-mantenimientos-finalizados">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card maintenance">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Mantenimientos pendientes</div>
+                            <div class="card-value" id="card-mantenimientos-pendientes">0</div>
+                        </div>
                     </div>
                 </div>
 
@@ -485,7 +501,7 @@
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="tecnico-table" id="tabla-recientes">
+                        <table class="requests-table tecnico-table" id="tabla-recientes">
                             <thead>
                                 <tr>
                                     <th>Dispositivo</th>
@@ -511,6 +527,38 @@
                         <button class="btn-secondary" id="btn-ver-solicitudes-docente">Ver mis solicitudes</button>
                     </div>
                 </div>
+
+                <div class="dashboard-cards">
+                    <div class="dashboard-card total">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Solicitudes totales</div>
+                            <div class="card-value" id="card-solicitudes-totales">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card available">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Aprobadas</div>
+                            <div class="card-value" id="card-solicitudes-aprobadas">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card inuse">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Pendientes</div>
+                            <div class="card-value" id="card-solicitudes-pendientes">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card maintenance">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Dispositivos disponibles</div>
+                            <div class="card-value" id="card-dispositivos-disponibles">0</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="section-card">
                     <div class="form-panel">
                         <h3 style="margin-top:0;">Bienvenido al panel de solicitudes</h3>
