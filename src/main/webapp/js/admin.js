@@ -103,6 +103,114 @@ function renderLayoutByRole() {
     aplicarPermisosPorRol(rolGlobal);
     actualizarTituloInicio(rolGlobal);
     cargarPanelInicial(rolGlobal);
+    actualizarEncabezadosTablasPorRol();
+}
+
+function obtenerRolActual() {
+    if (rolGlobal) return rolGlobal;
+    const usuarioJSON = localStorage.getItem('usuario');
+    if (!usuarioJSON) return '';
+    try {
+        const usuario = JSON.parse(usuarioJSON);
+        return usuario.rol || '';
+    } catch (e) {
+        return '';
+    }
+}
+
+function actualizarEncabezadosTablasPorRol() {
+    actualizarEncabezadoDispositivos();
+    actualizarEncabezadoPrestamosPanel();
+    actualizarEncabezadoMantenimientos();
+}
+
+function actualizarEncabezadoDispositivos() {
+    const rol = obtenerRolActual();
+    const table = document.getElementById('tabla-dispositivos');
+    if (!table) return;
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+
+    if (rol === 'TECNICO') {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;white-space:nowrap;">Código</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Nombre</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Descripción</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
+        ].join('');
+    } else {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;white-space:nowrap;">Código</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Nombre</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Ubicación</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
+        ].join('');
+    }
+}
+
+function actualizarEncabezadoPrestamosPanel() {
+    const rol = obtenerRolActual();
+    const table = document.getElementById('tabla-prestamos-panel');
+    if (!table) return;
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+
+    if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Salón</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
+        ].join('');
+    } else {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Usuario</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Salón</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
+        ].join('');
+    }
+}
+
+function actualizarEncabezadoMantenimientos() {
+    const rol = obtenerRolActual();
+    const table = document.querySelector('#panel-mantenimientos table');
+    if (!table) return;
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+
+    if (rol === 'TECNICO') {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Descripción</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acción</th>'
+        ].join('');
+    } else {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Técnico</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acción</th>'
+        ].join('');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -572,6 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderTablaDispositivos() {
+        actualizarEncabezadoDispositivos();
         var filtered = getDispositivosFiltrados();
         var total = filtered.length;
         var totalPaginas = Math.max(1, Math.ceil(total / DISP_POR_PAGINA));
@@ -583,16 +692,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (pagina.length === 0) {
             tablaDispositivosBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron dispositivos</td></tr>';
         } else {
+            var rol = obtenerRolActual();
             pagina.forEach(function(d) {
                 var codigo = 'D' + String(d.idDispositivo).padStart(3, '0');
                 var tr = document.createElement('tr');
                 tr.style.cssText = 'border-bottom:1px solid #f1f5f9;transition:background .15s;';
-                tr.innerHTML = [
+                var fila = [
                     '<td style="padding:12px 14px;font-weight:600;color:#64748b;">' + codigo + '</td>',
                     '<td style="padding:12px 14px;font-weight:500;color:#1e293b;">' + d.nombre + '</td>',
                     '<td style="padding:12px 14px;color:#475569;">' + d.tipo + '</td>',
-                    '<td style="padding:12px 14px;">' + getEstadoBadgeDisp(d.estado) + '</td>',
-                    '<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.ubicacion || '\u2014') + '</td>',
+                    '<td style="padding:12px 14px;">' + getEstadoBadgeDisp(d.estado) + '</td>'
+                ];
+                if (rol === 'TECNICO') {
+                    fila.push('<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.descripcion || '\u2014') + '</td>');
+                } else {
+                    fila.push('<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.ubicacion || '\u2014') + '</td>');
+                }
+                fila.push(
                     '<td style="padding:12px 14px;text-align:center;">',
                     '  <button class="btn-editar-disp" data-id="' + d.idDispositivo + '" title="Editar" style="background:none;border:none;cursor:pointer;padding:5px;color:#f59e0b;">',
                     '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
@@ -601,7 +717,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
                     '  </button>',
                     '</td>'
-                ].join('');
+                );
+                tr.innerHTML = fila.join('');
                 tablaDispositivosBody.appendChild(tr);
             });
 
@@ -745,7 +862,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(function(res) { return res.json(); })
             .then(function(prestamos) {
                 prestamosActuales = prestamos;
+                actualizarEncabezadoPrestamosPanel();
                 tbody.innerHTML = '';
+                var rol = obtenerRolActual();
+                var esDocenteAdministrativo = rol === 'DOCENTE' || rol === 'ADMINISTRATIVO';
                 var lista = Array.isArray(prestamos) ? prestamos.filter(function(p) { return !filtroEstado || p.estado === filtroEstado; }) : [];
                 if (lista.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes de pr\u00e9stamo</td></tr>';
@@ -766,16 +886,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     var salon = p.numeroSalon ? (p.nombreSede + ' - Sal\u00f3n ' + p.numeroSalon) : '&mdash;';
                     var tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid #f1f5f9';
-                    tr.innerHTML = [
-                        '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
-                        '<td style="padding:11px 14px;">' + p.nombreUsuario + '</td>',
-                        '<td style="padding:11px 14px;font-weight:500;">' + p.nombreDispositivo + '</td>',
-                        '<td style="padding:11px 14px;color:#64748b;">' + salon + '</td>',
-                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
-                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
-                        '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
-                        '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
-                    ].join('');
+                    if (esDocenteAdministrativo) {
+                        tr.innerHTML = [
+                            '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
+                            '<td style="padding:11px 14px;font-weight:500;">' + (p.idDispositivo || '-') + '</td>',
+                            '<td style="padding:11px 14px;color:#64748b;">' + (p.idSalon || '-') + '</td>',
+                            '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
+                            '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
+                            '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
+                            '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
+                        ].join('');
+                    } else {
+                        tr.innerHTML = [
+                            '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
+                            '<td style="padding:11px 14px;">' + p.nombreUsuario + '</td>',
+                            '<td style="padding:11px 14px;font-weight:500;">' + p.nombreDispositivo + '</td>',
+                            '<td style="padding:11px 14px;color:#64748b;">' + salon + '</td>',
+                            '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
+                            '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
+                            '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
+                            '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
+                        ].join('');
+                    }
                     tbody.appendChild(tr);
                 });
             })
@@ -962,17 +1094,33 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(mantenimientos => {
                 mantenimientosActuales = mantenimientos;
                 if(Array.isArray(mantenimientos)){
+                    actualizarEncabezadoMantenimientos();
                     tablaMantenimientosBody.innerHTML = '';
+                    var rol = obtenerRolActual();
+                    var esTecnico = rol === 'TECNICO';
                     mantenimientos.forEach(m => {
                         const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${m.nombreDispositivo}</td>
-                            <td>${m.nombreUsuario}</td>
-                            <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
-                            <td>${formatearFecha(m.fechaInicio)}</td>
-                            <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
-                            <td><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
-                        `;
+                        if (esTecnico) {
+                            tr.innerHTML = `
+                                <td>#${m.idMantenimiento}</td>
+                                <td>${m.idDispositivo || '-'}</td>
+                                <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                                <td>${formatearFecha(m.fechaInicio)}</td>
+                                <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                                <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                                <td>${m.descripcion || '-'}</td>
+                                <td><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                            `;
+                        } else {
+                            tr.innerHTML = `
+                                <td>${m.nombreDispositivo}</td>
+                                <td>${m.nombreUsuario}</td>
+                                <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                                <td>${formatearFecha(m.fechaInicio)}</td>
+                                <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                                <td><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                            `;
+                        }
                         tablaMantenimientosBody.appendChild(tr);
                     });
 
