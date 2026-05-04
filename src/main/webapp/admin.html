@@ -8,25 +8,30 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Force styling directly in HTML to bypass any browser cache */
-        .sidebar-nav .nav-link {
-            color: #ffffff !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
         .sidebar-nav .nav-link svg {
             stroke: #ffffff !important;
             opacity: 1 !important;
         }
+        .dashboard-panel {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="admin-container">
-        <aside class="sidebar">
-            <div class="logo-section">
-                <img src="img/LogoFup.png" alt="Logo FUP" class="logo-fup">
-                <span class="logo-title">FUNDACIÓN UNIVERSITARIA DE POPAYÁN</span>
+    <div class="page-wrapper">
+        <header class="admin-header">
+            <div class="header-left">
+                <div class="logo-section">
+                    <img src="img/fup.png" alt="Logo FUP" class="logo-fup">
+                </div>
             </div>
+            <div class="user-info">
+                <span class="user-label">Usuario:</span> <span id="admin-user-name">Administrador</span>
+                <button class="logout-btn" id="btn-logout">Cerrar sesión</button>
+            </div>
+        </header>
+        <div class="admin-container">
+            <aside class="sidebar">
             <nav class="sidebar-nav">
                 <a href="#" class="nav-link active" id="nav-inicio-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -39,6 +44,10 @@
                 <a href="#" class="nav-link" id="nav-prestamos-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     Préstamos
+                </a>
+                <a href="#" class="nav-link" id="nav-mis-solicitudes-btn" style="display:none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M8 7h8M8 11h8M8 15h5"></path></svg>
+                    Mis Solicitudes
                 </a>
                 <a href="#" class="nav-link" id="nav-mantenimientos-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
@@ -63,14 +72,6 @@
             <!-- Toast container -->
             <div id="toast-container" style="position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;"></div>
 
-            <header class="admin-header">
-                <div></div>
-                <div class="user-info">
-                    <span class="user-label">Usuario:</span> <span id="admin-user-name">Administrador</span>
-                    <button class="logout-btn" id="btn-logout">Cerrar sesión</button>
-                </div>
-            </header>
-            
             <section class="dashboard-panel" id="panel-dashboard">
                 <h2>Panel de Control</h2>
                 <div class="dashboard-cards">
@@ -123,6 +124,13 @@
                                 <!-- Dinámico -->
                             </tbody>
                         </table>
+                        <div id="dash-solicitudes-paginacion" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
+                            <div style="display:flex;gap:8px;">
+                                <button id="btn-dash-solicitudes-prev" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                                <button id="btn-dash-solicitudes-next" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                            </div>
+                            <div id="dash-solicitudes-pagina" style="font-weight:600;">Página 1</div>
+                        </div>
                     </div>
                     <div class="quick-access">
                         <h3>Accesos rápidos</h3>
@@ -165,6 +173,13 @@
                         <!-- Dinámico -->
                     </tbody>
                 </table>
+                <div id="usuarios-paginacion" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
+                    <div style="display:flex;gap:8px;">
+                        <button id="btn-usuarios-prev" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                        <button id="btn-usuarios-next" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                    </div>
+                    <div id="usuarios-pagina" style="font-weight:600;">Página 1</div>
+                </div>
             </section>
 
             <!-- Modal para Crear/Editar Usuario -->
@@ -235,14 +250,14 @@
 
                         <!-- Tabla -->
                         <div style="overflow-x:auto; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.07);">
-                            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                            <table id="tabla-dispositivos" class="requests-table" style="width:100%;border-collapse:collapse;font-size:14px;">
                                 <thead>
                                     <tr style="background:#f1f5f9;">
                                         <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;white-space:nowrap;">Código</th>
                                         <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Nombre</th>
                                         <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>
                                         <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>
-                                        <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Ubicación</th>
+                                        <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Creación</th>
                                         <th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>
                                     </tr>
                                 </thead>
@@ -300,30 +315,6 @@
                                 <textarea id="dispositivo-descripcion" rows="3" placeholder="Descripción del equipo..." style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:14px;box-sizing:border-box;resize:vertical;"></textarea>
                             </div>
 
-                            <!-- SECCION UBICACION -->
-                            <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:16px;">
-                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#374151;margin-bottom:12px;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    Ubicación
-                                </label>
-                                <div style="margin-bottom:10px;">
-                                    <label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b;">1. Sede (lista desplegable obligatoria)</label>
-                                    <select id="disp-sede" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
-                                        <option value="">Cargando sedes...</option>
-                                    </select>
-                                </div>
-                                <div style="margin-bottom:10px;">
-                                    <label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b;">2. Número de salón</label>
-                                    <select id="disp-salon" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
-                                        <option value="">Seleccione una sede primero</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b;">3. Ubicación generada automáticamente</label>
-                                    <input type="text" id="disp-ubicacion-generada" readonly placeholder="Ej: SJ-217" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#eef2ff;box-sizing:border-box;font-weight:600;color:#2563eb;">
-                                </div>
-                            </div>
-
                             <div style="display:flex;gap:10px;">
                                 <button type="submit" style="flex:1;padding:10px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -361,6 +352,13 @@
                         <!-- Dinámico -->
                     </tbody>
                 </table>
+                <div id="mantenimientos-paginacion" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
+                    <div style="display:flex;gap:8px;">
+                        <button id="btn-mantenimientos-prev" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                        <button id="btn-mantenimientos-next" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                    </div>
+                    <div id="mantenimientos-pagina" style="font-weight:600;">Página 1</div>
+                </div>
             </section>
 
             <!-- Panel Auditoría -->
@@ -384,6 +382,13 @@
                         <!-- Dinámico -->
                     </tbody>
                 </table>
+                <div id="auditoria-paginacion" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
+                    <div style="display:flex;gap:8px;">
+                        <button id="btn-auditoria-prev" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                        <button id="btn-auditoria-next" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                    </div>
+                    <div id="auditoria-pagina" style="font-weight:600;">Página 1</div>
+                </div>
             </section>
 
             <!-- Panel Reportes -->
@@ -429,7 +434,7 @@
                 </div>
 
                 <div style="overflow-x:auto;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);">
-                    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                    <table id="tabla-prestamos-panel" class="requests-table" style="width:100%;border-collapse:collapse;font-size:14px;">
                         <thead>
                             <tr style="background:#f1f5f9;">
                                 <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>
@@ -446,6 +451,134 @@
                             <!-- Dinámico -->
                         </tbody>
                     </table>
+                    <div id="prestamos-paginacion" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
+                        <div style="display:flex;gap:8px;">
+                            <button id="btn-prestamos-prev" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                            <button id="btn-prestamos-next" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                        </div>
+                        <div id="prestamos-pagina" style="font-weight:600;">Página 1</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="dashboard-panel panel" id="panel-inicio-tecnico" style="display:none;">
+                <div class="tecnico-header">
+                    <h2>Inicio Técnico</h2>
+                    <div class="tecnico-buttons">
+                        <button class="btn-primary" id="btn-registrar-mantenimiento">Registrar mantenimiento</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-cards">
+                    <div class="dashboard-card total">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Dispositivos en mantenimiento</div>
+                            <div class="card-value" id="card-dispositivos-mantenimiento">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card available">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Mantenimientos en proceso</div>
+                            <div class="card-value" id="card-mantenimientos-proceso">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card inuse">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Mantenimientos finalizados</div>
+                            <div class="card-value" id="card-mantenimientos-finalizados">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card maintenance">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Mantenimientos pendientes</div>
+                            <div class="card-value" id="card-mantenimientos-pendientes">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                        <div>
+                            <h3 style="margin:0;">Mantenimientos recientes</h3>
+                            <p style="margin:6px 0 0; color:#64748b;">Últimos registros extraídos de la base de datos.</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="requests-table tecnico-table" id="tabla-recientes">
+                            <thead>
+                                <tr>
+                                    <th>Dispositivo</th>
+                                    <th>Tipo</th>
+                                    <th>Ubicación</th>
+                                    <th>Fecha de inicio</th>
+                                    <th>Fecha fin</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-recientes-body"></tbody>
+                        </table>
+                        <div id="tecnico-recientes-paginacion" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
+                            <div style="display:flex;gap:8px;">
+                                <button id="btn-recientes-prev" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                                <button id="btn-recientes-next" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                            </div>
+                            <div id="recientes-pagina" style="font-weight:600;">Página 1</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="dashboard-panel panel" id="panel-inicio-docente" style="display:none;">
+                <div class="tecnico-header">
+                    <h2 id="titulo-inicio">Inicio</h2>
+                    <div class="tecnico-buttons">
+                        <button class="btn-primary" id="btn-crear-prestamo-docente">Solicitar préstamo</button>
+                        <button class="btn-secondary" id="btn-ver-solicitudes-docente">Ver mis solicitudes</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-cards">
+                    <div class="dashboard-card total">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Solicitudes totales</div>
+                            <div class="card-value" id="card-solicitudes-totales">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card available">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Aprobadas</div>
+                            <div class="card-value" id="card-solicitudes-aprobadas">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card inuse">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Pendientes</div>
+                            <div class="card-value" id="card-solicitudes-pendientes">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card maintenance">
+                        <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></div>
+                        <div class="card-info">
+                            <div class="card-label">Dispositivos disponibles</div>
+                            <div class="card-value" id="card-dispositivos-disponibles">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="form-panel">
+                        <h3 style="margin-top:0;">Bienvenido al panel de solicitudes</h3>
+                        <p>Desde aquí puedes consultar la disponibilidad, reservar dispositivos y seguir el estado de tus préstamos.</p>
+                        <p>Presiona “Solicitar préstamo” para crear una nueva solicitud o “Ver mis solicitudes” para revisar tus registros.</p>
+                    </div>
                 </div>
             </section>
 
@@ -461,11 +594,28 @@
                             </select>
                         </div>
                         
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px;">Salón / Ubicación</label>
-                            <select id="prestamo-salon" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-                                <!-- Dinámico -->
-                            </select>
+                        <!-- SECCION UBICACIÓN PRESTAMO -->
+                        <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:15px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#374151;margin-bottom:10px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                Ubicación
+                            </label>
+                            <div style="margin-bottom:8px;">
+                                <label style="display:block;margin-bottom:3px;font-size:12px;color:#64748b;">1. Sede (obligatoria)</label>
+                                <select id="prestamo-sede" required style="width:100%;padding:7px 9px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
+                                    <option value="">Cargando sedes...</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <label style="display:block;margin-bottom:3px;font-size:12px;color:#64748b;">2. Número de salón</label>
+                                <select id="prestamo-salon" required style="width:100%;padding:7px 9px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:white;box-sizing:border-box;">
+                                    <option value="">Seleccione una sede primero</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block;margin-bottom:3px;font-size:12px;color:#64748b;">3. Ubicación generada automáticamente</label>
+                                <input type="text" id="prestamo-ubicacion-generada" readonly placeholder="Ej: SJ-217" style="width:100%;padding:7px 9px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#eef2ff;box-sizing:border-box;font-weight:600;color:#2563eb;">
+                            </div>
                         </div>
 
                         <div style="margin-bottom: 15px;">
@@ -565,6 +715,7 @@
 
         </main>
     </div>
+    <script src="js/auth.js?v=1"></script>
     <script src="js/admin.js?v=6"></script>
 </body>
 </html>

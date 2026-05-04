@@ -3,6 +3,246 @@
 const apiBase = window.location.origin + '/systechpro/api';
 let rolGlobal = '';
 let idUsuarioGlobal = '';
+let prestamosDashboard = [];
+let dashSolicitudesPage = 1;
+const DASH_SOLICITUDES_PER_PAGE = 5;
+let tecnicoRecientesPage = 1;
+const TECNICO_RECIENTES_PER_PAGE = 5;
+let usuariosActuales = [];
+let usuariosPage = 1;
+let auditoriaActuales = [];
+let auditoriaPage = 1;
+let prestamosPanelPage = 1;
+let mantenimientosPage = 1;
+const PANEL_PAGE_SIZE = 10;
+
+const permisos = {
+    ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes'],
+    TECNICO: ['inicio','mantenimientos'],
+    DOCENTE: ['inicio','mis-solicitudes'],
+    ADMINISTRATIVO: ['inicio','mis-solicitudes']
+};
+
+const modulos = {
+    inicio: 'nav-inicio-btn',
+    usuarios: 'nav-usuarios-btn',
+    dispositivos: 'nav-dispositivos-btn',
+    prestamos: 'nav-prestamos-btn',
+    mantenimientos: 'nav-mantenimientos-btn',
+    auditoria: 'nav-auditoria-btn',
+    reportes: 'nav-reportes-btn',
+    historial: 'nav-historial-btn',
+    'mis-solicitudes': 'nav-mis-solicitudes-btn'
+};
+
+const panelInicioByRol = {
+    ADMINISTRADOR: 'panel-dashboard',
+    TECNICO: 'panel-inicio-tecnico',
+    DOCENTE: 'panel-inicio-docente',
+    ADMINISTRATIVO: 'panel-inicio-docente'
+};
+
+function aplicarPermisosPorRol(rol) {
+    const permitidos = permisos[rol] || [];
+
+    Object.values(modulos).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+
+    permitidos.forEach(mod => {
+        const id = modulos[mod];
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'flex';
+    });
+}
+
+function ocultarTodosLosPaneles() {
+    document.querySelectorAll('.dashboard-panel').forEach(panel => panel.style.display = 'none');
+    document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => link.classList.remove('active'));
+}
+
+function getNavIdForSection(sectionId) {
+    const map = {
+        'panel-dashboard': 'nav-inicio-btn',
+        'panel-inicio-tecnico': 'nav-inicio-btn',
+        'panel-inicio-docente': 'nav-inicio-btn',
+        'panel-usuarios': 'nav-usuarios-btn',
+        'panel-dispositivos': 'nav-dispositivos-btn',
+        'panel-prestamos': 'nav-prestamos-btn',
+        'panel-mantenimientos': 'nav-mantenimientos-btn',
+        'panel-auditoria': 'nav-auditoria-btn',
+        'panel-reportes': 'nav-reportes-btn'
+    };
+    return map[sectionId] || null;
+}
+
+function mostrarPanel(sectionId, activeNavId = null) {
+    ocultarTodosLosPaneles();
+    const section = document.getElementById(sectionId);
+    if (section) section.style.display = 'block';
+
+    const navId = activeNavId || getNavIdForSection(sectionId);
+    if (navId) {
+        const nav = document.getElementById(navId);
+        if (nav) nav.classList.add('active');
+    }
+}
+
+function cargarPanelInicial(rol) {
+    if (rol === 'ADMINISTRADOR') {
+        mostrarPanel('panel-dashboard');
+    } else if (rol === 'TECNICO') {
+        mostrarPanel('panel-inicio-tecnico');
+    } else {
+        mostrarPanel('panel-inicio-docente');
+    }
+}
+
+function actualizarTituloInicio(rol) {
+    const titulo = document.getElementById('titulo-inicio');
+    if (!titulo) return;
+
+    if (rol === 'TECNICO') {
+        titulo.textContent = 'Inicio Técnico';
+    } else {
+        titulo.textContent = 'Inicio';
+    }
+}
+
+function renderLayoutByRole() {
+    if (!rolGlobal) return;
+    aplicarPermisosPorRol(rolGlobal);
+    actualizarTituloInicio(rolGlobal);
+    cargarPanelInicial(rolGlobal);
+    actualizarEncabezadosTablasPorRol();
+    if (rolGlobal !== 'ADMINISTRADOR') {
+        const panelUsuarios = document.getElementById('panel-usuarios');
+        if (panelUsuarios) panelUsuarios.style.display = 'none';
+        const panelAuditoria = document.getElementById('panel-auditoria');
+        if (panelAuditoria) panelAuditoria.style.display = 'none';
+    }
+}
+
+function obtenerRolActual() {
+    if (rolGlobal) return rolGlobal;
+    const usuarioJSON = localStorage.getItem('usuario');
+    if (!usuarioJSON) return '';
+    try {
+        const usuario = JSON.parse(usuarioJSON);
+        return usuario.rol || '';
+    } catch (e) {
+        return '';
+    }
+}
+
+function actualizarEncabezadosTablasPorRol() {
+    actualizarEncabezadoDispositivos();
+    actualizarEncabezadoPrestamosPanel();
+    actualizarEncabezadoMantenimientos();
+}
+
+function actualizarEncabezadoDispositivos() {
+    const rol = obtenerRolActual();
+    const table = document.getElementById('tabla-dispositivos');
+    if (!table) return;
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+
+    if (rol === 'TECNICO') {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;white-space:nowrap;">Código</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Nombre</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Descripción</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
+        ].join('');
+    } else {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;white-space:nowrap;">Código</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Nombre</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Creación</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
+        ].join('');
+    }
+}
+
+function actualizarEncabezadoPrestamosPanel() {
+    const rol = obtenerRolActual();
+    const table = document.getElementById('tabla-prestamos-panel');
+    if (!table) return;
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+
+    if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO' || rol === 'TECNICO') {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Salón</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
+        ].join('');
+    } else {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Usuario</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Salón</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
+        ].join('');
+    }
+}
+
+function actualizarEncabezadoMantenimientos() {
+    const rol = obtenerRolActual();
+    const table = document.querySelector('#panel-mantenimientos table');
+    if (!table) return;
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+
+    if (rol === 'TECNICO') {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Descripción</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acción</th>'
+        ].join('');
+    } else if (rol === 'ADMINISTRADOR') {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Técnico</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Fin</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Descripción</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Creación</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acción</th>'
+        ].join('');
+    } else {
+        headerRow.innerHTML = [
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Dispositivo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Técnico</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Inicio</th>',
+            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
+            '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acción</th>'
+        ].join('');
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -11,35 +251,27 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(res => res.json())
         .then(data => {
             if (data.authenticated && data.usuario) {
-                document.getElementById('admin-user-name').textContent = data.usuario.nombre;
+                // Guardar usuario en localStorage para que auth.js pueda accederlo
+                localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                
+                const userNameEl = document.getElementById('admin-user-name');
+                if (userNameEl) userNameEl.textContent = data.usuario.nombre;
                 rolGlobal = data.usuario.rol;
                 idUsuarioGlobal = data.usuario.idUsuario;
-                aplicarPermisosPorRol();
-                // Inicializar datos al cargar la app
-                cargarDispositivos();
-                cargarPrestamos();
+                renderLayoutByRole();
+
+                if (rolGlobal === 'ADMINISTRADOR') {
+                    cargarDispositivos();
+                    cargarPrestamos();
+                } else if (rolGlobal === 'TECNICO') {
+                    cargarMantenimientos();
+                } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+                    cargarMisSolicitudes();
+                }
             } else {
                 window.location.href = 'index.html';
             }
         });
-
-    function aplicarPermisosPorRol() {
-        const esAdminOrTecnico = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
-        const esAdmin = (rolGlobal === 'ADMINISTRADOR');
-
-        if (!esAdmin) {
-            document.getElementById('nav-usuarios-btn').style.display = 'none';
-            document.getElementById('quick-add-user-btn').style.display = 'none';
-            document.getElementById('nav-auditoria-btn').style.display = 'none';
-            document.getElementById('nav-reportes-btn').style.display = 'none';
-        }
-        
-        if (!esAdminOrTecnico) {
-            document.getElementById('nav-dispositivos-btn').style.display = 'none';
-            document.getElementById('quick-add-dispositivo-btn').style.display = 'none';
-            document.getElementById('nav-mantenimientos-btn').style.display = 'none';
-        }
-    }
 
     // Lógica para cerrar sesión
     const logoutBtn = document.getElementById('btn-logout');
@@ -65,76 +297,102 @@ document.addEventListener('DOMContentLoaded', function() {
     const panelReportes = document.getElementById('panel-reportes');
 
     const navPrestamosBtn = document.getElementById('nav-prestamos-btn');
+    const navMisSolicitudesBtn = document.getElementById('nav-mis-solicitudes-btn');
+    const navHistorialBtn = document.getElementById('nav-historial-btn');
     const navMantenimientosBtn = document.getElementById('nav-mantenimientos-btn');
     const navAuditoriaBtn = document.getElementById('nav-auditoria-btn');
     const navReportesBtn = document.getElementById('nav-reportes-btn');
 
     function ocultarPaneles() {
-        panelDashboard.style.display = 'none';
-        panelUsuarios.style.display = 'none';
-        panelDispositivos.style.display = 'none';
-        if (panelPrestamos) panelPrestamos.style.display = 'none';
-        if (panelMantenimientos) panelMantenimientos.style.display = 'none';
-        if (panelAuditoria) panelAuditoria.style.display = 'none';
-        if (panelReportes) panelReportes.style.display = 'none';
-        document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => link.classList.remove('active'));
+        ocultarTodosLosPaneles();
     }
 
     navInicioBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        ocultarPaneles();
-        panelDashboard.style.display = 'block';
-        navInicioBtn.classList.add('active');
-        cargarPrestamos(); // refrescar
+        renderLayoutByRole();
     });
 
     navUsuariosBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        ocultarPaneles();
-        panelUsuarios.style.display = 'block';
-        navUsuariosBtn.classList.add('active');
+        mostrarPanel('panel-usuarios');
         cargarUsuarios();
     });
 
     document.getElementById('quick-add-user-btn').addEventListener('click', () => {
-        ocultarPaneles();
-        panelUsuarios.style.display = 'block';
-        navUsuariosBtn.classList.add('active');
+        mostrarPanel('panel-usuarios');
         cargarUsuarios();
         abrirModalUsuario();
     });
 
     navDispositivosBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        ocultarPaneles();
-        panelDispositivos.style.display = 'block';
-        navDispositivosBtn.classList.add('active');
+        mostrarPanel('panel-dispositivos');
         cargarDispositivos();
     });
 
     if (navPrestamosBtn) {
         navPrestamosBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ocultarPaneles();
-            panelPrestamos.style.display = 'block';
-            navPrestamosBtn.classList.add('active');
+            mostrarPanel('panel-prestamos');
             cargarPrestamosPanelDedicado();
         });
     }
 
+    if (navMisSolicitudesBtn) {
+        navMisSolicitudesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarPanel('panel-prestamos', 'nav-mis-solicitudes-btn');
+            cargarPrestamosPanelDedicado();
+        });
+    }
+
+    if (navHistorialBtn) {
+        navHistorialBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarPanel('panel-mantenimientos', 'nav-historial-btn');
+            cargarMantenimientos();
+        });
+    }
+
     document.getElementById('quick-add-dispositivo-btn').addEventListener('click', () => {
-        ocultarPaneles();
-        panelDispositivos.style.display = 'block';
-        navDispositivosBtn.classList.add('active');
+        mostrarPanel('panel-dispositivos');
         cargarDispositivos();
         setTimeout(() => abrirFormDispositivo(null), 100);
     });
 
+    const btnRegistrarMantenimiento = document.getElementById('btn-registrar-mantenimiento');
+    const btnVerHistorial = document.getElementById('btn-ver-historial');
+    const btnCrearPrestamoDocente = document.getElementById('btn-crear-prestamo-docente');
+    const btnVerSolicitudesDocente = document.getElementById('btn-ver-solicitudes-docente');
+
+    if (btnRegistrarMantenimiento) {
+        btnRegistrarMantenimiento.addEventListener('click', abrirModalCrearMantenimiento);
+    }
+
+    if (btnVerHistorial) {
+        btnVerHistorial.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarPanel('panel-mantenimientos', 'nav-historial-btn');
+            cargarMantenimientos();
+        });
+    }
+
+    if (btnCrearPrestamoDocente) {
+        btnCrearPrestamoDocente.addEventListener('click', abrirModalCrearPrestamo);
+    }
+
+    if (btnVerSolicitudesDocente) {
+        btnVerSolicitudesDocente.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarPanel('panel-prestamos', 'nav-mis-solicitudes-btn');
+            cargarPrestamosPanelDedicado();
+        });
+    }
+
     const verSolicitudesBtn = document.getElementById('ver-solicitudes-btn');
     if (verSolicitudesBtn) {
         verSolicitudesBtn.addEventListener('click', () => {
-            ocultarPaneles();
-            panelPrestamos.style.display = 'block';
+            mostrarPanel('panel-prestamos');
             if (navPrestamosBtn) navPrestamosBtn.classList.add('active');
             cargarPrestamosPanelDedicado();
         });
@@ -143,9 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (navMantenimientosBtn) {
         navMantenimientosBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ocultarPaneles();
-            panelMantenimientos.style.display = 'block';
-            navMantenimientosBtn.classList.add('active');
+            mostrarPanel('panel-mantenimientos');
             cargarMantenimientos();
         });
     }
@@ -153,9 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (navAuditoriaBtn) {
         navAuditoriaBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ocultarPaneles();
-            panelAuditoria.style.display = 'block';
-            navAuditoriaBtn.classList.add('active');
+            mostrarPanel('panel-auditoria');
             cargarAuditoria();
         });
     }
@@ -163,9 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (navReportesBtn) {
         navReportesBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ocultarPaneles();
-            panelReportes.style.display = 'block';
-            navReportesBtn.classList.add('active');
+            mostrarPanel('panel-reportes');
             cargarReportes();
         });
     }
@@ -341,81 +593,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (dispPaginaActual < Math.ceil(filtered.length / DISP_POR_PAGINA)) { dispPaginaActual++; renderTablaDispositivos(); }
     });
 
-    var selectSede = document.getElementById('disp-sede');
-    var selectSalon = document.getElementById('disp-salon');
-    var inputUbicacion = document.getElementById('disp-ubicacion-generada');
-
-    selectSede.addEventListener('change', function() {
-        var idSede = selectSede.value;
-        inputUbicacion.value = '';
-        if (!idSede) { selectSalon.innerHTML = '<option value="">Seleccione una sede primero</option>'; return; }
-        fetch(apiBase + '/sedes/' + idSede + '/salones')
-            .then(function(res) { return res.json(); })
-            .then(function(salones) {
-                selectSalon.innerHTML = '<option value="">Seleccione un sal\u00f3n</option>';
-                salones.forEach(function(s) {
-                    selectSalon.innerHTML += '<option value="' + s.idSalon + '" data-numero="' + s.numero + '">' + s.numero + '</option>';
-                });
-            });
-    });
-
-    selectSalon.addEventListener('change', function() {
-        var opt = selectSalon.options[selectSalon.selectedIndex];
-        var sedeOpt = selectSede.options[selectSede.selectedIndex];
-        var codigoSede = sedeOpt ? sedeOpt.getAttribute('data-codigo') : '';
-        var numSalon = opt ? opt.getAttribute('data-numero') : '';
-        inputUbicacion.value = (codigoSede && numSalon) ? (codigoSede + '-' + numSalon) : '';
-    });
-
-    function cargarSedes() {
-        selectSede.innerHTML = '<option value="">Cargando sedes...</option>';
-        fetch(apiBase + '/sedes')
-            .then(function(res) {
-                if (res.status === 401) { selectSede.innerHTML = '<option value="">Sin sesi\u00f3n activa</option>'; return null; }
-                return res.json();
-            })
-            .then(function(sedes) {
-                if (!sedes) return;
-                if (!Array.isArray(sedes) || sedes.length === 0) {
-                    selectSede.innerHTML = '<option value="">Sin sedes registradas</option>';
-                    return;
-                }
-                selectSede.innerHTML = '<option value="">Seleccione una sede...</option>';
-                sedes.forEach(function(s) {
-                    selectSede.innerHTML += '<option value="' + s.idSede + '" data-codigo="' + s.codigo + '">' + s.nombre + ' (' + s.codigo + ')</option>';
-                });
-            })
-            .catch(function(err) {
-                console.error('Error cargando sedes:', err);
-                selectSede.innerHTML = '<option value="">Error al cargar sedes</option>';
-            });
-    }
-
     function abrirFormDispositivo(dispositivo) {
         formDispositivo.reset();
         document.getElementById('dispositivo-id').value = '';
         document.getElementById('disp-form-titulo').textContent = dispositivo ? 'Editar Dispositivo' : 'Registrar Nuevo Dispositivo';
-        inputUbicacion.value = '';
-        selectSalon.innerHTML = '<option value="">Seleccione una sede primero</option>';
-        cargarSedes();
         if (dispositivo) {
             document.getElementById('dispositivo-id').value = dispositivo.idDispositivo;
             document.getElementById('dispositivo-nombre').value = dispositivo.nombre;
             document.getElementById('dispositivo-tipo').value = dispositivo.tipo;
             document.getElementById('dispositivo-estado').value = dispositivo.estado;
             document.getElementById('dispositivo-descripcion').value = dispositivo.descripcion || '';
-            if (dispositivo.ubicacion && dispositivo.ubicacion !== '\u2014') {
-                inputUbicacion.value = dispositivo.ubicacion;
-            }
         }
     }
 
     function resetFormDispositivo() {
         formDispositivo.reset();
         document.getElementById('dispositivo-id').value = '';
-        document.getElementById('disp-form-titulo').textContent = 'Gesti\u00f3n Detallada del Dispositivo';
-        if(inputUbicacion) inputUbicacion.value = '';
-        if(selectSalon) selectSalon.innerHTML = '<option value="">Seleccione una sede primero</option>';
+        document.getElementById('disp-form-titulo').textContent = 'Gestión Detallada del Dispositivo';
     }
 
     function actualizarDashboard(dispositivos) {
@@ -459,6 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderTablaDispositivos() {
+        actualizarEncabezadoDispositivos();
         var filtered = getDispositivosFiltrados();
         var total = filtered.length;
         var totalPaginas = Math.max(1, Math.ceil(total / DISP_POR_PAGINA));
@@ -474,12 +669,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 var codigo = 'D' + String(d.idDispositivo).padStart(3, '0');
                 var tr = document.createElement('tr');
                 tr.style.cssText = 'border-bottom:1px solid #f1f5f9;transition:background .15s;';
-                tr.innerHTML = [
+                var fila = [
                     '<td style="padding:12px 14px;font-weight:600;color:#64748b;">' + codigo + '</td>',
                     '<td style="padding:12px 14px;font-weight:500;color:#1e293b;">' + d.nombre + '</td>',
                     '<td style="padding:12px 14px;color:#475569;">' + d.tipo + '</td>',
                     '<td style="padding:12px 14px;">' + getEstadoBadgeDisp(d.estado) + '</td>',
-                    '<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.ubicacion || '\u2014') + '</td>',
+                    '<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.fechaCreacion ? formatearFecha(d.fechaCreacion) : '\u2014') + '</td>'
+                ];
+                fila.push(
                     '<td style="padding:12px 14px;text-align:center;">',
                     '  <button class="btn-editar-disp" data-id="' + d.idDispositivo + '" title="Editar" style="background:none;border:none;cursor:pointer;padding:5px;color:#f59e0b;">',
                     '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
@@ -488,7 +685,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
                     '  </button>',
                     '</td>'
-                ].join('');
+                );
+                tr.innerHTML = fila.join('');
                 tablaDispositivosBody.appendChild(tr);
             });
 
@@ -572,6 +770,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     const tablaSolicitudesBody = document.getElementById('tabla-solicitudes-body');
+    const tablaRecientesBody = document.getElementById('tabla-recientes-body');
+    const tablaPrestamosPanelBody = document.getElementById('tabla-prestamos-panel-body');
     const modalCrearPrestamo = document.getElementById('modal-crear-prestamo');
     const formCrearPrestamo = document.getElementById('form-crear-prestamo');
     const modalDetallePrestamo = document.getElementById('modal-detalle-prestamo');
@@ -582,9 +782,360 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btn-cancelar-prestamo').addEventListener('click', () => modalCrearPrestamo.style.display = 'none');
     document.getElementById('btn-cerrar-detalle').addEventListener('click', () => modalDetallePrestamo.style.display = 'none');
 
+    function parseFecha(timestamp) {
+        if (timestamp == null) return null;
+        if (timestamp instanceof Date) return timestamp;
+
+        if (typeof timestamp === 'number' || /^\d+$/.test(String(timestamp).trim())) {
+            const ms = Number(timestamp);
+            return new Date(ms);
+        }
+
+        if (typeof timestamp === 'string') {
+            const trimmed = timestamp.trim();
+            const normalized = trimmed.replace(' ', 'T');
+            const date = new Date(normalized);
+            if (!Number.isNaN(date.getTime())) {
+                return date;
+            }
+        }
+
+        return null;
+    }
+
     function formatearFecha(timestamp) {
-        const d = new Date(timestamp);
-        return d.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+        const d = parseFecha(timestamp);
+        if (!d || Number.isNaN(d.getTime())) {
+            return 'N/A';
+        }
+        const colombiaOffset = 5 * 60;
+        const localOffset = d.getTimezoneOffset();
+        const diffMinutes = (colombiaOffset - localOffset) * 60 * 1000;
+        const colombiaDate = new Date(d.getTime() + diffMinutes);
+        const day = String(colombiaDate.getUTCDate()).padStart(2, '0');
+        const month = String(colombiaDate.getUTCMonth() + 1).padStart(2, '0');
+        const year = String(colombiaDate.getUTCFullYear()).slice(-2);
+        const hour = String(colombiaDate.getUTCHours()).padStart(2, '0');
+        const minute = String(colombiaDate.getUTCMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hour}:${minute}`;
+    }
+
+    function generarUbicacionSalon(prestamo) {
+        if (prestamo.codigoSede && prestamo.numeroSalon) {
+            return prestamo.codigoSede + '-' + prestamo.numeroSalon;
+        }
+        if (prestamo.nombreSede && prestamo.numeroSalon) {
+            const codigo = prestamo.nombreSede
+                .split(' ')
+                .filter(Boolean)
+                .map(word => word[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2);
+            return codigo + '-' + prestamo.numeroSalon;
+        }
+        return prestamo.numeroSalon ? prestamo.numeroSalon : '—';
+    }
+
+    function renderTablaSolicitudesDashboard() {
+        if (!tablaSolicitudesBody) return;
+        const lista = Array.isArray(prestamosDashboard) ? prestamosDashboard.slice() : [];
+        lista.sort((a, b) => new Date(b.fechaInicio || b.fechaCreacion || 0) - new Date(a.fechaInicio || a.fechaCreacion || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / DASH_SOLICITUDES_PER_PAGE));
+        if (dashSolicitudesPage > totalPages) dashSolicitudesPage = totalPages;
+        const inicio = (dashSolicitudesPage - 1) * DASH_SOLICITUDES_PER_PAGE;
+        const pagina = lista.slice(inicio, inicio + DASH_SOLICITUDES_PER_PAGE);
+        tablaSolicitudesBody.innerHTML = '';
+        if (pagina.length === 0) {
+            tablaSolicitudesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes</td></tr>';
+        } else {
+            pagina.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.nombreUsuario}</td>
+                    <td>${p.nombreDispositivo}</td>
+                    <td>${formatearFecha(p.fechaInicio)}</td>
+                    <td>${getEstadoBadge(p.estado)}</td>
+                    <td><button class="view-btn btn-ver-prestamo" data-id="${p.idPrestamo}">Ver</button></td>
+                `;
+                tablaSolicitudesBody.appendChild(tr);
+            });
+            document.querySelectorAll('.btn-ver-prestamo').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    abrirModalDetallePrestamo(id);
+                });
+            });
+        }
+        const pageLabel = document.getElementById('dash-solicitudes-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + dashSolicitudesPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-dash-solicitudes-prev');
+        const btnNext = document.getElementById('btn-dash-solicitudes-next');
+        if (btnPrev) btnPrev.disabled = dashSolicitudesPage <= 1;
+        if (btnNext) btnNext.disabled = dashSolicitudesPage >= totalPages;
+    }
+
+    function renderTablaRecientesTecnico() {
+        if (!tablaRecientesBody) return;
+        const lista = Array.isArray(mantenimientosActuales) ? mantenimientosActuales.slice() : [];
+        lista.sort((a, b) => new Date(b.fechaInicio || 0) - new Date(a.fechaInicio || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / TECNICO_RECIENTES_PER_PAGE));
+        if (tecnicoRecientesPage > totalPages) tecnicoRecientesPage = totalPages;
+        const inicio = (tecnicoRecientesPage - 1) * TECNICO_RECIENTES_PER_PAGE;
+        const pagina = lista.slice(inicio, inicio + TECNICO_RECIENTES_PER_PAGE);
+        tablaRecientesBody.innerHTML = '';
+        if (pagina.length === 0) {
+            tablaRecientesBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">No hay mantenimientos recientes</td></tr>';
+        } else {
+            pagina.forEach(m => {
+                const ubicacion = m.ubicacion || (m.nombreSede ? m.nombreSede + (m.numeroSalon ? ' - Salón ' + m.numeroSalon : '') : '-');
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                    <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                    <td>${ubicacion}</td>
+                    <td>${formatearFecha(m.fechaInicio)}</td>
+                    <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                    <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                    <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                `;
+                tablaRecientesBody.appendChild(tr);
+            });
+            document.querySelectorAll('.btn-ver-mantenimiento').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    abrirModalDetalleMantenimiento(id);
+                });
+            });
+        }
+        const pageLabel = document.getElementById('recientes-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + tecnicoRecientesPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-recientes-prev');
+        const btnNext = document.getElementById('btn-recientes-next');
+        if (btnPrev) btnPrev.disabled = tecnicoRecientesPage <= 1;
+        if (btnNext) btnNext.disabled = tecnicoRecientesPage >= totalPages;
+    }
+
+    function renderTablaUsuarios() {
+        const tbody = document.getElementById('tabla-usuarios-body');
+        if (!tbody) return;
+        const lista = Array.isArray(usuariosActuales) ? usuariosActuales.slice() : [];
+        lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+        if (usuariosPage > totalPages) usuariosPage = totalPages;
+        const inicio = (usuariosPage - 1) * PANEL_PAGE_SIZE;
+        const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
+        tbody.innerHTML = '';
+        if (pagina.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron usuarios</td></tr>';
+        } else {
+            pagina.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${u.nombre}</td>
+                    <td>${u.correo}</td>
+                    <td><span class="badge" style="background:#2c3e50; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${u.rol}</span></td>
+                    <td>
+                        <button class="btn-editar" data-id="${u.idUsuario}" style="background:#f39c12; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px; margin-right:5px;">Editar</button>
+                        <button class="btn-eliminar" data-id="${u.idUsuario}" style="background:#e74c3c; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.querySelectorAll('.btn-editar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    const usuario = usuariosActuales.find(user => user.idUsuario == id);
+                    if (usuario) abrirModalUsuario(usuario);
+                });
+            });
+            document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    eliminarUsuario(id);
+                });
+            });
+        }
+        const pageLabel = document.getElementById('usuarios-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + usuariosPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-usuarios-prev');
+        const btnNext = document.getElementById('btn-usuarios-next');
+        if (btnPrev) btnPrev.disabled = usuariosPage <= 1;
+        if (btnNext) btnNext.disabled = usuariosPage >= totalPages;
+    }
+
+    function renderTablaAuditoria() {
+        const tbody = document.getElementById('tabla-auditoria-body');
+        if (!tbody) return;
+        const lista = Array.isArray(auditoriaActuales) ? auditoriaActuales.slice() : [];
+        lista.sort((a, b) => new Date(b.fechaEvento || 0) - new Date(a.fechaEvento || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+        if (auditoriaPage > totalPages) auditoriaPage = totalPages;
+        const inicio = (auditoriaPage - 1) * PANEL_PAGE_SIZE;
+        const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
+        tbody.innerHTML = '';
+        if (pagina.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron registros de auditoría</td></tr>';
+        } else {
+            pagina.forEach(log => {
+                let badgeColor = '#3498db';
+                if (log.accion === 'INSERT') badgeColor = '#2ecc71';
+                else if (log.accion === 'UPDATE') badgeColor = '#f39c12';
+                else if (log.accion === 'DELETE') badgeColor = '#e74c3c';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatearFecha(log.fechaEvento)}</td>
+                    <td>${log.nombreUsuario}</td>
+                    <td><span class="badge" style="background:${badgeColor}; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${log.accion}</span></td>
+                    <td>${log.tablaAfectada}</td>
+                    <td>${log.descripcion}</td>
+                    <td>${log.ip}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        const pageLabel = document.getElementById('auditoria-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + auditoriaPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-auditoria-prev');
+        const btnNext = document.getElementById('btn-auditoria-next');
+        if (btnPrev) btnPrev.disabled = auditoriaPage <= 1;
+        if (btnNext) btnNext.disabled = auditoriaPage >= totalPages;
+    }
+
+    function renderTablaMantenimientosPanel() {
+        if (!tablaMantenimientosBody) return;
+        const lista = Array.isArray(mantenimientosActuales) ? mantenimientosActuales.slice() : [];
+        lista.sort((a, b) => new Date(b.fechaInicio || 0) - new Date(a.fechaInicio || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+        if (mantenimientosPage > totalPages) mantenimientosPage = totalPages;
+        const inicio = (mantenimientosPage - 1) * PANEL_PAGE_SIZE;
+        const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
+        tablaMantenimientosBody.innerHTML = '';
+        const rol = obtenerRolActual();
+        if (pagina.length === 0) {
+            tablaMantenimientosBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron mantenimientos</td></tr>';
+        } else {
+            pagina.forEach(m => {
+                const tr = document.createElement('tr');
+                if (rol === 'TECNICO') {
+                    tr.innerHTML = `
+                        <td>#${m.idMantenimiento}</td>
+                        <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                        <td>${formatearFecha(m.fechaInicio)}</td>
+                        <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                        <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                        <td>${m.descripcion || '-'}</td>
+                        <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                    `;
+                } else if (rol === 'ADMINISTRADOR') {
+                    tr.innerHTML = `
+                        <td>#${m.idMantenimiento}</td>
+                        <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                        <td>${m.nombreUsuario || '-'}</td>
+                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                        <td>${formatearFecha(m.fechaInicio)}</td>
+                        <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                        <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                        <td>${m.descripcion || '-'}</td>
+                        <td>${m.fechaCreacion ? formatearFecha(m.fechaCreacion) : '-'}</td>
+                        <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                    `;
+                } else {
+                    tr.innerHTML = `
+                        <td>${m.nombreDispositivo}</td>
+                        <td>${m.nombreUsuario}</td>
+                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                        <td>${formatearFecha(m.fechaInicio)}</td>
+                        <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
+                        <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                    `;
+                }
+                tablaMantenimientosBody.appendChild(tr);
+            });
+            document.querySelectorAll('.btn-ver-mantenimiento').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    abrirModalDetalleMantenimiento(id);
+                });
+            });
+        }
+        const pageLabel = document.getElementById('mantenimientos-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + mantenimientosPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-mantenimientos-prev');
+        const btnNext = document.getElementById('btn-mantenimientos-next');
+        if (btnPrev) btnPrev.disabled = mantenimientosPage <= 1;
+        if (btnNext) btnNext.disabled = mantenimientosPage >= totalPages;
+    }
+
+    function renderTablaPrestamosPanel() {
+        if (!tablaPrestamosPanelBody) return;
+        const rol = obtenerRolActual();
+        let lista = Array.isArray(prestamosActuales) ? prestamosActuales.slice() : [];
+        if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
+            lista = lista.filter(function(p) { return p.idUsuario == idUsuarioGlobal; });
+        }
+        lista.sort((a, b) => new Date(b.fechaInicio || 0) - new Date(a.fechaInicio || 0));
+        const total = lista.length;
+        const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+        if (prestamosPanelPage > totalPages) prestamosPanelPage = totalPages;
+        const inicio = (prestamosPanelPage - 1) * PANEL_PAGE_SIZE;
+        const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
+        tablaPrestamosPanelBody.innerHTML = '';
+        if (pagina.length === 0) {
+            const colspan = rol === 'DOCENTE' || rol === 'ADMINISTRATIVO' ? 7 : 8;
+            tablaPrestamosPanelBody.innerHTML = '<tr><td colspan="' + colspan + '" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes de préstamo</td></tr>';
+        } else {
+            pagina.forEach(function(p) {
+                const esAdminTec = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
+                const esPend = p.estado === 'PENDIENTE';
+                let acciones = '';
+                if (esAdminTec && esPend) {
+                    acciones += '<button onclick="aprobarPrestamoPanel(' + p.idPrestamo + ')" style="background:#22c55e;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;margin-right:4px;">✓ Aprobar</button>';
+                    acciones += '<button onclick="rechazarPrestamoPanel(' + p.idPrestamo + ')" style="background:#ef4444;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">✕ Rechazar</button>';
+                } else if (esPend) {
+                    acciones += '<button onclick="cancelarPrestamoPanel(' + p.idPrestamo + ')" style="background:#64748b;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Cancelar</button>';
+                } else {
+                    acciones = '<span style="color:#94a3b8;font-size:12px;">—</span>';
+                }
+                const ubicacionSalon = generarUbicacionSalon(p);
+                const tr = document.createElement('tr');
+                if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
+                    tr.innerHTML = [
+                        '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
+                        '<td style="padding:11px 14px;font-weight:500;">' + (p.nombreDispositivo || p.idDispositivo || '-') + '</td>',
+                        '<td style="padding:11px 14px;color:#64748b;">' + ubicacionSalon + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
+                        '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
+                        '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
+                    ].join('');
+                } else {
+                    tr.innerHTML = [
+                        '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
+                        '<td style="padding:11px 14px;">' + p.nombreUsuario + '</td>',
+                        '<td style="padding:11px 14px;font-weight:500;">' + p.nombreDispositivo + '</td>',
+                        '<td style="padding:11px 14px;color:#64748b;">' + ubicacionSalon + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
+                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
+                        '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
+                        '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
+                    ].join('');
+                }
+                tablaPrestamosPanelBody.appendChild(tr);
+            });
+        }
+        const pageLabel = document.getElementById('prestamos-pagina');
+        if (pageLabel) pageLabel.textContent = 'Página ' + prestamosPanelPage + ' de ' + totalPages;
+        const btnPrev = document.getElementById('btn-prestamos-prev');
+        const btnNext = document.getElementById('btn-prestamos-next');
+        if (btnPrev) btnPrev.disabled = prestamosPanelPage <= 1;
+        if (btnNext) btnNext.disabled = prestamosPanelPage >= totalPages;
     }
 
     function cargarPrestamos() {
@@ -592,29 +1143,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(res => res.json())
             .then(prestamos => {
                 prestamosActuales = prestamos;
-                if(Array.isArray(prestamos)){
-                    tablaSolicitudesBody.innerHTML = '';
-                    prestamos.forEach(p => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${p.nombreUsuario}</td>
-                            <td>${p.nombreDispositivo}</td>
-                            <td>${formatearFecha(p.fechaInicio)}</td>
-                            <td>${getEstadoBadge(p.estado)}</td>
-                            <td><button class="view-btn btn-ver-prestamo" data-id="${p.idPrestamo}">Ver</button></td>
-                        `;
-                        tablaSolicitudesBody.appendChild(tr);
-                    });
-
-                    document.querySelectorAll('.btn-ver-prestamo').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const id = parseInt(e.target.getAttribute('data-id'));
-                            abrirModalDetallePrestamo(id);
-                        });
-                    });
-                }
+                prestamosDashboard = Array.isArray(prestamos) ? prestamos : [];
+                renderTablaSolicitudesDashboard();
             })
             .catch(error => console.error('Error cargando prestamos:', error));
+    }
+
+    function cargarMisSolicitudes() {
+        // El backend devuelve solo las solicitudes del usuario logueado
+        cargarPrestamos();
     }
 
     // Panel dedicado de prestamos
@@ -626,40 +1163,12 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(apiBase + '/prestamos')
             .then(function(res) { return res.json(); })
             .then(function(prestamos) {
-                prestamosActuales = prestamos;
-                tbody.innerHTML = '';
-                var lista = Array.isArray(prestamos) ? prestamos.filter(function(p) { return !filtroEstado || p.estado === filtroEstado; }) : [];
-                if (lista.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes de pr\u00e9stamo</td></tr>';
-                    return;
+                prestamosActuales = Array.isArray(prestamos) ? prestamos : [];
+                if (filtroEstado) {
+                    prestamosActuales = prestamosActuales.filter(function(p) { return p.estado === filtroEstado; });
                 }
-                lista.forEach(function(p) {
-                    var esAdminTec = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
-                    var esPend = p.estado === 'PENDIENTE';
-                    var acciones = '';
-                    if (esAdminTec && esPend) {
-                        acciones += '<button onclick="aprobarPrestamoPanel(' + p.idPrestamo + ')" style="background:#22c55e;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;margin-right:4px;">\u2713 Aprobar</button>';
-                        acciones += '<button onclick="rechazarPrestamoPanel(' + p.idPrestamo + ')" style="background:#ef4444;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">\u2715 Rechazar</button>';
-                    } else if (esPend) {
-                        acciones += '<button onclick="cancelarPrestamoPanel(' + p.idPrestamo + ')" style="background:#64748b;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Cancelar</button>';
-                    } else {
-                        acciones = '<span style="color:#94a3b8;font-size:12px;">&mdash;</span>';
-                    }
-                    var salon = p.numeroSalon ? (p.nombreSede + ' - Sal\u00f3n ' + p.numeroSalon) : '&mdash;';
-                    var tr = document.createElement('tr');
-                    tr.style.borderBottom = '1px solid #f1f5f9';
-                    tr.innerHTML = [
-                        '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
-                        '<td style="padding:11px 14px;">' + p.nombreUsuario + '</td>',
-                        '<td style="padding:11px 14px;font-weight:500;">' + p.nombreDispositivo + '</td>',
-                        '<td style="padding:11px 14px;color:#64748b;">' + salon + '</td>',
-                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
-                        '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
-                        '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
-                        '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
-                    ].join('');
-                    tbody.appendChild(tr);
-                });
+                actualizarEncabezadoPrestamosPanel();
+                renderTablaPrestamosPanel();
             })
             .catch(function(error) { console.error('Error panel prestamos:', error); });
     }
@@ -706,6 +1215,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function abrirModalCrearPrestamo() {
         formCrearPrestamo.reset();
         
+        // Limpiar campos de ubicación
+        const prestamoSede = document.getElementById('prestamo-sede');
+        const prestamoSalon = document.getElementById('prestamo-salon');
+        const prestanoUbicacion = document.getElementById('prestamo-ubicacion-generada');
+        
+        prestamoSalon.innerHTML = '<option value="">Seleccione una sede primero</option>';
+        prestanoUbicacion.value = '';
+        
         // Cargar dispositivos DISPONIBLES
         fetch(`${apiBase}/dispositivos?estado=DISPONIBLE`)
             .then(res => res.json())
@@ -717,19 +1234,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-        // Cargar salones
-        fetch(`${apiBase}/salones`)
+        // Cargar sedes
+        prestamoSede.innerHTML = '<option value="">Cargando sedes...</option>';
+        fetch(`${apiBase}/sedes`)
             .then(res => res.json())
-            .then(salones => {
-                const selectS = document.getElementById('prestamo-salon');
-                selectS.innerHTML = '<option value="">Seleccione un salón...</option>';
-                salones.forEach(s => {
-                    selectS.innerHTML += `<option value="${s.idSalon}">Salón ${s.numero}</option>`;
+            .then(sedes => {
+                prestamoSede.innerHTML = '<option value="">Seleccione una sede...</option>';
+                sedes.forEach(s => {
+                    prestamoSede.innerHTML += `<option value="${s.idSede}" data-codigo="${s.codigo}">${s.nombre} (${s.codigo})</option>`;
                 });
             });
 
         modalCrearPrestamo.style.display = 'flex';
     }
+
+    // Evento para cuando cambia la sede en el formulario de préstamo
+    document.getElementById('prestamo-sede').addEventListener('change', function() {
+        const salonSelect = document.getElementById('prestamo-salon');
+        const ubicacionInput = document.getElementById('prestamo-ubicacion-generada');
+        const sedeId = this.value;
+        
+        ubicacionInput.value = '';
+        
+        if (!sedeId) {
+            salonSelect.innerHTML = '<option value="">Seleccione una sede primero</option>';
+            return;
+        }
+        
+        // Cargar salones de esa sede
+        fetch(`${apiBase}/sedes/${sedeId}/salones`)
+            .then(res => res.json())
+            .then(salones => {
+                salonSelect.innerHTML = '<option value="">Seleccione un salón...</option>';
+                salones.forEach(s => {
+                    salonSelect.innerHTML += `<option value="${s.idSalon}" data-numero="${s.numero}">${s.numero}</option>`;
+                });
+            })
+            .catch(err => console.error('Error cargando salones:', err));
+    });
+
+    // Evento para cuando cambia el salón en el formulario de préstamo
+    document.getElementById('prestamo-salon').addEventListener('change', function() {
+        const ubicacionInput = document.getElementById('prestamo-ubicacion-generada');
+        const sedeSelect = document.getElementById('prestamo-sede');
+        const salonOpt = this.options[this.selectedIndex];
+        
+        if (!salonOpt.value) {
+            ubicacionInput.value = '';
+            return;
+        }
+        
+        const sedeOpt = sedeSelect.options[sedeSelect.selectedIndex];
+        const codigoSede = sedeOpt ? sedeOpt.getAttribute('data-codigo') : '';
+        const numSalon = salonOpt ? salonOpt.getAttribute('data-numero') : '';
+        
+        ubicacionInput.value = (codigoSede && numSalon) ? (codigoSede + '-' + numSalon) : '';
+    });
 
     formCrearPrestamo.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -769,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('det-prestamo-usuario').textContent = prestamo.nombreUsuario;
         document.getElementById('det-prestamo-dispositivo').textContent = prestamo.nombreDispositivo;
-        document.getElementById('det-prestamo-salon').textContent = prestamo.numeroSalon + ' (' + prestamo.nombreSede + ')';
+        document.getElementById('det-prestamo-salon').textContent = generarUbicacionSalon(prestamo);
         document.getElementById('det-prestamo-inicio').textContent = formatearFecha(prestamo.fechaInicio);
         document.getElementById('det-prestamo-fin').textContent = formatearFecha(prestamo.fechaFin);
         document.getElementById('det-prestamo-estado').innerHTML = getEstadoBadge(prestamo.estado);
@@ -844,17 +1404,46 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(mantenimientos => {
                 mantenimientosActuales = mantenimientos;
                 if(Array.isArray(mantenimientos)){
+                    actualizarEncabezadoMantenimientos();
                     tablaMantenimientosBody.innerHTML = '';
+                    var rol = obtenerRolActual();
+                    var esTecnico = rol === 'TECNICO';
                     mantenimientos.forEach(m => {
                         const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${m.nombreDispositivo}</td>
-                            <td>${m.nombreUsuario}</td>
-                            <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
-                            <td>${formatearFecha(m.fechaInicio)}</td>
-                            <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
-                            <td><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
-                        `;
+                        if (rol === 'TECNICO') {
+                            tr.innerHTML = `
+                                <td style="padding:12px 14px;color:#64748b;font-weight:600;">#${m.idMantenimiento}</td>
+                                <td style="padding:12px 14px;font-weight:500;">${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                                <td style="padding:12px 14px;"><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                                <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
+                                <td style="padding:12px 14px;color:#64748b;font-size:13px;">${m.descripcion || '-'}</td>
+                                <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                            `;
+                        } else if (rol === 'ADMINISTRADOR') {
+                            tr.innerHTML = `
+                                <td style="padding:12px 14px;color:#64748b;font-weight:600;">#${m.idMantenimiento}</td>
+                                <td style="padding:12px 14px;font-weight:500;">${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                                <td style="padding:12px 14px;">${m.nombreUsuario || '-'}</td>
+                                <td style="padding:12px 14px;"><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                                <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
+                                <td style="padding:12px 14px;color:#64748b;font-size:13px;">${m.descripcion || '-'}</td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${m.fechaCreacion ? formatearFecha(m.fechaCreacion) : '-'}</td>
+                                <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                            `;
+                        } else {
+                            tr.innerHTML = `
+                                <td style="padding:12px 14px;font-weight:500;">${m.nombreDispositivo}</td>
+                                <td style="padding:12px 14px;">${m.nombreUsuario}</td>
+                                <td style="padding:12px 14px;"><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
+                                <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
+                                <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                            `;
+                        }
                         tablaMantenimientosBody.appendChild(tr);
                     });
 

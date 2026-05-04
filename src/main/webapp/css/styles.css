@@ -1,9 +1,15 @@
 /* ================= ADMIN INTERFACE STYLES ================= */
+.page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f4f7f6;
+}
+
 .admin-container {
     display: flex;
-    height: 100vh;
+    flex: 1;
     overflow: hidden;
-    background: #f4f7f6;
 }
 
 .sidebar {
@@ -14,20 +20,22 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    height: 100vh;
+    height: calc(100vh - 80px);
     overflow-y: auto;
     box-shadow: 2px 0 10px rgba(0,0,0,0.04);
     flex-shrink: 0;
 }
 .logo-section {
-    padding: 32px 20px 16px 20px;
-    text-align: center;
-    background: #fff;
-    border-bottom: 1px solid #e5e9f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+    padding: 0 20px;
+    background: transparent;
 }
 .logo-fup {
-    width: 60px;
-    margin-bottom: 10px;
+    width: 90px;
+    max-width: 100%;
 }
 .logo-title {
     display: block;
@@ -77,15 +85,21 @@
     flex-direction: column;
     overflow-y: auto;
     min-width: 0;
-    height: 100vh;
+    min-height: calc(100vh - 80px);
 }
 .admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 36px 10px 36px;
+    min-height: 80px;
+    padding: 0 36px;
     background: #fff;
-    border-bottom: 1px solid #e5e9f2;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+}
+.admin-header .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 .user-info {
     font-size: 15px;
@@ -242,6 +256,76 @@
 .quick-btn:hover {
     background: #f8fafe;
     border-color: #14477b;
+}
+
+.tecnico-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.tecnico-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #14477b;
+    color: #fff;
+}
+
+.btn-secondary {
+    background: #fff;
+    color: #14477b;
+    border: 1px solid #dbe6f6;
+}
+
+.btn-secondary:hover {
+    background: #f8fafe;
+}
+
+.tecnico-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.tecnico-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    min-height: 140px;
+}
+
+.tecnico-card h3 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    color: #334155;
+}
+
+.tecnico-card .value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.1;
 }
 
 .requests-table {

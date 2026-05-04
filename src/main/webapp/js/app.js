@@ -23,10 +23,8 @@ function checkSession() {
         .then(data => {
             if (data.authenticated && data.usuario) {
                 const rol = String(data.usuario.rol || '').trim().toUpperCase();
-                if (rol === 'ADMINISTRADOR') {
+                if (rol === 'ADMINISTRADOR' || rol === 'TECNICO' || rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
                     window.location.href = window.location.origin + '/systechpro/admin.html';
-                } else if (rol === 'TECNICO') {
-                    window.location.href = window.location.origin + '/systechpro/tecnico.html';
                 } else {
                     showDashboard(data.usuario);
                 }
@@ -79,10 +77,10 @@ function handleLogin(e) {
     .then(data => {
         if (data.success && data.usuario) {
             const rol = String(data.usuario.rol || '').trim().toUpperCase();
-            if (rol === 'ADMINISTRADOR') {
+            // Guardar usuario en localStorage para que auth.js pueda accederlo
+            localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            if (rol === 'ADMINISTRADOR' || rol === 'TECNICO' || rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
                 window.location.replace(window.location.origin + '/systechpro/admin.html');
-            } else if (rol === 'TECNICO') {
-                window.location.replace(window.location.origin + '/systechpro/tecnico.html');
             } else {
                 showDashboard(data.usuario);
             }

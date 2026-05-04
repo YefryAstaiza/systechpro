@@ -51,6 +51,7 @@ public class Prestamo {
     private String nombreDispositivo;
     private String numeroSalon;
     private String nombreSede;
+    private String codigoSede;
 
     public String getNombreUsuario() { return nombreUsuario; }
     public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
@@ -63,4 +64,7 @@ public class Prestamo {
 
     public String getNombreSede() { return nombreSede; }
     public void setNombreSede(String nombreSede) { this.nombreSede = nombreSede; }
+
+    public String getCodigoSede() { return codigoSede; }
+    public void setCodigoSede(String codigoSede) { this.codigoSede = codigoSede; }
 }

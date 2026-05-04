@@ -14,7 +14,8 @@ public class PrestamoDAO {
         "u.nombre AS nombre_usuario, " +
         "d.nombre AS nombre_dispositivo, " +
         "s.numero AS numero_salon, " +
-        "se.nombre AS nombre_sede " +
+        "se.nombre AS nombre_sede, " +
+        "se.codigo AS codigo_sede " +
         "FROM prestamo p " +
         "JOIN usuario u ON p.id_usuario = u.id_usuario " +
         "JOIN dispositivo d ON p.id_dispositivo = d.id_dispositivo " +
@@ -141,6 +142,7 @@ public class PrestamoDAO {
         p.setNombreDispositivo(rs.getString("nombre_dispositivo"));
         p.setNumeroSalon(String.valueOf(rs.getInt("numero_salon")));
         p.setNombreSede(rs.getString("nombre_sede"));
+        p.setCodigoSede(rs.getString("codigo_sede"));
         
         return p;
     }
