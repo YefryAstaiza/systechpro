@@ -1,9 +1,15 @@
 /* ================= ADMIN INTERFACE STYLES ================= */
+.page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f4f7f6;
+}
+
 .admin-container {
     display: flex;
-    height: 100vh;
+    flex: 1;
     overflow: hidden;
-    background: #f4f7f6;
 }
 
 .sidebar {
@@ -14,20 +20,22 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    height: 100vh;
+    height: calc(100vh - 80px);
     overflow-y: auto;
     box-shadow: 2px 0 10px rgba(0,0,0,0.04);
     flex-shrink: 0;
 }
 .logo-section {
-    padding: 32px 20px 16px 20px;
-    text-align: center;
-    background: #fff;
-    border-bottom: 1px solid #e5e9f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+    padding: 0 20px;
+    background: transparent;
 }
 .logo-fup {
-    width: 60px;
-    margin-bottom: 10px;
+    width: 90px;
+    max-width: 100%;
 }
 .logo-title {
     display: block;
@@ -77,15 +85,21 @@
     flex-direction: column;
     overflow-y: auto;
     min-width: 0;
-    height: 100vh;
+    min-height: calc(100vh - 80px);
 }
 .admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 36px 10px 36px;
+    min-height: 80px;
+    padding: 0 36px;
     background: #fff;
-    border-bottom: 1px solid #e5e9f2;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+}
+.admin-header .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 .user-info {
     font-size: 15px;
