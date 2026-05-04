@@ -157,8 +157,9 @@ public class UsuarioController extends HttpServlet {
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Error al registrar en BD"));
             }
         } catch (Exception e) {
+            e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            objectMapper.writeValue(response.getWriter(), Map.of("error", "Error en el servidor"));
+            objectMapper.writeValue(response.getWriter(), Map.of("error", "Error en el servidor", "detalle", e.getMessage()));
         }
     }
 
@@ -244,8 +245,9 @@ public class UsuarioController extends HttpServlet {
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Usuario no encontrado"));
             }
         } catch (Exception e) {
+            e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            objectMapper.writeValue(response.getWriter(), Map.of("error", "Error en el servidor"));
+            objectMapper.writeValue(response.getWriter(), Map.of("error", "Error en el servidor", "detalle", e.getMessage()));
         }
     }
 

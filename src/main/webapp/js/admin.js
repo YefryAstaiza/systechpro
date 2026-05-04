@@ -495,7 +495,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     formUsuario.addEventListener('submit', function(e) {
         e.preventDefault();
-        const id = document.getElementById('usuario-id').value;
+        const rawId = document.getElementById('usuario-id').value;
+        const id = rawId && rawId !== 'undefined' && rawId !== 'null' ? rawId : '';
         const password = document.getElementById('usuario-password').value;
         
         const payload = {
@@ -523,7 +524,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 modalUsuario.style.display = 'none';
                 cargarUsuarios();
             } else {
-                alert(res.body.error || 'Ocurrió un error al guardar');
+                const detalle = res.body.detalle ? ' (' + res.body.detalle + ')' : '';
+                alert((res.body.error || 'Ocurrió un error al guardar') + detalle);
             }
         })
         .catch(err => {
