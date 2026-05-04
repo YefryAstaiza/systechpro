@@ -164,7 +164,6 @@ function actualizarEncabezadoDispositivos() {
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Nombre</th>',
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Tipo</th>',
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado</th>',
-            '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Ubicación</th>',
             '<th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha Creación</th>',
             '<th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">Acciones</th>'
         ].join('');
@@ -783,9 +782,59 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btn-cancelar-prestamo').addEventListener('click', () => modalCrearPrestamo.style.display = 'none');
     document.getElementById('btn-cerrar-detalle').addEventListener('click', () => modalDetallePrestamo.style.display = 'none');
 
+    function parseFecha(timestamp) {
+        if (timestamp == null) return null;
+        if (timestamp instanceof Date) return timestamp;
+
+        if (typeof timestamp === 'number' || /^\d+$/.test(String(timestamp).trim())) {
+            const ms = Number(timestamp);
+            return new Date(ms);
+        }
+
+        if (typeof timestamp === 'string') {
+            const trimmed = timestamp.trim();
+            const normalized = trimmed.replace(' ', 'T');
+            const date = new Date(normalized);
+            if (!Number.isNaN(date.getTime())) {
+                return date;
+            }
+        }
+
+        return null;
+    }
+
     function formatearFecha(timestamp) {
-        const d = new Date(timestamp);
-        return d.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+        const d = parseFecha(timestamp);
+        if (!d || Number.isNaN(d.getTime())) {
+            return 'N/A';
+        }
+        const colombiaOffset = 5 * 60;
+        const localOffset = d.getTimezoneOffset();
+        const diffMinutes = (colombiaOffset - localOffset) * 60 * 1000;
+        const colombiaDate = new Date(d.getTime() + diffMinutes);
+        const day = String(colombiaDate.getUTCDate()).padStart(2, '0');
+        const month = String(colombiaDate.getUTCMonth() + 1).padStart(2, '0');
+        const year = String(colombiaDate.getUTCFullYear()).slice(-2);
+        const hour = String(colombiaDate.getUTCHours()).padStart(2, '0');
+        const minute = String(colombiaDate.getUTCMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hour}:${minute}`;
+    }
+
+    function generarUbicacionSalon(prestamo) {
+        if (prestamo.codigoSede && prestamo.numeroSalon) {
+            return prestamo.codigoSede + '-' + prestamo.numeroSalon;
+        }
+        if (prestamo.nombreSede && prestamo.numeroSalon) {
+            const codigo = prestamo.nombreSede
+                .split(' ')
+                .filter(Boolean)
+                .map(word => word[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2);
+            return codigo + '-' + prestamo.numeroSalon;
+        }
+        return prestamo.numeroSalon ? prestamo.numeroSalon : '—';
     }
 
     function renderTablaSolicitudesDashboard() {
@@ -1054,13 +1103,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     acciones = '<span style="color:#94a3b8;font-size:12px;">—</span>';
                 }
-                const salon = p.numeroSalon ? (p.nombreSede + ' - Salón ' + p.numeroSalon) : '—';
+                const ubicacionSalon = generarUbicacionSalon(p);
                 const tr = document.createElement('tr');
                 if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
                     tr.innerHTML = [
                         '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
                         '<td style="padding:11px 14px;font-weight:500;">' + (p.nombreDispositivo || p.idDispositivo || '-') + '</td>',
-                        '<td style="padding:11px 14px;color:#64748b;">' + (p.idSalon || '-') + '</td>',
+                        '<td style="padding:11px 14px;color:#64748b;">' + ubicacionSalon + '</td>',
                         '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
                         '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
                         '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
@@ -1071,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
                         '<td style="padding:11px 14px;">' + p.nombreUsuario + '</td>',
                         '<td style="padding:11px 14px;font-weight:500;">' + p.nombreDispositivo + '</td>',
-                        '<td style="padding:11px 14px;color:#64748b;">' + salon + '</td>',
+                        '<td style="padding:11px 14px;color:#64748b;">' + ubicacionSalon + '</td>',
                         '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
                         '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
                         '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
@@ -1280,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('det-prestamo-usuario').textContent = prestamo.nombreUsuario;
         document.getElementById('det-prestamo-dispositivo').textContent = prestamo.nombreDispositivo;
-        document.getElementById('det-prestamo-salon').textContent = prestamo.numeroSalon + ' (' + prestamo.nombreSede + ')';
+        document.getElementById('det-prestamo-salon').textContent = generarUbicacionSalon(prestamo);
         document.getElementById('det-prestamo-inicio').textContent = formatearFecha(prestamo.fechaInicio);
         document.getElementById('det-prestamo-fin').textContent = formatearFecha(prestamo.fechaFin);
         document.getElementById('det-prestamo-estado').innerHTML = getEstadoBadge(prestamo.estado);

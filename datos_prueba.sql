@@ -3,8 +3,9 @@
 -- ======================================
 -- Este script inserta datos de prueba asumiendo que los usuarios ya existen.
 -- Incluye 20 registros de préstamos y suficientes datos para probar paginación en todos los roles.
-
+SET NAMES utf8mb4;
 USE systechpro3;
+
 
 -- Insertar sedes (si no existen)
 INSERT IGNORE INTO sede (nombre, codigo) VALUES

@@ -37,7 +37,7 @@ public class AuthController extends HttpServlet {
 
     private void login(HttpServletRequest request, HttpServletResponse response) 
             throws IOException {
-        response.setContentType("application/json");
+        response.setContentType("application/json; charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
 
         try {
