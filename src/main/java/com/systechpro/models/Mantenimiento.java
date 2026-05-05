@@ -11,6 +11,7 @@ public class Mantenimiento {
     private Timestamp fechaFin;
     private String descripcion;
     private String estado; // EN_PROCESO, FINALIZADO
+    private Timestamp fechaCreacion;
 
     public Mantenimiento() {}
 
@@ -51,6 +52,9 @@ public class Mantenimiento {
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
 
+    public Timestamp getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(Timestamp fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+
     // Propiedades para frontend
     private String nombreDispositivo;
     private String nombreUsuario;
@@ -60,9 +64,4 @@ public class Mantenimiento {
 
     public String getNombreUsuario() { return nombreUsuario; }
     public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
-
-    private String ubicacion;
-
-    public String getUbicacion() { return ubicacion; }
-    public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
 }

@@ -15,6 +15,7 @@ let auditoriaPage = 1;
 let prestamosPanelPage = 1;
 let mantenimientosPage = 1;
 const PANEL_PAGE_SIZE = 10;
+let autoRefreshTimer = null;
 
 const permisos = {
     ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes'],
@@ -263,15 +264,66 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (rolGlobal === 'ADMINISTRADOR') {
                     cargarDispositivos();
                     cargarPrestamos();
+                    cargarMantenimientos();
                 } else if (rolGlobal === 'TECNICO') {
                     cargarMantenimientos();
                 } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
                     cargarMisSolicitudes();
                 }
+                iniciarAutoRefresh();
             } else {
                 window.location.href = 'index.html';
             }
         });
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && rolGlobal) {
+            if (rolGlobal === 'ADMINISTRADOR') {
+                actualizarTarjetasAdmin();
+            } else if (rolGlobal === 'TECNICO') {
+                actualizarTarjetasTecnico();
+            } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+                cargarMisSolicitudes();
+            }
+        }
+    });
+
+    function iniciarAutoRefresh() {
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+        }
+        autoRefreshTimer = setInterval(function() {
+            if (rolGlobal === 'ADMINISTRADOR') {
+                actualizarTarjetasAdmin();
+            } else if (rolGlobal === 'TECNICO') {
+                actualizarTarjetasTecnico();
+            } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+                cargarMisSolicitudes();
+            }
+        }, 300000);
+    }
+
+    function actualizarTarjetasAdmin() {
+        fetch(apiBase + '/dispositivos')
+            .then(res => res.json())
+            .then(dispositivos => {
+                if (Array.isArray(dispositivos)) {
+                    actualizarDashboard(dispositivos);
+                }
+            })
+            .catch(error => console.error('Error actualizando tarjetas admin:', error));
+    }
+
+    function actualizarTarjetasTecnico() {
+        fetch(apiBase + '/mantenimientos')
+            .then(res => res.json())
+            .then(mantenimientos => {
+                if (Array.isArray(mantenimientos)) {
+                    actualizarDashboardTecnico(mantenimientos);
+                }
+            })
+            .catch(error => console.error('Error actualizando tarjetas técnico:', error));
+    }
 
     // Lógica para cerrar sesión
     const logoutBtn = document.getElementById('btn-logout');
@@ -621,6 +673,38 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('dash-maintenance').textContent = dispositivos.filter(function(d) { return d.estado === 'MANTENIMIENTO'; }).length;
     }
 
+    function actualizarTarjetasSolicitudes(prestamos) {
+        if (!Array.isArray(prestamos)) return;
+        var lista = prestamos.slice();
+        if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+            lista = lista.filter(function(p) { return Number(p.idUsuario) === Number(idUsuarioGlobal); });
+        }
+        var total = lista.length;
+        var aprobadas = lista.filter(function(p) { return p.estado === 'APROBADO'; }).length;
+        var pendientes = lista.filter(function(p) { return p.estado === 'PENDIENTE'; }).length;
+
+        var totalEl = document.getElementById('card-solicitudes-totales');
+        var aprobadasEl = document.getElementById('card-solicitudes-aprobadas');
+        var pendientesEl = document.getElementById('card-solicitudes-pendientes');
+        if (totalEl) totalEl.textContent = total;
+        if (aprobadasEl) aprobadasEl.textContent = aprobadas;
+        if (pendientesEl) pendientesEl.textContent = pendientes;
+    }
+
+    function actualizarDispositivosDisponibles() {
+        fetch(apiBase + '/dispositivos')
+            .then(function(res) { return res.json(); })
+            .then(function(dispositivos) {
+                if (!Array.isArray(dispositivos)) return;
+                var disponibles = dispositivos.filter(function(d) { return d.estado === 'DISPONIBLE'; }).length;
+                var disponiblesEl = document.getElementById('card-dispositivos-disponibles');
+                if (disponiblesEl) disponiblesEl.textContent = disponibles;
+            })
+            .catch(function(error) {
+                console.error('Error actualizando dispositivos disponibles:', error);
+            });
+    }
+
     function getEstadoBadgeDisp(estado) {
         var cfg = {
             'DISPONIBLE':    { bg: '#dcfce7', color: '#16a34a', label: 'Disponible' },
@@ -784,6 +868,29 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btn-cancelar-prestamo').addEventListener('click', () => modalCrearPrestamo.style.display = 'none');
     document.getElementById('btn-cerrar-detalle').addEventListener('click', () => modalDetallePrestamo.style.display = 'none');
 
+    const btnRecientesPrev = document.getElementById('btn-recientes-prev');
+    const btnRecientesNext = document.getElementById('btn-recientes-next');
+
+    if (btnRecientesPrev) {
+        btnRecientesPrev.addEventListener('click', function() {
+            if (tecnicoRecientesPage > 1) {
+                tecnicoRecientesPage--;
+                renderMantenimientosRecientes(mantenimientosActuales);
+            }
+        });
+    }
+
+    if (btnRecientesNext) {
+        btnRecientesNext.addEventListener('click', function() {
+            const total = filtrarMantenimientosTecnico(mantenimientosActuales).length;
+            const totalPages = Math.max(1, Math.ceil(total / TECNICO_RECIENTES_PER_PAGE));
+            if (tecnicoRecientesPage < totalPages) {
+                tecnicoRecientesPage++;
+                renderMantenimientosRecientes(mantenimientosActuales);
+            }
+        });
+    }
+
     function parseFecha(timestamp) {
         if (timestamp == null) return null;
         if (timestamp instanceof Date) return timestamp;
@@ -810,16 +917,39 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!d || Number.isNaN(d.getTime())) {
             return 'N/A';
         }
-        const colombiaOffset = 5 * 60;
-        const localOffset = d.getTimezoneOffset();
-        const diffMinutes = (colombiaOffset - localOffset) * 60 * 1000;
-        const colombiaDate = new Date(d.getTime() + diffMinutes);
-        const day = String(colombiaDate.getUTCDate()).padStart(2, '0');
-        const month = String(colombiaDate.getUTCMonth() + 1).padStart(2, '0');
-        const year = String(colombiaDate.getUTCFullYear()).slice(-2);
-        const hour = String(colombiaDate.getUTCHours()).padStart(2, '0');
-        const minute = String(colombiaDate.getUTCMinutes()).padStart(2, '0');
-        return `${day}/${month}/${year} ${hour}:${minute}`;
+        const formatter = new Intl.DateTimeFormat('es-CO', {
+            timeZone: 'America/Bogota',
+            year: '2-digit',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        return formatter.format(d).replace(',', '');
+    }
+
+    function parseFecha(timestamp) {
+        if (timestamp == null) return null;
+        if (timestamp instanceof Date) return timestamp;
+
+        if (typeof timestamp === 'number' || /^\d+$/.test(String(timestamp).trim())) {
+            return new Date(Number(timestamp));
+        }
+
+        if (typeof timestamp === 'string') {
+            const trimmed = timestamp.trim();
+            let normalized = trimmed.replace(' ', 'T');
+            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(normalized)) {
+                normalized += '-05:00';
+            }
+            const date = new Date(normalized);
+            if (!Number.isNaN(date.getTime())) {
+                return date;
+            }
+        }
+
+        return null;
     }
 
     function generarUbicacionSalon(prestamo) {
@@ -889,15 +1019,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const pagina = lista.slice(inicio, inicio + TECNICO_RECIENTES_PER_PAGE);
         tablaRecientesBody.innerHTML = '';
         if (pagina.length === 0) {
-            tablaRecientesBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">No hay mantenimientos recientes</td></tr>';
+            tablaRecientesBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No hay mantenimientos recientes</td></tr>';
         } else {
             pagina.forEach(m => {
-                const ubicacion = m.ubicacion || (m.nombreSede ? m.nombreSede + (m.numeroSalon ? ' - Salón ' + m.numeroSalon : '') : '-');
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
                     <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
-                    <td>${ubicacion}</td>
                     <td>${formatearFecha(m.fechaInicio)}</td>
                     <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
                     <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
@@ -1147,13 +1275,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 prestamosActuales = prestamos;
                 prestamosDashboard = Array.isArray(prestamos) ? prestamos : [];
                 renderTablaSolicitudesDashboard();
+                if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+                    actualizarTarjetasSolicitudes(prestamosDashboard);
+                }
             })
             .catch(error => console.error('Error cargando prestamos:', error));
     }
 
     function cargarMisSolicitudes() {
-        // El backend devuelve solo las solicitudes del usuario logueado
         cargarPrestamos();
+        if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+            actualizarDispositivosDisponibles();
+        }
     }
 
     // Panel dedicado de prestamos
@@ -1455,20 +1588,127 @@ document.addEventListener('DOMContentLoaded', function() {
                             abrirModalDetalleMantenimiento(id);
                         });
                     });
+
+                    if (rolGlobal === 'TECNICO') {
+                        tecnicoRecientesPage = 1;
+                        actualizarDashboardTecnico(mantenimientos);
+                        renderMantenimientosRecientes(mantenimientos);
+                    }
+                    if (rolGlobal === 'ADMINISTRADOR') {
+                        actualizarContadorMantenimientoAdmin(mantenimientos);
+                    }
                 }
             })
             .catch(error => console.error('Error cargando mantenimientos:', error));
     }
 
+    function actualizarContadorMantenimientoAdmin(mantenimientos) {
+        if (!Array.isArray(mantenimientos)) return;
+        const enProceso = mantenimientos.filter(m => m.estado === 'EN_PROCESO');
+        const dispositivosEnMantenimiento = new Set(enProceso.map(m => m.idDispositivo)).size;
+        const cardMaintenance = document.getElementById('dash-maintenance');
+        if (cardMaintenance) {
+            cardMaintenance.textContent = dispositivosEnMantenimiento;
+        }
+    }
+
     function getEstadoBadgeMantenimiento(estado) {
-        if(estado === 'FINALIZADO') return '<span class="badge approved"><span class="dot"></span>Finalizado</span>';
-        if(estado === 'EN_PROCESO') return '<span class="badge pending"><span class="dot"></span>En Proceso</span>';
-        return estado;
+        if (estado === 'FINALIZADO') return '<span class="badge approved"><span class="dot"></span>Finalizado</span>';
+        if (estado === 'EN_PROCESO') return '<span class="badge pending"><span class="dot"></span>En Proceso</span>';
+        return '<span class="badge" style="background:#e2e8f0;color:#475569;padding:4px 10px;border-radius:12px;font-size:12px;display:inline-flex;align-items:center;gap:5px;">' + estado + '</span>';
+    }
+
+    function filtrarMantenimientosTecnico(mantenimientos) {
+        const tecnicoId = Number(idUsuarioGlobal);
+        return mantenimientos.filter(m => Number(m.idUsuario) === tecnicoId);
+    }
+
+    function actualizarDashboardTecnico(mantenimientos) {
+        const tecnicos = filtrarMantenimientosTecnico(mantenimientos);
+        const enProceso = tecnicos.filter(m => m.estado === 'EN_PROCESO');
+        const finalizados = tecnicos.filter(m => m.estado === 'FINALIZADO');
+
+        const dispositivosEnMantenimiento = new Set(enProceso.map(m => m.idDispositivo)).size;
+        const pendientes = tecnicos.filter(m => m.estado !== 'FINALIZADO').length;
+
+        const cardDisp = document.getElementById('card-dispositivos-mantenimiento');
+        const cardProceso = document.getElementById('card-mantenimientos-proceso');
+        const cardFinalizados = document.getElementById('card-mantenimientos-finalizados');
+        const cardPendientes = document.getElementById('card-mantenimientos-pendientes');
+
+        if(cardDisp) cardDisp.textContent = dispositivosEnMantenimiento;
+        if(cardProceso) cardProceso.textContent = enProceso.length;
+        if(cardFinalizados) cardFinalizados.textContent = finalizados.length;
+        if(cardPendientes) cardPendientes.textContent = pendientes;
+    }
+
+    function renderMantenimientosRecientes(mantenimientos) {
+        const recientes = filtrarMantenimientosTecnico(mantenimientos)
+            .sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio));
+
+        const total = recientes.length;
+        const totalPages = Math.max(1, Math.ceil(total / TECNICO_RECIENTES_PER_PAGE));
+        if (tecnicoRecientesPage > totalPages) tecnicoRecientesPage = totalPages;
+
+        const start = (tecnicoRecientesPage - 1) * TECNICO_RECIENTES_PER_PAGE;
+        const pageItems = recientes.slice(start, start + TECNICO_RECIENTES_PER_PAGE);
+
+        const body = document.getElementById('tabla-recientes-body');
+        if (body) {
+            body.innerHTML = '';
+            if (pageItems.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No hay mantenimientos recientes</td></tr>';
+            } else {
+                pageItems.forEach(m => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="padding:12px 14px;font-weight:500;color:#1e293b;">${m.nombreDispositivo || m.idDispositivo || '-'}</td>
+                        <td style="padding:12px 14px;color:#475569;">${m.tipo || '-'}</td>
+                        <td style="padding:12px 14px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
+                        <td style="padding:12px 14px;color:#64748b;">${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
+                        <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
+                        <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
+                    `;
+                    body.appendChild(tr);
+                });
+
+                document.querySelectorAll('.btn-ver-mantenimiento').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = parseInt(e.target.getAttribute('data-id'));
+                        abrirModalDetalleMantenimiento(id);
+                    });
+                });
+            }
+        }
+
+        const recPage = document.getElementById('recientes-pagina');
+        const prevBtn = document.getElementById('btn-recientes-prev');
+        const nextBtn = document.getElementById('btn-recientes-next');
+
+        if (recPage) recPage.textContent = `Página ${tecnicoRecientesPage} de ${totalPages}`;
+        if (prevBtn) {
+            prevBtn.disabled = tecnicoRecientesPage <= 1;
+            prevBtn.style.opacity = tecnicoRecientesPage <= 1 ? '0.4' : '1';
+        }
+        if (nextBtn) {
+            nextBtn.disabled = tecnicoRecientesPage >= totalPages;
+            nextBtn.style.opacity = tecnicoRecientesPage >= totalPages ? '0.4' : '1';
+        }
     }
 
     function abrirModalCrearMantenimiento() {
         if(formCrearMantenimiento) formCrearMantenimiento.reset();
-        
+
+        const sedeSelect = document.getElementById('mantenimiento-sede');
+        const salonSelect = document.getElementById('mantenimiento-salon');
+
+        if (sedeSelect) {
+            sedeSelect.innerHTML = '<option value="">Cargando sedes...</option>';
+        }
+        if (salonSelect) {
+            salonSelect.innerHTML = '<option value="">Seleccione una sede primero</option>';
+        }
+
         fetch(apiBase + '/dispositivos?estado=DISPONIBLE')
             .then(res => res.json())
             .then(dispositivos => {
@@ -1481,6 +1721,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
+        if (sedeSelect) {
+            fetch(apiBase + '/sedes')
+                .then(res => res.json())
+                .then(sedes => {
+                    sedeSelect.innerHTML = '<option value="">Seleccione una sede...</option>';
+                    sedes.forEach(s => {
+                        sedeSelect.innerHTML += `<option value="${s.idSede}" data-codigo="${s.codigo}" data-nombre="${s.nombre}">${s.nombre} (${s.codigo})</option>`;
+                    });
+                })
+                .catch(() => {
+                    sedeSelect.innerHTML = '<option value="">Error cargando sedes</option>';
+                });
+
+            sedeSelect.onchange = function() {
+                if (!salonSelect) return;
+                const sedeOpt = sedeSelect.options[sedeSelect.selectedIndex];
+                const sedeId = sedeOpt.value;
+
+                if (!sedeId) {
+                    salonSelect.innerHTML = '<option value="">Seleccione una sede primero</option>';
+                    return;
+                }
+
+                salonSelect.innerHTML = '<option value="">Cargando salones...</option>';
+                fetch(`${apiBase}/sedes/${sedeId}/salones`)
+                    .then(res => res.json())
+                    .then(salones => {
+                        salonSelect.innerHTML = '<option value="">Seleccione un salón...</option>';
+                        salones.forEach(salon => {
+                            salonSelect.innerHTML += `<option value="${salon.idSalon}" data-numero="${salon.numero}">${salon.numero}</option>`;
+                        });
+                    })
+                    .catch(() => {
+                        salonSelect.innerHTML = '<option value="">Error cargando salones</option>';
+                    });
+            };
+        }
+
+        if (salonSelect) {
+            salonSelect.onchange = function() {
+                // No longer needed since ubicacion is removed
+            };
+        }
+
         if(modalCrearMantenimiento) modalCrearMantenimiento.style.display = 'flex';
     }
 
@@ -1491,6 +1775,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const payload = {
                 idDispositivo: parseInt(document.getElementById('mantenimiento-dispositivo').value),
                 tipo: document.getElementById('mantenimiento-tipo').value,
+                estado: 'EN_PROCESO',
                 descripcion: document.getElementById('mantenimiento-descripcion').value
             };
 
@@ -1499,7 +1784,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
-            .then(res => res.json().then(data => ({status: res.status, body: data})))
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
             .then(res => {
                 if (res.status >= 200 && res.status < 300) {
                     alert(res.body.mensaje);

@@ -19,7 +19,7 @@ public class MantenimientoDAO {
         "JOIN usuario u ON m.id_usuario = u.id_usuario ";
     
     public boolean insertar(Mantenimiento mantenimiento) {
-        String sql = "INSERT INTO mantenimiento (id_dispositivo, id_usuario, tipo, fecha_inicio, descripcion, estado) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO mantenimiento (id_dispositivo, id_usuario, tipo, fecha_inicio, fecha_fin, descripcion, estado) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
@@ -27,8 +27,9 @@ public class MantenimientoDAO {
             pstmt.setInt(2, mantenimiento.getIdUsuario());
             pstmt.setString(3, mantenimiento.getTipo());
             pstmt.setTimestamp(4, mantenimiento.getFechaInicio());
-            pstmt.setString(5, mantenimiento.getDescripcion());
-            pstmt.setString(6, mantenimiento.getEstado());
+            pstmt.setTimestamp(5, mantenimiento.getFechaFin());
+            pstmt.setString(6, mantenimiento.getDescripcion());
+            pstmt.setString(7, mantenimiento.getEstado());
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -120,11 +121,7 @@ public class MantenimientoDAO {
         
         m.setNombreDispositivo(rs.getString("nombre_dispositivo"));
         m.setNombreUsuario(rs.getString("nombre_usuario"));
-
-        Dispositivo dispositivo = dispositivoDAO.buscarPorId(m.getIdDispositivo());
-        if (dispositivo != null) {
-            m.setUbicacion(dispositivo.getUbicacion());
-        }
+        m.setFechaCreacion(rs.getTimestamp("fecha_creacion"));
         
         return m;
     }
