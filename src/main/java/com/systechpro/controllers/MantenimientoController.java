@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -97,26 +99,33 @@ public class MantenimientoController extends HttpServlet {
             String tipo = (String) datos.get("tipo");
             String descripcion = (String) datos.get("descripcion");
 
-            if (idDispositivo == 0 || tipo == null || descripcion == null || descripcion.isEmpty()) {
+            if (idDispositivo == 0 || tipo == null || tipo.isEmpty() || descripcion == null || descripcion.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Datos incompletos"));
                 return;
             }
 
-            // Crear mantenimiento y cambiar estado del dispositivo
+            String estado = "EN_PROCESO";
+            Timestamp fechaInicio = ahoraBogota();
+            Timestamp fechaFin = null;
+
             Mantenimiento mantenimiento = new Mantenimiento();
             mantenimiento.setIdDispositivo(idDispositivo);
             mantenimiento.setIdUsuario(idUsuario);
             mantenimiento.setTipo(tipo);
             mantenimiento.setDescripcion(descripcion);
-            mantenimiento.setFechaInicio(new Timestamp(System.currentTimeMillis()));
-            mantenimiento.setEstado("EN_PROCESO");
+            mantenimiento.setFechaInicio(fechaInicio);
+            mantenimiento.setFechaFin(fechaFin);
+            mantenimiento.setEstado(estado);
 
             boolean resultado = mantenimientoDAO.insertar(mantenimiento);
 
             if (resultado) {
-                // Cambiar estado del dispositivo a mantenimiento
-                dispositivoDAO.actualizarEstado(idDispositivo, "MANTENIMIENTO");
+                if ("FINALIZADO".equals(estado)) {
+                    dispositivoDAO.actualizarEstado(idDispositivo, "DISPONIBLE");
+                } else {
+                    dispositivoDAO.actualizarEstado(idDispositivo, "MANTENIMIENTO");
+                }
                 
                 response.setStatus(HttpServletResponse.SC_CREATED);
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Mantenimiento registrado"));
@@ -128,6 +137,21 @@ public class MantenimientoController extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Error en el servidor"));
         }
+    }
+
+    private Timestamp parseTimestamp(String value) {
+        if (value == null || value.isEmpty()) {
+            throw new IllegalArgumentException("Valor de fecha vacío");
+        }
+        String normalized = value.replace('T', ' ');
+        if (normalized.length() == 16) {
+            normalized += ":00";
+        }
+        return Timestamp.valueOf(normalized);
+    }
+
+    private Timestamp ahoraBogota() {
+        return Timestamp.valueOf(LocalDateTime.now(ZoneId.of("America/Bogota")));
     }
 
     @Override
@@ -175,7 +199,7 @@ public class MantenimientoController extends HttpServlet {
 
             mantenimiento.setEstado(estado);
             if ("FINALIZADO".equals(estado)) {
-                mantenimiento.setFechaFin(new Timestamp(System.currentTimeMillis()));
+                mantenimiento.setFechaFin(ahoraBogota());
                 // Device returns to available
                 dispositivoDAO.actualizarEstado(mantenimiento.getIdDispositivo(), "DISPONIBLE");
             }
