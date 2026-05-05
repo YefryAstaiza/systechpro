@@ -15,6 +15,7 @@ let auditoriaPage = 1;
 let prestamosPanelPage = 1;
 let mantenimientosPage = 1;
 const PANEL_PAGE_SIZE = 10;
+let autoRefreshTimer = null;
 
 const permisos = {
     ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes'],
@@ -269,10 +270,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
                     cargarMisSolicitudes();
                 }
+                iniciarAutoRefresh();
             } else {
                 window.location.href = 'index.html';
             }
         });
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && rolGlobal) {
+            if (rolGlobal === 'ADMINISTRADOR') {
+                actualizarTarjetasAdmin();
+            } else if (rolGlobal === 'TECNICO') {
+                actualizarTarjetasTecnico();
+            } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+                cargarMisSolicitudes();
+            }
+        }
+    });
+
+    function iniciarAutoRefresh() {
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+        }
+        autoRefreshTimer = setInterval(function() {
+            if (rolGlobal === 'ADMINISTRADOR') {
+                actualizarTarjetasAdmin();
+            } else if (rolGlobal === 'TECNICO') {
+                actualizarTarjetasTecnico();
+            } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+                cargarMisSolicitudes();
+            }
+        }, 300000);
+    }
+
+    function actualizarTarjetasAdmin() {
+        fetch(apiBase + '/dispositivos')
+            .then(res => res.json())
+            .then(dispositivos => {
+                if (Array.isArray(dispositivos)) {
+                    actualizarDashboard(dispositivos);
+                }
+            })
+            .catch(error => console.error('Error actualizando tarjetas admin:', error));
+    }
+
+    function actualizarTarjetasTecnico() {
+        fetch(apiBase + '/mantenimientos')
+            .then(res => res.json())
+            .then(mantenimientos => {
+                if (Array.isArray(mantenimientos)) {
+                    actualizarDashboardTecnico(mantenimientos);
+                }
+            })
+            .catch(error => console.error('Error actualizando tarjetas técnico:', error));
+    }
 
     // Lógica para cerrar sesión
     const logoutBtn = document.getElementById('btn-logout');
@@ -618,6 +669,38 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('dash-available').textContent = dispositivos.filter(function(d) { return d.estado === 'DISPONIBLE'; }).length;
         document.getElementById('dash-inuse').textContent = dispositivos.filter(function(d) { return d.estado === 'EN_USO'; }).length;
         document.getElementById('dash-maintenance').textContent = dispositivos.filter(function(d) { return d.estado === 'MANTENIMIENTO'; }).length;
+    }
+
+    function actualizarTarjetasSolicitudes(prestamos) {
+        if (!Array.isArray(prestamos)) return;
+        var lista = prestamos.slice();
+        if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+            lista = lista.filter(function(p) { return Number(p.idUsuario) === Number(idUsuarioGlobal); });
+        }
+        var total = lista.length;
+        var aprobadas = lista.filter(function(p) { return p.estado === 'APROBADO'; }).length;
+        var pendientes = lista.filter(function(p) { return p.estado === 'PENDIENTE'; }).length;
+
+        var totalEl = document.getElementById('card-solicitudes-totales');
+        var aprobadasEl = document.getElementById('card-solicitudes-aprobadas');
+        var pendientesEl = document.getElementById('card-solicitudes-pendientes');
+        if (totalEl) totalEl.textContent = total;
+        if (aprobadasEl) aprobadasEl.textContent = aprobadas;
+        if (pendientesEl) pendientesEl.textContent = pendientes;
+    }
+
+    function actualizarDispositivosDisponibles() {
+        fetch(apiBase + '/dispositivos')
+            .then(function(res) { return res.json(); })
+            .then(function(dispositivos) {
+                if (!Array.isArray(dispositivos)) return;
+                var disponibles = dispositivos.filter(function(d) { return d.estado === 'DISPONIBLE'; }).length;
+                var disponiblesEl = document.getElementById('card-dispositivos-disponibles');
+                if (disponiblesEl) disponiblesEl.textContent = disponibles;
+            })
+            .catch(function(error) {
+                console.error('Error actualizando dispositivos disponibles:', error);
+            });
     }
 
     function getEstadoBadgeDisp(estado) {
@@ -1190,13 +1273,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 prestamosActuales = prestamos;
                 prestamosDashboard = Array.isArray(prestamos) ? prestamos : [];
                 renderTablaSolicitudesDashboard();
+                if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+                    actualizarTarjetasSolicitudes(prestamosDashboard);
+                }
             })
             .catch(error => console.error('Error cargando prestamos:', error));
     }
 
     function cargarMisSolicitudes() {
-        // El backend devuelve solo las solicitudes del usuario logueado
         cargarPrestamos();
+        if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
+            actualizarDispositivosDisponibles();
+        }
     }
 
     // Panel dedicado de prestamos
@@ -1504,9 +1592,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         actualizarDashboardTecnico(mantenimientos);
                         renderMantenimientosRecientes(mantenimientos);
                     }
+                    if (rolGlobal === 'ADMINISTRADOR') {
+                        actualizarContadorMantenimientoAdmin(mantenimientos);
+                    }
                 }
             })
             .catch(error => console.error('Error cargando mantenimientos:', error));
+    }
+
+    function actualizarContadorMantenimientoAdmin(mantenimientos) {
+        if (!Array.isArray(mantenimientos)) return;
+        const enProceso = mantenimientos.filter(m => m.estado === 'EN_PROCESO');
+        const dispositivosEnMantenimiento = new Set(enProceso.map(m => m.idDispositivo)).size;
+        const cardMaintenance = document.getElementById('dash-maintenance');
+        if (cardMaintenance) {
+            cardMaintenance.textContent = dispositivosEnMantenimiento;
+        }
     }
 
     function getEstadoBadgeMantenimiento(estado) {
@@ -1681,6 +1782,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
             .then(res => {
                 if (res.status >= 200 && res.status < 300) {
                     alert(res.body.mensaje);
