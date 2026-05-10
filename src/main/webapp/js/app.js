@@ -9,6 +9,8 @@ const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
 const modal = document.getElementById('modal');
 const modalForm = document.getElementById('modal-form');
+const modalForgot = document.getElementById('modal-forgot');
+const modalChangePass = document.getElementById('modal-change-pass');
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
@@ -38,10 +40,11 @@ function checkSession() {
 // Configurar eventos
 function setupEventListeners() {
     // Login
-    loginForm.addEventListener('submit', handleLogin);
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
     
     // Logout
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     
     // Navegación
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -49,16 +52,53 @@ function setupEventListeners() {
     });
     
     // Modal
-    document.querySelector('.close-modal').addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
+    const closeModalBtn = document.querySelector('.close-modal');
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+    
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
     
     // Botones agregar
-    document.getElementById('add-dispositivo-btn').addEventListener('click', () => showDispositivoForm());
-    document.getElementById('add-prestamo-btn').addEventListener('click', () => showPrestamoForm());
-    document.getElementById('add-mantenimiento-btn').addEventListener('click', () => showMantenimientoForm());
-    document.getElementById('add-usuario-btn').addEventListener('click', () => showUsuarioForm());
+    const addDispositivoBtn = document.getElementById('add-dispositivo-btn');
+    if (addDispositivoBtn) addDispositivoBtn.addEventListener('click', () => showDispositivoForm());
+    
+    const addPrestamoBtn = document.getElementById('add-prestamo-btn');
+    if (addPrestamoBtn) addPrestamoBtn.addEventListener('click', () => showPrestamoForm());
+    
+    const addMantenimientoBtn = document.getElementById('add-mantenimiento-btn');
+    if (addMantenimientoBtn) addMantenimientoBtn.addEventListener('click', () => showMantenimientoForm());
+    
+    const addUsuarioBtn = document.getElementById('add-usuario-btn');
+    if (addUsuarioBtn) addUsuarioBtn.addEventListener('click', () => showUsuarioForm());
+
+    // Password Reset Events
+    const forgotLink = document.getElementById('forgot-password-link');
+    if (forgotLink) {
+        forgotLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("Botón Olvidó contraseña clickeado");
+            if (modalForgot) modalForgot.classList.add('active');
+            else console.error("modalForgot no encontrado en el DOM");
+        });
+    } else {
+        console.error("forgot-password-link no encontrado en el DOM");
+    }
+
+    const closeForgotBtn = document.querySelector('.close-modal-forgot');
+    if (closeForgotBtn) {
+        closeForgotBtn.addEventListener('click', () => {
+            if (modalForgot) modalForgot.classList.remove('active');
+        });
+    }
+
+    const forgotForm = document.getElementById('forgot-form');
+    if (forgotForm) forgotForm.addEventListener('submit', handleForgotRequest);
+    
+    const changePassForm = document.getElementById('change-pass-form');
+    if (changePassForm) changePassForm.addEventListener('submit', handleChangePassword);
 }
 
 // Login
@@ -76,8 +116,13 @@ function handleLogin(e) {
     .then(res => res.json())
     .then(data => {
         if (data.success && data.usuario) {
+            if (data.requirePasswordChange) {
+                document.getElementById('change-pass-id').value = data.usuario.idUsuario;
+                modalChangePass.classList.add('active');
+                return;
+            }
+            
             const rol = String(data.usuario.rol || '').trim().toUpperCase();
-            // Guardar usuario en localStorage para que auth.js pueda accederlo
             localStorage.setItem('usuario', JSON.stringify(data.usuario));
             if (rol === 'ADMINISTRADOR' || rol === 'TECNICO' || rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
                 window.location.replace(window.location.origin + '/systechpro/admin.html');
@@ -90,6 +135,67 @@ function handleLogin(e) {
     })
     .catch(err => {
         loginError.textContent = 'Error de conexión';
+    });
+}
+
+function handleForgotRequest(e) {
+    e.preventDefault();
+    const correo = document.getElementById('forgot-correo').value;
+    const msg = document.getElementById('forgot-message');
+    msg.textContent = 'Enviando solicitud...';
+    msg.style.color = '#333';
+
+    fetch(`${API_BASE}/auth/reset-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            msg.textContent = 'Solicitud enviada. Contacta al administrador para tu nueva clave.';
+            msg.style.color = 'green';
+            e.target.reset();
+        } else {
+            msg.textContent = data.error || 'Error al enviar solicitud';
+            msg.style.color = 'red';
+        }
+    })
+    .catch(() => {
+        msg.textContent = 'Error de conexión';
+        msg.style.color = 'red';
+    });
+}
+
+function handleChangePassword(e) {
+    e.preventDefault();
+    const idUsuario = document.getElementById('change-pass-id').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    const errorMsg = document.getElementById('change-pass-error');
+
+    if (newPassword !== confirmPassword) {
+        errorMsg.textContent = 'Las contraseñas no coinciden';
+        return;
+    }
+
+    fetch(`${API_BASE}/auth/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idUsuario, newPassword })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Contraseña actualizada correctamente. Inicia sesión con tu nueva contraseña.');
+            modalChangePass.classList.remove('active');
+            loginForm.reset();
+        } else {
+            errorMsg.textContent = data.error || 'Error al actualizar';
+        }
+    })
+    .catch(() => {
+        errorMsg.textContent = 'Error de conexión';
     });
 }
 

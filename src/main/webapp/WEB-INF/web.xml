@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+    <display-name>SysTechPro</display-name>
+
+    <servlet>
+        <servlet-name>AuthController</servlet-name>
+        <servlet-class>com.systechpro.controllers.AuthController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AuthController</servlet-name>
+        <url-pattern>/api/auth/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>UsuarioController</servlet-name>
+        <servlet-class>com.systechpro.controllers.UsuarioController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>UsuarioController</servlet-name>
+        <url-pattern>/api/usuarios/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdministrativoController</servlet-name>
+        <servlet-class>com.systechpro.controllers.AdministrativoController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdministrativoController</servlet-name>
+        <url-pattern>/api/administrativos/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>DispositivoController</servlet-name>
+        <servlet-class>com.systechpro.controllers.DispositivoController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DispositivoController</servlet-name>
+        <url-pattern>/api/dispositivos/*</url-pattern>
+    </servlet-mapping>
+</web-app>

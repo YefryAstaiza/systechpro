@@ -26,7 +26,7 @@ public class UsuarioDAO {
     }
     
     public boolean insertar(Usuario usuario) {
-        String sql = "INSERT INTO usuario (nombre, correo, contrasena, rol) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO usuario (nombre, correo, contrasena, rol, cambio_obligatorio) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
@@ -34,6 +34,7 @@ public class UsuarioDAO {
             pstmt.setString(2, usuario.getCorreo());
             pstmt.setString(3, usuario.getContrasena());
             pstmt.setString(4, usuario.getRol());
+            pstmt.setBoolean(5, usuario.isCambioObligatorio());
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -64,9 +65,9 @@ public class UsuarioDAO {
         boolean updatePassword = usuario.getContrasena() != null && !usuario.getContrasena().trim().isEmpty();
         
         if (updatePassword) {
-            sql = "UPDATE usuario SET nombre = ?, correo = ?, rol = ?, contrasena = ? WHERE id_usuario = ?";
+            sql = "UPDATE usuario SET nombre = ?, correo = ?, rol = ?, contrasena = ?, cambio_obligatorio = ? WHERE id_usuario = ?";
         } else {
-            sql = "UPDATE usuario SET nombre = ?, correo = ?, rol = ? WHERE id_usuario = ?";
+            sql = "UPDATE usuario SET nombre = ?, correo = ?, rol = ?, cambio_obligatorio = ? WHERE id_usuario = ?";
         }
         
         try (Connection conn = GestorJDBC.getConnection();
@@ -78,14 +79,30 @@ public class UsuarioDAO {
             
             if (updatePassword) {
                 pstmt.setString(4, usuario.getContrasena());
-                pstmt.setInt(5, usuario.getIdUsuario());
+                pstmt.setBoolean(5, usuario.isCambioObligatorio());
+                pstmt.setInt(6, usuario.getIdUsuario());
             } else {
-                pstmt.setInt(4, usuario.getIdUsuario());
+                pstmt.setBoolean(4, usuario.isCambioObligatorio());
+                pstmt.setInt(5, usuario.getIdUsuario());
             }
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Error al actualizar usuario: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean actualizarPasswordForceChange(int id, String newPassEncrypted, boolean forceChange) {
+        String sql = "UPDATE usuario SET contrasena = ?, cambio_obligatorio = ? WHERE id_usuario = ?";
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newPassEncrypted);
+            pstmt.setBoolean(2, forceChange);
+            pstmt.setInt(3, id);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error al actualizar password force change: " + e.getMessage());
             return false;
         }
     }
@@ -142,6 +159,7 @@ public class UsuarioDAO {
         usuario.setCorreo(rs.getString("correo"));
         usuario.setContrasena(rs.getString("contrasena"));
         usuario.setRol(rs.getString("rol"));
+        usuario.setCambioObligatorio(rs.getBoolean("cambio_obligatorio"));
         return usuario;
     }
 }

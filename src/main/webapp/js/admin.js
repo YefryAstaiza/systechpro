@@ -18,8 +18,8 @@ const PANEL_PAGE_SIZE = 10;
 let autoRefreshTimer = null;
 
 const permisos = {
-    ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes'],
-    TECNICO: ['inicio','mantenimientos'],
+    ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes', 'password-requests'],
+    TECNICO: ['inicio','mantenimientos', 'password-requests'],
     DOCENTE: ['inicio','mis-solicitudes'],
     ADMINISTRATIVO: ['inicio','mis-solicitudes']
 };
@@ -33,7 +33,8 @@ const modulos = {
     auditoria: 'nav-auditoria-btn',
     reportes: 'nav-reportes-btn',
     historial: 'nav-historial-btn',
-    'mis-solicitudes': 'nav-mis-solicitudes-btn'
+    'mis-solicitudes': 'nav-mis-solicitudes-btn',
+    'password-requests': 'nav-password-requests-btn'
 };
 
 const panelInicioByRol = {
@@ -73,7 +74,8 @@ function getNavIdForSection(sectionId) {
         'panel-prestamos': 'nav-prestamos-btn',
         'panel-mantenimientos': 'nav-mantenimientos-btn',
         'panel-auditoria': 'nav-auditoria-btn',
-        'panel-reportes': 'nav-reportes-btn'
+        'panel-reportes': 'nav-reportes-btn',
+        'panel-password-requests': 'nav-password-requests-btn'
     };
     return map[sectionId] || null;
 }
@@ -471,6 +473,15 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             mostrarPanel('panel-reportes');
             cargarReportes();
+        });
+    }
+
+    const navPasswordRequestsBtn = document.getElementById('nav-password-requests-btn');
+    if (navPasswordRequestsBtn) {
+        navPasswordRequestsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarPanel('panel-password-requests');
+            cargarPasswordRequests();
         });
     }
 
@@ -1873,9 +1884,72 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(res => res.json())
             .then(logs => {
                 auditoriaActuales = Array.isArray(logs) ? logs : [];
+                auditoriaPage = 1;
                 renderTablaAuditoria();
             })
             .catch(error => console.error('Error cargando auditoria:', error));
+    }
+
+    function renderTablaAuditoria() {
+        const total = auditoriaActuales.length;
+        const totalPages = Math.max(1, Math.ceil(total / 10));
+        if (auditoriaPage > totalPages) auditoriaPage = totalPages;
+
+        const start = (auditoriaPage - 1) * 10;
+        const pageItems = auditoriaActuales.slice(start, start + 10);
+
+        tablaAuditoriaBody.innerHTML = '';
+        if (pageItems.length === 0) {
+            tablaAuditoriaBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No hay registros de auditoría</td></tr>';
+        } else {
+            pageItems.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding:12px 14px;">${formatearFecha(log.fechaEvento)}</td>
+                    <td style="padding:12px 14px;">${log.nombreUsuario || log.idUsuario}</td>
+                    <td style="padding:12px 14px;"><span class="badge" style="background:#e0f2fe;color:#0369a1;">${log.accion}</span></td>
+                    <td style="padding:12px 14px;">${log.tablaAfectada || '-'}</td>
+                    <td style="padding:12px 14px;">${log.descripcion}</td>
+                    <td style="padding:12px 14px;color:#94a3b8;">${log.ip || '-'}</td>
+                `;
+                tablaAuditoriaBody.appendChild(tr);
+            });
+        }
+
+        const info = document.getElementById('auditoria-pagina');
+        if (info) info.textContent = `Página ${auditoriaPage} de ${totalPages}`;
+        
+        const prevBtn = document.getElementById('btn-auditoria-prev');
+        const nextBtn = document.getElementById('btn-auditoria-next');
+        if(prevBtn) {
+            prevBtn.disabled = auditoriaPage <= 1;
+            prevBtn.style.opacity = auditoriaPage <= 1 ? '0.4' : '1';
+        }
+        if(nextBtn) {
+            nextBtn.disabled = auditoriaPage >= totalPages;
+            nextBtn.style.opacity = auditoriaPage >= totalPages ? '0.4' : '1';
+        }
+    }
+
+    const btnAudPrev = document.getElementById('btn-auditoria-prev');
+    if(btnAudPrev) {
+        btnAudPrev.addEventListener('click', () => {
+            if (auditoriaPage > 1) {
+                auditoriaPage--;
+                renderTablaAuditoria();
+            }
+        });
+    }
+
+    const btnAudNext = document.getElementById('btn-auditoria-next');
+    if(btnAudNext) {
+        btnAudNext.addEventListener('click', () => {
+            const totalPages = Math.ceil(auditoriaActuales.length / 10);
+            if (auditoriaPage < totalPages) {
+                auditoriaPage++;
+                renderTablaAuditoria();
+            }
+        });
     }
 
     // ---------------------------------------------
@@ -2035,5 +2109,124 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error al exportar XLSX:', err);
                 alert('Error al exportar el inventario');
             });
+    }
+
+    // ---------------------------------------------
+    // LOGICA PASSWORD REQUESTS
+    // ---------------------------------------------
+    window.cargarPasswordRequests = function() {
+        fetch(`${apiBase}/admin/password-requests`, { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    renderTablaPasswordRequests(data);
+                }
+            })
+            .catch(error => console.error('Error cargando solicitudes de password:', error));
+    };
+
+    function renderTablaPasswordRequests(solicitudes) {
+        const tbody = document.getElementById('tabla-password-requests-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (solicitudes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes pendientes</td></tr>';
+            return;
+        }
+
+        solicitudes.forEach(sol => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding:12px 14px;">${sol.idSolicitud}</td>
+                <td style="padding:12px 14px; font-weight:600;">${sol.nombreUsuario}</td>
+                <td style="padding:12px 14px;">${formatearFecha(sol.fechaSolicitud)}</td>
+                <td style="padding:12px 14px;">${getEstadoBadge(sol.estado)}</td>
+                <td style="padding:12px 14px; font-family:monospace; font-weight:bold; color:#14477b;">${sol.passwordTemporal || '---'}</td>
+                <td style="padding:12px 14px; text-align:center;">
+                    ${sol.estado === 'PENDIENTE' ? `
+                        <button class="view-btn" onclick="procesarSolicitudPassword(${sol.idSolicitud}, 'approve')" style="background:#22c55e; color:white; border:none; margin-right:5px;">Aprobar</button>
+                        <button class="view-btn" onclick="procesarSolicitudPassword(${sol.idSolicitud}, 'reject')" style="background:#ef4444; color:white; border:none;">Rechazar</button>
+                    ` : sol.passwordTemporal ? `
+                        <button class="view-btn" onclick="copiarClave('${sol.passwordTemporal}')">Copiar</button>
+                    ` : '---'}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    window.procesarSolicitudPassword = function(id, accion) {
+        const confirmMsg = accion === 'approve' ? '¿Aprobar solicitud? Se generará una clave temporal.' : '¿Rechazar solicitud?';
+        if (!confirm(confirmMsg)) return;
+
+        fetch(`${apiBase}/admin/password-requests/${id}/${accion}`, {
+            method: 'PUT',
+            credentials: 'include'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.mensaje, 'success');
+                if (data.passwordTemporal) {
+                    alert(`Solicitud Aprobada. Clave Temporal: ${data.passwordTemporal}\nEntregue esta clave al usuario.`);
+                }
+                cargarPasswordRequests();
+            } else {
+                showToast(data.error || 'Error al procesar', 'error');
+            }
+        })
+        .catch(() => showToast('Error de conexión', 'error'));
+    };
+
+    window.copiarClave = function(clave) {
+        navigator.clipboard.writeText(clave).then(() => {
+            showToast('Clave copiada al portapapeles', 'info');
+        });
+    };
+
+    // ---------------------------------------------
+    // EVENTOS PAGINACIÓN EXTRAS
+    // ---------------------------------------------
+    const btnPrestPrev = document.getElementById('btn-prestamos-prev');
+    if(btnPrestPrev) {
+        btnPrestPrev.addEventListener('click', () => {
+            if (prestamosPanelPage > 1) {
+                prestamosPanelPage--;
+                renderTablaPrestamosPanel();
+            }
+        });
+    }
+    const btnPrestNext = document.getElementById('btn-prestamos-next');
+    if(btnPrestNext) {
+        btnPrestNext.addEventListener('click', () => {
+            const total = (Array.isArray(prestamosActuales) ? prestamosActuales : []).length;
+            const totalPages = Math.ceil(total / PANEL_PAGE_SIZE);
+            if (prestamosPanelPage < totalPages) {
+                prestamosPanelPage++;
+                renderTablaPrestamosPanel();
+            }
+        });
+    }
+
+    const btnMantPrev = document.getElementById('btn-mantenimientos-prev');
+    if(btnMantPrev) {
+        btnMantPrev.addEventListener('click', () => {
+            if (mantenimientosPage > 1) {
+                mantenimientosPage--;
+                renderTablaMantenimientosPanel();
+            }
+        });
+    }
+    const btnMantNext = document.getElementById('btn-mantenimientos-next');
+    if(btnMantNext) {
+        btnMantNext.addEventListener('click', () => {
+            const total = (Array.isArray(mantenimientosActuales) ? mantenimientosActuales : []).length;
+            const totalPages = Math.ceil(total / PANEL_PAGE_SIZE);
+            if (mantenimientosPage < totalPages) {
+                mantenimientosPage++;
+                renderTablaMantenimientosPanel();
+            }
+        });
     }
 });

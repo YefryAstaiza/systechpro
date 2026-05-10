@@ -6,15 +6,17 @@ public class Usuario {
     private String correo;
     private String contrasena;
     private String rol; // ADMINISTRADOR, DOCENTE, TECNICO, ADMINISTRATIVO
+    private boolean cambioObligatorio;
 
     public Usuario() {}
 
-    public Usuario(int idUsuario, String nombre, String correo, String contrasena, String rol) {
+    public Usuario(int idUsuario, String nombre, String correo, String contrasena, String rol, boolean cambioObligatorio) {
         this.idUsuario = idUsuario;
         this.nombre = nombre;
         this.correo = correo;
         this.contrasena = contrasena;
         this.rol = rol;
+        this.cambioObligatorio = cambioObligatorio;
     }
 
     // Getters y Setters
@@ -32,4 +34,7 @@ public class Usuario {
 
     public String getRol() { return rol; }
     public void setRol(String rol) { this.rol = rol; }
+
+    public boolean isCambioObligatorio() { return cambioObligatorio; }
+    public void setCambioObligatorio(boolean cambioObligatorio) { this.cambioObligatorio = cambioObligatorio; }
 }
