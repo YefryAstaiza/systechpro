@@ -5,12 +5,14 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class GestorJDBC {
-    private static final String URL = "jdbc:mysql://localhost:3306/systechpro3?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+    private static final String URL = "jdbc:mysql://localhost:3306/systechpro3?useSSL=false&serverTimezone=America/Bogota&allowPublicKeyRetrieval=true";
     private static final String USER = "root";
     private static final String PASSWORD = "";
     
     static {
         try {
+            // Establecer zona horaria por defecto para la JVM
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/Bogota"));
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
             System.err.println("Error al cargar el driver de MySQL: " + e.getMessage());

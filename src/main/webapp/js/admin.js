@@ -939,10 +939,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (typeof timestamp === 'string') {
             const trimmed = timestamp.trim();
+            if (!trimmed) return null;
+
+            // Normalizar formato: '2024-05-01 08:00:00' -> '2024-05-01T08:00:00'
             let normalized = trimmed.replace(' ', 'T');
+
+            // Si ya tiene información de zona horaria (Z o offset como +00:00 o -05:00)
+            if (normalized.includes('Z') || /[+-]\d{2}:?\d{2}$/.test(normalized)) {
+                return new Date(normalized);
+            }
+
+            // Si es un formato ISO básico sin zona, forzamos Bogotá (-05:00)
             if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(normalized)) {
                 normalized += '-05:00';
             }
+            
             const date = new Date(normalized);
             if (!Number.isNaN(date.getTime())) {
                 return date;
@@ -972,7 +983,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderTablaSolicitudesDashboard() {
         if (!tablaSolicitudesBody) return;
         const lista = Array.isArray(prestamosDashboard) ? prestamosDashboard.slice() : [];
-        lista.sort((a, b) => new Date(b.fechaInicio || b.fechaCreacion || 0) - new Date(a.fechaInicio || a.fechaCreacion || 0));
+        lista.sort((a, b) => (parseFecha(b.fechaInicio || b.fechaCreacion) || 0) - (parseFecha(a.fechaInicio || a.fechaCreacion) || 0));
         const total = lista.length;
         const totalPages = Math.max(1, Math.ceil(total / DASH_SOLICITUDES_PER_PAGE));
         if (dashSolicitudesPage > totalPages) dashSolicitudesPage = totalPages;
@@ -1011,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderTablaRecientesTecnico() {
         if (!tablaRecientesBody) return;
         const lista = Array.isArray(mantenimientosActuales) ? mantenimientosActuales.slice() : [];
-        lista.sort((a, b) => new Date(b.fechaInicio || 0) - new Date(a.fechaInicio || 0));
+        lista.sort((a, b) => (parseFecha(b.fechaInicio) || 0) - (parseFecha(a.fechaInicio) || 0));
         const total = lista.length;
         const totalPages = Math.max(1, Math.ceil(total / TECNICO_RECIENTES_PER_PAGE));
         if (tecnicoRecientesPage > totalPages) tecnicoRecientesPage = totalPages;
@@ -1101,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const tbody = document.getElementById('tabla-auditoria-body');
         if (!tbody) return;
         const lista = Array.isArray(auditoriaActuales) ? auditoriaActuales.slice() : [];
-        lista.sort((a, b) => new Date(b.fechaEvento || 0) - new Date(a.fechaEvento || 0));
+        lista.sort((a, b) => (parseFecha(b.fechaEvento) || 0) - (parseFecha(a.fechaEvento) || 0));
         const total = lista.length;
         const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
         if (auditoriaPage > totalPages) auditoriaPage = totalPages;
@@ -1139,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderTablaMantenimientosPanel() {
         if (!tablaMantenimientosBody) return;
         const lista = Array.isArray(mantenimientosActuales) ? mantenimientosActuales.slice() : [];
-        lista.sort((a, b) => new Date(b.fechaInicio || 0) - new Date(a.fechaInicio || 0));
+        lista.sort((a, b) => (parseFecha(b.fechaInicio) || 0) - (parseFecha(a.fechaInicio) || 0));
         const total = lista.length;
         const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
         if (mantenimientosPage > totalPages) mantenimientosPage = totalPages;
@@ -1210,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
             lista = lista.filter(function(p) { return p.idUsuario == idUsuarioGlobal; });
         }
-        lista.sort((a, b) => new Date(b.fechaInicio || 0) - new Date(a.fechaInicio || 0));
+        lista.sort((a, b) => (parseFecha(b.fechaInicio) || 0) - (parseFecha(a.fechaInicio) || 0));
         const total = lista.length;
         const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
         if (prestamosPanelPage > totalPages) prestamosPanelPage = totalPages;
@@ -1644,7 +1655,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderMantenimientosRecientes(mantenimientos) {
         const recientes = filtrarMantenimientosTecnico(mantenimientos)
-            .sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio));
+            .sort((a, b) => (parseFecha(b.fechaInicio) || 0) - (parseFecha(a.fechaInicio) || 0));
 
         const total = recientes.length;
         const totalPages = Math.max(1, Math.ceil(total / TECNICO_RECIENTES_PER_PAGE));
@@ -1968,6 +1979,11 @@ document.addEventListener('DOMContentLoaded', function() {
         btnExportarCSV.addEventListener('click', exportarInventarioCSV);
     }
 
+    const btnExportarXLSX = document.getElementById('btn-exportar-xlsx');
+    if (btnExportarXLSX) {
+        btnExportarXLSX.addEventListener('click', exportarInventarioXLSX);
+    }
+
     function exportarInventarioCSV() {
         fetch(apiBase + '/dispositivos')
             .then(res => res.json())
@@ -1994,12 +2010,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement("a");
                 link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "inventario_systechpro.csv");
+                link.setAttribute("download", `inventario_${new Date().toISOString().split('T')[0]}.csv`);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-            })
-            .catch(error => alert('Error al exportar inventario'));
+            });
     }
 
+    function exportarInventarioXLSX() {
+        if (typeof XLSX === 'undefined') {
+            alert('La librería de Excel (SheetJS) no se ha cargado. Por favor, verifica tu conexión a internet o recarga la página.');
+            return;
+        }
+
+        fetch(apiBase + '/dispositivos')
+            .then(res => res.json())
+            .then(dispositivos => {
+                if (!Array.isArray(dispositivos) || dispositivos.length === 0) {
+                    alert('No hay dispositivos para exportar');
+                    return;
+                }
+
+                const data = dispositivos.map(d => ({
+                    'ID': d.idDispositivo,
+                    'Nombre': d.nombre,
+                    'Tipo': d.tipo,
+                    'Estado': d.estado,
+                    'Descripción': d.descripcion || '',
+                    'Fecha Creación': formatearFecha(d.fechaCreacion)
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
+
+                // Generar el archivo y descargar
+                XLSX.writeFile(workbook, `inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
+            })
+            .catch(err => {
+                console.error('Error al exportar XLSX:', err);
+                alert('Error al exportar el inventario');
+            });
+    }
 });

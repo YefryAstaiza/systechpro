@@ -21,20 +21,20 @@ Esto generará el archivo `systechpro.war` en la carpeta `target/`.
 Antes de iniciar Tomcat, configura las variables de entorno en PowerShell:
 ```
 $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-25.0.1.8-hotspot"
-$env:CATALINA_HOME = "c:\xampp\tomcat"
+$env:CATALINA_HOME = "C:\Users\pc1\apache-tomcat-10.1.54"
 ```
 
 ## Paso 3: Iniciar Tomcat
 Ejecuta el comando para iniciar el servidor Tomcat:
 ```
-& "c:\xampp\tomcat\bin\startup.bat"
+& "C:\Users\pc1\apache-tomcat-10.1.54\bin\startup.bat"
 ```
 Tomcat debería iniciarse y mostrar mensajes de confirmación.
 
 ## Paso 4: Desplegar la Aplicación
 Copia el archivo WAR al directorio webapps de Tomcat:
 ```
-Copy-Item "target\systechpro.war" "c:\xampp\tomcat\webapps\"
+Copy-Item "target\systechpro.war" "C:\Users\pc1\apache-tomcat-10.1.54\webapps\"
 ```
 Tomcat detectará automáticamente el archivo y lo desplegará.
 
@@ -51,11 +51,11 @@ http://localhost:8080/systechpro/
 ## Detener Tomcat
 Para detener el servidor, ejecuta:
 ```
-& "c:\xampp\tomcat\bin\shutdown.bat"
+& "C:\Users\pc1\apache-tomcat-10.1.54\bin\shutdown.bat"
 ```
 
 ## Notas Adicionales
 - Asegúrate de que MySQL esté corriendo en XAMPP para la base de datos.
-- Si hay errores, verifica los logs en `c:\xampp\tomcat\logs\`.
+- Si hay errores, verifica los logs en `C:\Users\pc1\apache-tomcat-10.1.54\logs\`.
 - La aplicación usa Jakarta Servlet 6.0, compatible con Tomcat 10+.</content>
 <parameter name="filePath">c:\Users\pc1\Documents\javaSystech\systechpro\GUIA_INICIO.md
