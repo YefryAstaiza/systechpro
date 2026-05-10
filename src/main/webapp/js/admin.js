@@ -510,37 +510,8 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`${apiBase}/usuarios`)
             .then(res => res.json())
             .then(usuarios => {
-                if(Array.isArray(usuarios)){
-                    tablaUsuariosBody.innerHTML = '';
-                    usuarios.forEach(u => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${u.nombre}</td>
-                            <td>${u.correo}</td>
-                            <td><span class="badge" style="background:#2c3e50; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${u.rol}</span></td>
-                            <td>
-                                <button class="btn-editar" data-id="${u.idUsuario}" style="background:#f39c12; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px; margin-right:5px;">Editar</button>
-                                <button class="btn-eliminar" data-id="${u.idUsuario}" style="background:#e74c3c; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Eliminar</button>
-                            </td>
-                        `;
-                        tablaUsuariosBody.appendChild(tr);
-                    });
-
-                    document.querySelectorAll('.btn-editar').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const id = e.target.getAttribute('data-id');
-                            const usuario = usuarios.find(user => user.idUsuario == id);
-                            if(usuario) abrirModalUsuario(usuario);
-                        });
-                    });
-
-                    document.querySelectorAll('.btn-eliminar').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const id = e.target.getAttribute('data-id');
-                            eliminarUsuario(id);
-                        });
-                    });
-                }
+                usuariosActuales = Array.isArray(usuarios) ? usuarios : [];
+                renderTablaUsuarios();
             })
             .catch(error => console.error('Error cargando usuarios:', error));
     }
@@ -888,6 +859,86 @@ document.addEventListener('DOMContentLoaded', function() {
                 tecnicoRecientesPage++;
                 renderMantenimientosRecientes(mantenimientosActuales);
             }
+        });
+    }
+
+    // Paginación Usuarios
+    const btnUsuariosPrev = document.getElementById('btn-usuarios-prev');
+    const btnUsuariosNext = document.getElementById('btn-usuarios-next');
+    if (btnUsuariosPrev) {
+        btnUsuariosPrev.addEventListener('click', function() {
+            if (usuariosPage > 1) { usuariosPage--; renderTablaUsuarios(); }
+        });
+    }
+    if (btnUsuariosNext) {
+        btnUsuariosNext.addEventListener('click', function() {
+            const total = (Array.isArray(usuariosActuales) ? usuariosActuales.length : 0);
+            const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+            if (usuariosPage < totalPages) { usuariosPage++; renderTablaUsuarios(); }
+        });
+    }
+
+    // Paginación Auditoría
+    const btnAuditoriaPrev = document.getElementById('btn-auditoria-prev');
+    const btnAuditoriaNext = document.getElementById('btn-auditoria-next');
+    if (btnAuditoriaPrev) {
+        btnAuditoriaPrev.addEventListener('click', function() {
+            if (auditoriaPage > 1) { auditoriaPage--; renderTablaAuditoria(); }
+        });
+    }
+    if (btnAuditoriaNext) {
+        btnAuditoriaNext.addEventListener('click', function() {
+            const total = (Array.isArray(auditoriaActuales) ? auditoriaActuales.length : 0);
+            const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+            if (auditoriaPage < totalPages) { auditoriaPage++; renderTablaAuditoria(); }
+        });
+    }
+
+    // Paginación Mantenimientos
+    const btnMantenimientosPrev = document.getElementById('btn-mantenimientos-prev');
+    const btnMantenimientosNext = document.getElementById('btn-mantenimientos-next');
+    if (btnMantenimientosPrev) {
+        btnMantenimientosPrev.addEventListener('click', function() {
+            if (mantenimientosPage > 1) { mantenimientosPage--; renderTablaMantenimientosPanel(); }
+        });
+    }
+    if (btnMantenimientosNext) {
+        btnMantenimientosNext.addEventListener('click', function() {
+            const total = (Array.isArray(mantenimientosActuales) ? mantenimientosActuales.length : 0);
+            const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+            if (mantenimientosPage < totalPages) { mantenimientosPage++; renderTablaMantenimientosPanel(); }
+        });
+    }
+
+    // Paginación Préstamos Panel
+    const btnPrestamosPrev = document.getElementById('btn-prestamos-prev');
+    const btnPrestamosNext = document.getElementById('btn-prestamos-next');
+    if (btnPrestamosPrev) {
+        btnPrestamosPrev.addEventListener('click', function() {
+            if (prestamosPanelPage > 1) { prestamosPanelPage--; renderTablaPrestamosPanel(); }
+        });
+    }
+    if (btnPrestamosNext) {
+        btnPrestamosNext.addEventListener('click', function() {
+            const total = (Array.isArray(prestamosActuales) ? prestamosActuales.length : 0);
+            const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
+            if (prestamosPanelPage < totalPages) { prestamosPanelPage++; renderTablaPrestamosPanel(); }
+        });
+    }
+
+    // Paginación Dashboard Solicitudes
+    const btnDashSolicitudesPrev = document.getElementById('btn-dash-solicitudes-prev');
+    const btnDashSolicitudesNext = document.getElementById('btn-dash-solicitudes-next');
+    if (btnDashSolicitudesPrev) {
+        btnDashSolicitudesPrev.addEventListener('click', function() {
+            if (dashSolicitudesPage > 1) { dashSolicitudesPage--; renderTablaSolicitudesDashboard(); }
+        });
+    }
+    if (btnDashSolicitudesNext) {
+        btnDashSolicitudesNext.addEventListener('click', function() {
+            const total = (Array.isArray(prestamosDashboard) ? prestamosDashboard.length : 0);
+            const totalPages = Math.max(1, Math.ceil(total / DASH_SOLICITUDES_PER_PAGE));
+            if (dashSolicitudesPage < totalPages) { dashSolicitudesPage++; renderTablaSolicitudesDashboard(); }
         });
     }
 
@@ -1548,66 +1599,17 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(apiBase + '/mantenimientos')
             .then(res => res.json())
             .then(mantenimientos => {
-                mantenimientosActuales = mantenimientos;
-                if(Array.isArray(mantenimientos)){
-                    actualizarEncabezadoMantenimientos();
-                    tablaMantenimientosBody.innerHTML = '';
-                    var rol = obtenerRolActual();
-                    var esTecnico = rol === 'TECNICO';
-                    mantenimientos.forEach(m => {
-                        const tr = document.createElement('tr');
-                        if (rol === 'TECNICO') {
-                            tr.innerHTML = `
-                                <td style="padding:12px 14px;color:#64748b;font-weight:600;">#${m.idMantenimiento}</td>
-                                <td style="padding:12px 14px;font-weight:500;">${m.nombreDispositivo || m.idDispositivo || '-'}</td>
-                                <td style="padding:12px 14px;"><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
-                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
-                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
-                                <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
-                                <td style="padding:12px 14px;color:#64748b;font-size:13px;">${m.descripcion || '-'}</td>
-                                <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
-                            `;
-                        } else if (rol === 'ADMINISTRADOR') {
-                            tr.innerHTML = `
-                                <td style="padding:12px 14px;color:#64748b;font-weight:600;">#${m.idMantenimiento}</td>
-                                <td style="padding:12px 14px;font-weight:500;">${m.nombreDispositivo || m.idDispositivo || '-'}</td>
-                                <td style="padding:12px 14px;">${m.nombreUsuario || '-'}</td>
-                                <td style="padding:12px 14px;"><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
-                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
-                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
-                                <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
-                                <td style="padding:12px 14px;color:#64748b;font-size:13px;">${m.descripcion || '-'}</td>
-                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${m.fechaCreacion ? formatearFecha(m.fechaCreacion) : '-'}</td>
-                                <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
-                            `;
-                        } else {
-                            tr.innerHTML = `
-                                <td style="padding:12px 14px;font-weight:500;">${m.nombreDispositivo}</td>
-                                <td style="padding:12px 14px;">${m.nombreUsuario}</td>
-                                <td style="padding:12px 14px;"><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
-                                <td style="padding:12px 14px;font-size:13px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
-                                <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
-                                <td style="padding:12px 14px;text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
-                            `;
-                        }
-                        tablaMantenimientosBody.appendChild(tr);
-                    });
+                mantenimientosActuales = Array.isArray(mantenimientos) ? mantenimientos : [];
+                actualizarEncabezadoMantenimientos();
+                renderTablaMantenimientosPanel();
 
-                    document.querySelectorAll('.btn-ver-mantenimiento').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const id = parseInt(e.target.getAttribute('data-id'));
-                            abrirModalDetalleMantenimiento(id);
-                        });
-                    });
-
-                    if (rolGlobal === 'TECNICO') {
-                        tecnicoRecientesPage = 1;
-                        actualizarDashboardTecnico(mantenimientos);
-                        renderMantenimientosRecientes(mantenimientos);
-                    }
-                    if (rolGlobal === 'ADMINISTRADOR') {
-                        actualizarContadorMantenimientoAdmin(mantenimientos);
-                    }
+                if (rolGlobal === 'TECNICO') {
+                    tecnicoRecientesPage = 1;
+                    actualizarDashboardTecnico(mantenimientosActuales);
+                    renderMantenimientosRecientes(mantenimientosActuales);
+                }
+                if (rolGlobal === 'ADMINISTRADOR') {
+                    actualizarContadorMantenimientoAdmin(mantenimientosActuales);
                 }
             })
             .catch(error => console.error('Error cargando mantenimientos:', error));
@@ -1870,26 +1872,8 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(apiBase + '/auditoria')
             .then(res => res.json())
             .then(logs => {
-                if(Array.isArray(logs)){
-                    tablaAuditoriaBody.innerHTML = '';
-                    logs.forEach(log => {
-                        let badgeColor = '#3498db'; // Default blue (LOGIN, etc)
-                        if (log.accion === 'INSERT') badgeColor = '#2ecc71'; // Green
-                        else if (log.accion === 'UPDATE') badgeColor = '#f39c12'; // Orange
-                        else if (log.accion === 'DELETE') badgeColor = '#e74c3c'; // Red
-                        
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${formatearFecha(log.fechaEvento)}</td>
-                            <td>${log.nombreUsuario}</td>
-                            <td><span class="badge" style="background:${badgeColor}; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${log.accion}</span></td>
-                            <td>${log.tablaAfectada}</td>
-                            <td>${log.descripcion}</td>
-                            <td>${log.ip}</td>
-                        `;
-                        tablaAuditoriaBody.appendChild(tr);
-                    });
-                }
+                auditoriaActuales = Array.isArray(logs) ? logs : [];
+                renderTablaAuditoria();
             })
             .catch(error => console.error('Error cargando auditoria:', error));
     }
