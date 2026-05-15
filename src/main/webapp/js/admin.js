@@ -19,7 +19,7 @@ let autoRefreshTimer = null;
 
 const permisos = {
     ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes', 'password-requests'],
-    TECNICO: ['inicio','mantenimientos', 'password-requests'],
+    TECNICO: ['inicio','mantenimientos'],
     DOCENTE: ['inicio','mis-solicitudes'],
     ADMINISTRATIVO: ['inicio','mis-solicitudes']
 };
@@ -116,6 +116,10 @@ function actualizarTituloInicio(rol) {
 function renderLayoutByRole() {
     if (!rolGlobal) return;
     aplicarPermisosPorRol(rolGlobal);
+    const passwordRequestsBtn = document.getElementById('nav-password-requests-btn');
+    if (passwordRequestsBtn) {
+        passwordRequestsBtn.style.display = rolGlobal === 'ADMINISTRADOR' ? 'flex' : 'none';
+    }
     actualizarTituloInicio(rolGlobal);
     cargarPanelInicial(rolGlobal);
     actualizarEncabezadosTablasPorRol();
@@ -133,7 +137,7 @@ function obtenerRolActual() {
     if (!usuarioJSON) return '';
     try {
         const usuario = JSON.parse(usuarioJSON);
-        return usuario.rol || '';
+        return (usuario.rol || '').trim().toUpperCase();
     } catch (e) {
         return '';
     }
@@ -259,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const userNameEl = document.getElementById('admin-user-name');
                 if (userNameEl) userNameEl.textContent = data.usuario.nombre;
-                rolGlobal = data.usuario.rol;
+                rolGlobal = (data.usuario.rol || '').trim().toUpperCase();
                 idUsuarioGlobal = data.usuario.idUsuario;
                 renderLayoutByRole();
 
@@ -608,6 +612,24 @@ document.addEventListener('DOMContentLoaded', function() {
     toastStyle.textContent = '@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes fadeOut{from{opacity:1}to{opacity:0;transform:translateX(120%)}}';
     document.head.appendChild(toastStyle);
 
+    function esNombreDispositivoValido(nombre) {
+        if (!nombre) return false;
+        const texto = nombre.trim();
+        if (texto.length < 5 || texto.length > 80) return false;
+        if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,_\-\(\)\/]+$/.test(texto)) return false;
+        if (!/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(texto)) return false;
+        if (/^\d+$/.test(texto)) return false;
+        if (/[0-9]/.test(texto) && !/[ \-_/]/.test(texto)) return false;
+        if (texto.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, '').length < 2) return false;
+        return true;
+    }
+
+    function esDescripcionValida(descripcion) {
+        if (!descripcion) return true;
+        if (descripcion.length > 250) return false;
+        return /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,_;:\-\(\)\[\]\/\n\r]*$/.test(descripcion);
+    }
+
     // ---------------------------------------------
     // LOGICA CRUD DISPOSITIVOS Y DASHBOARD
     // ---------------------------------------------
@@ -794,11 +816,24 @@ document.addEventListener('DOMContentLoaded', function() {
     formDispositivo.addEventListener('submit', function(e) {
         e.preventDefault();
         var id = document.getElementById('dispositivo-id').value;
+        var nombre = document.getElementById('dispositivo-nombre').value;
+        var descripcion = document.getElementById('dispositivo-descripcion').value;
+
+        if (!esNombreDispositivoValido(nombre)) {
+            showToast('Nombre inválido. Usa un nombre descriptivo, sin caracteres extraños y con al menos 2 letras.', 'warning');
+            return;
+        }
+
+        if (!esDescripcionValida(descripcion)) {
+            showToast('Descripción inválida. Máximo 250 caracteres y solo texto normal permitido.', 'warning');
+            return;
+        }
+
         var payload = {
-            nombre: document.getElementById('dispositivo-nombre').value,
+            nombre: nombre.trim(),
             tipo: document.getElementById('dispositivo-tipo').value,
             estado: document.getElementById('dispositivo-estado').value,
-            descripcion: document.getElementById('dispositivo-descripcion').value
+            descripcion: descripcion.trim()
         };
         var method = id ? 'PUT' : 'POST';
         var url = id ? (apiBase + '/dispositivos/' + id) : (apiBase + '/dispositivos');

@@ -30,6 +30,25 @@ public class DispositivoController extends HttpServlet {
         return "ADMINISTRADOR".equals(rol);
     }
 
+    private boolean validarNombreDispositivo(String nombre) {
+        if (nombre == null) return false;
+        String texto = nombre.trim();
+        if (texto.length() < 5 || texto.length() > 80) return false;
+        if (!texto.matches("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,_\\-\\(\\)\\/]+$")) return false;
+        if (!texto.matches(".*[A-Za-zÁÉÍÓÚÜÑáéíóúüñ].*")) return false;
+        if (texto.matches("^\\d+$")) return false;
+        if (texto.matches(".*[0-9].*") && !texto.matches(".*[ \\-_\\/].*")) return false;
+        if (texto.replaceAll("[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]", "").length() < 2) return false;
+        return true;
+    }
+
+    private boolean validarDescripcionDispositivo(String descripcion) {
+        if (descripcion == null || descripcion.trim().isEmpty()) return true;
+        String texto = descripcion.trim();
+        if (texto.length() > 250) return false;
+        return texto.matches("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,_;:\\-\\(\\)\\[\\]\\/\\n\\r]*$");
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
@@ -110,6 +129,18 @@ public class DispositivoController extends HttpServlet {
                 return;
             }
 
+            if (!validarNombreDispositivo(dispositivo.getNombre())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Nombre de dispositivo inválido. Usa un nombre descriptivo y legible."));
+                return;
+            }
+
+            if (!validarDescripcionDispositivo(dispositivo.getDescripcion())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Descripción inválida. Máximo 250 caracteres y sin caracteres extraños."));
+                return;
+            }
+
             if (!TIPOS_VALIDOS.contains(dispositivo.getTipo())) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Tipo de dispositivo inválido"));
@@ -182,6 +213,18 @@ public class DispositivoController extends HttpServlet {
                 dispositivo.getTipo() == null || dispositivo.getEstado() == null) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Nombre, tipo y estado son requeridos"));
+                return;
+            }
+
+            if (!validarNombreDispositivo(dispositivo.getNombre())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Nombre de dispositivo inválido. Usa un nombre descriptivo y legible."));
+                return;
+            }
+
+            if (!validarDescripcionDispositivo(dispositivo.getDescripcion())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Descripción inválida. Máximo 250 caracteres y sin caracteres extraños."));
                 return;
             }
 
