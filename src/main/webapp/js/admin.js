@@ -536,9 +536,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const rawId = document.getElementById('usuario-id').value;
         const id = rawId && rawId !== 'undefined' && rawId !== 'null' ? rawId : '';
         const password = document.getElementById('usuario-password').value;
-        
+        const nombreUsuario = document.getElementById('usuario-nombre').value;
+
+        if (!esTextoLibreValido(nombreUsuario)) {
+            showToast('Nombre de usuario inválido. Usa un nombre real y legible.', 'warning');
+            return;
+        }
+
         const payload = {
-            nombre: document.getElementById('usuario-nombre').value,
+            nombre: nombreUsuario.trim(),
             correo: document.getElementById('usuario-correo').value,
             rol: document.getElementById('usuario-rol').value
         };
@@ -611,17 +617,21 @@ document.addEventListener('DOMContentLoaded', function() {
     var toastStyle = document.createElement('style');
     toastStyle.textContent = '@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes fadeOut{from{opacity:1}to{opacity:0;transform:translateX(120%)}}';
     document.head.appendChild(toastStyle);
+// Función para validar texto libre
+    function esTextoLibreValido(texto) {
+        if (!texto) return false;
+        const valor = texto.trim();
+        if (valor.length < 5 || valor.length > 80) return false;
+        if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,_\-\(\)\/]+$/.test(valor)) return false;
+        if (!/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(valor)) return false;
+        if (/^\d+$/.test(valor)) return false;
+        if (/[0-9]/.test(valor) && !/[ \-_/]/.test(valor)) return false;
+        if (valor.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, '').length < 2) return false;
+        return true;
+    }
 
     function esNombreDispositivoValido(nombre) {
-        if (!nombre) return false;
-        const texto = nombre.trim();
-        if (texto.length < 5 || texto.length > 80) return false;
-        if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,_\-\(\)\/]+$/.test(texto)) return false;
-        if (!/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(texto)) return false;
-        if (/^\d+$/.test(texto)) return false;
-        if (/[0-9]/.test(texto) && !/[ \-_/]/.test(texto)) return false;
-        if (texto.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, '').length < 2) return false;
-        return true;
+        return esTextoLibreValido(nombre);
     }
 
     function esDescripcionValida(descripcion) {
