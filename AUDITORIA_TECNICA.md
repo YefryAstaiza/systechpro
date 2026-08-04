@@ -207,6 +207,17 @@ Estos no estaban en la Fase 2 y Fase 5 originales; se documentan aquí para una 
 - **Schema drift adicional**: `prestamo.estado` nunca incluyó `'DEVUELTO'` en su `ENUM` de MySQL, pese a que `PrestamoController` ya lo acepta y usa como estado válido desde antes de esta auditoría. Corregido en `database.sql` (Fase 2) y agregado `update_db_prestamo_devuelto.sql` para instalaciones existentes.
 - **Comparación imposible detectada en `PrestamoController.doPut`**: una condición compara `prestamo.getEstado()` contra `EstadoDispositivo.EN_USO`, un valor que el campo `prestamo.estado` nunca toma (solo `dispositivo.estado` lo hace). Es una condición preexistente que nunca se cumple; se preservó el comportamiento original y se dejó un comentario explicativo en el código — requiere que alguien con contexto de negocio confirme cuál era la intención original antes de corregirla.
 
+### Fase 3 — Refactor frontend (parcialmente implementada)
+
+- **F1 cerrado**: eliminado el frontend muerto. `index.html` quedó reducido a la vista de login y sus dos modales (recuperar/cambiar contraseña); se borró por completo la sección `dashboard-view` (CRUD paralelo inalcanzable) y el modal genérico que solo usaba ese CRUD. `app.js` se reescribió de 709 a 151 líneas, conservando únicamente `checkSession`, `handleLogin`, `handleForgotRequest`, `handleChangePassword` y `showLogin`; se eliminaron `showDashboard`, `switchView`, `showModal`/`closeModal` y todo el CRUD de dispositivos/préstamos/mantenimientos/usuarios que nunca se ejecutaba. De paso se corrigió S9/F2: `API_BASE` ya no está hardcodeado a `http://localhost:8080`, ahora usa `window.location.origin` igual que `admin.js`.
+- **F5 cerrado**: se eliminó `auth.js` por completo (y su `<script>` en `admin.html`). Existían dos sistemas de permisos de sidebar corriendo en paralelo y en conflicto: `auth.js` ocultaba todos los `.nav-link` con `!important` y solo mostraba los de una lista que **no incluía** `nav-password-requests-btn` para ADMINISTRADOR; `admin.js` intentaba mostrar ese mismo enlace después, pero sin `!important`, por lo que nunca ganaba la cascada. **Esto significa que el enlace "Solicitudes Clave" del sidebar estaba permanentemente oculto para el rol ADMINISTRADOR** — un bug real causado exactamente por la duplicación que describía el hallazgo F5. Al quedar `admin.js` como único responsable de la visibilidad del sidebar, el enlace vuelve a mostrarse correctamente.
+- Limpieza de `styles.css` (798 → ~607 líneas): eliminadas las reglas que solo aplicaban al dashboard/CRUD ya borrado (`#dashboard-view`, `header`, `.dashboard-layout nav`, `.nav-btn`, `.panel`, `.add-btn`, tablas genéricas, `.action-btn`/`.edit-btn`/`.delete-btn`, `.status-*`, `.view`/`.view.active` ya cubiertas por `#login-view`). De paso se corrigió otro bug de la duplicación de estilos (F8): la sección legada redefinía `.user-info` con un `gap` distinto al de la sección de administración, y por orden de cascada esa redefinición ganaba silenciosamente sobre el `admin.html` real.
+- Verificado con `node --check` sobre `app.js` y `admin.js`, y revisión manual de que ningún ID/clase eliminado siga siendo referenciado.
+
 ### Pendiente (no implementado en esta sesión)
 
-Fases 3 (frontend), 4 (SQL), 5 (UX) y 6 (seguridad avanzada) del roadmap original siguen pendientes.
+Del roadmap de Fase 3 quedan sin hacer, por ser los ítems de mayor riesgo/esfuerzo y requerir prueba visual en navegador (no disponible en este entorno):
+- Dividir `admin.js` (2.277 líneas) en módulos por entidad.
+- Mover los estilos inline de `admin.html` a clases CSS reutilizables (F7).
+
+Fases 4 (SQL), 5 (UX) y 6 (seguridad avanzada) del roadmap original también siguen pendientes.

@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(res => res.json())
         .then(data => {
             if (data.authenticated && data.usuario) {
-                // Guardar usuario en localStorage para que auth.js pueda accederlo
+                // Guardar usuario en localStorage para que obtenerRolActual() pueda leerlo antes de que rolGlobal esté listo
                 localStorage.setItem('usuario', JSON.stringify(data.usuario));
                 
                 const userNameEl = document.getElementById('admin-user-name');
