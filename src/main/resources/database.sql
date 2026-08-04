@@ -71,6 +71,10 @@ CREATE TABLE IF NOT EXISTS dispositivo (
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Índices para los filtros de DispositivoDAO.listarPorFiltro (tipo, estado)
+CREATE INDEX idx_dispositivo_estado ON dispositivo(estado);
+CREATE INDEX idx_dispositivo_tipo ON dispositivo(tipo);
+
 -- ======================================
 -- TABLA: PRESTAMO (UBICACIÓN = SALON ✔)
 -- ======================================
@@ -91,6 +95,10 @@ CREATE TABLE IF NOT EXISTS prestamo (
     FOREIGN KEY (id_salon) REFERENCES salon(id_salon)
 );
 
+-- Índice compuesto para PrestamoDAO.listarPorEstado (WHERE estado = ?) y para la
+-- subconsulta de "última ubicación" de DispositivoDAO (WHERE estado = 'APROBADO' GROUP BY id_dispositivo)
+CREATE INDEX idx_prestamo_estado_dispositivo ON prestamo(estado, id_dispositivo);
+
 -- ======================================
 -- TABLA: MANTENIMIENTO
 -- ======================================
@@ -109,6 +117,9 @@ CREATE TABLE IF NOT EXISTS mantenimiento (
     FOREIGN KEY (id_dispositivo) REFERENCES dispositivo(id_dispositivo),
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
 );
+
+-- Índice para futuros filtros por estado (EN_PROCESO/FINALIZADO)
+CREATE INDEX idx_mantenimiento_estado ON mantenimiento(estado);
 
 -- ======================================
 -- TABLA: AUDITORÍA (CON IP ✔)

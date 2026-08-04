@@ -241,4 +241,16 @@ Al reconstruir cada módulo desde cero registrando cada listener una sola vez, l
 
 - **F7 (mover estilos inline de `admin.html` a clases CSS) se decidió aplazar.** Es el ítem de menor prioridad e impacto de todo el roadmap de Fase 3 ("Baja prioridad, Bajo impacto, Alta dificultad por volumen" en la tabla de la Fase 4), es puramente cosmético (no corrige ningún bug ni riesgo), y a diferencia de la división de `admin.js` — que se pudo verificar exhaustivamente con análisis estático porque es lógica, no apariencia — cualquier error al mover cientos de atributos `style="..."` solo sería detectable mirando la página renderizada en un navegador, algo que no está disponible en este entorno. Se recomienda hacerlo en una sesión con acceso a probar visualmente el resultado.
 
-Fases 4 (SQL), 5 (UX) y 6 (seguridad avanzada) del roadmap original también siguen pendientes.
+### Fase 4 — Índices en columnas de filtro frecuente (implementada)
+
+- `idx_dispositivo_estado`, `idx_dispositivo_tipo` — sirven a `DispositivoDAO.listarPorFiltro` (`WHERE d.tipo = ? AND d.estado = ?`).
+- `idx_prestamo_estado_dispositivo` (compuesto, `estado, id_dispositivo`) — sirve tanto a `PrestamoDAO.listarPorEstado` (`WHERE p.estado = ?`) como a la subconsulta de "última ubicación" de `DispositivoDAO.BASE_QUERY` (`WHERE estado = 'APROBADO' GROUP BY id_dispositivo`), evitando así dos índices separados.
+- `idx_mantenimiento_estado` — no hay una consulta SQL que filtre por él todavía, pero se agrega de forma preventiva tal como señalaba el hallazgo BD3.
+- Agregados directamente en `database.sql` (para instalaciones nuevas) y en `update_db_indices_rendimiento.sql` (para instalaciones existentes), siguiendo el mismo patrón de migración separada usado en Fases 1 y 2.
+- No se pudo verificar contra un servidor MySQL real (no disponible en este entorno); se revisó manualmente que la sintaxis `CREATE INDEX ... ON tabla(columnas)` es válida y que cada índice se declara después de que su tabla ya existe en el script.
+
+### Fase 4 — Mover paginación a la base de datos (pendiente, requiere decisión)
+
+No implementada todavía: implica cambiar el contrato de las APIs GET (`/api/dispositivos`, `/api/prestamos`, `/api/mantenimientos`, `/api/auditoria`), que hoy devuelven un array plano, a algo como `{ total, items }`, y actualizar en simultáneo los 4 DAO (agregar `LIMIT`/`OFFSET` + un método de conteo), los 4 controllers, y los módulos de frontend correspondientes (`dispositivos.js`, `prestamos.js`, `mantenimientos.js`, `auditoria.js`). Es el ítem de **menor prioridad** de la Fase 4 (la tabla de la Fase 4 del roadmap lo marca "Baja prioridad" frente a "Media" para los índices) y el de **mayor riesgo**, ya que cruza backend y frontend a la vez y no hay manera de probar el round-trip real (MySQL + Tomcat) en este entorno. Se dejó pendiente de una decisión explícita antes de tocarlo.
+
+Fases 5 (UX) y 6 (seguridad avanzada) del roadmap original también siguen pendientes.
