@@ -1077,18 +1077,34 @@
                     </div>
                 </div>
 
+                <!-- Modal de confirmación genérico (reemplaza confirm() nativo) -->
+                <div id="modal-confirmacion"
+                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+                    <div
+                        style="background: white; width: min(360px, 90vw); padding: 22px; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.2);">
+                        <p id="confirmacion-mensaje"
+                            style="margin: 0 0 20px; color: #1e293b; font-size: 15px; line-height: 1.5;"></p>
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" id="btn-confirmacion-cancelar"
+                                style="padding: 8px 16px; background: #f1f5f9; color: #374151; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancelar</button>
+                            <button type="button" id="btn-confirmacion-aceptar"
+                                style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+
             </main>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-        <script src="js/core.js?v=1"></script>
-        <script src="js/usuarios.js?v=1"></script>
-        <script src="js/dispositivos.js?v=1"></script>
-        <script src="js/prestamos.js?v=1"></script>
-        <script src="js/mantenimientos.js?v=1"></script>
-        <script src="js/auditoria.js?v=1"></script>
-        <script src="js/reportes.js?v=1"></script>
-        <script src="js/password-requests.js?v=1"></script>
-        <script src="js/init.js?v=1"></script>
+        <script src="js/core.js?v=2"></script>
+        <script src="js/usuarios.js?v=2"></script>
+        <script src="js/dispositivos.js?v=2"></script>
+        <script src="js/prestamos.js?v=2"></script>
+        <script src="js/mantenimientos.js?v=2"></script>
+        <script src="js/auditoria.js?v=2"></script>
+        <script src="js/reportes.js?v=2"></script>
+        <script src="js/password-requests.js?v=2"></script>
+        <script src="js/init.js?v=2"></script>
 </body>
 
 </html>

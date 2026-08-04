@@ -276,15 +276,15 @@ function guardarMantenimiento(e) {
     .then(res => res.json().then(data => ({ status: res.status, body: data })))
     .then(res => {
         if (res.status >= 200 && res.status < 300) {
-            alert(res.body.mensaje);
+            showToast(res.body.mensaje, 'success');
             modalCrearMantenimiento.style.display = 'none';
             cargarMantenimientos();
             cargarDispositivos();
         } else {
-            alert(res.body.error || 'Error al registrar mantenimiento');
+            showToast(res.body.error || 'Error al registrar mantenimiento', 'error');
         }
     })
-    .catch(err => alert('Error de conexión con el servidor'));
+    .catch(err => showToast('Error de conexión con el servidor', 'error'));
 }
 
 function abrirModalDetalleMantenimiento(id) {
@@ -344,15 +344,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(res => res.json().then(data => ({status: res.status, body: data})))
             .then(res => {
                 if (res.status >= 200 && res.status < 300) {
-                    alert(res.body.mensaje);
+                    showToast(res.body.mensaje, 'success');
                     modalDetalleMantenimiento.style.display = 'none';
                     cargarMantenimientos();
                     cargarDispositivos();
                 } else {
-                    alert(res.body.error || 'Error al finalizar mantenimiento');
+                    showToast(res.body.error || 'Error al finalizar mantenimiento', 'error');
                 }
             })
-            .catch(err => alert('Error de conexión con el servidor'));
+            .catch(err => showToast('Error de conexión con el servidor', 'error'));
         });
     }
 

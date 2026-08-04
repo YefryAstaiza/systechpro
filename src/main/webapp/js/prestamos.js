@@ -207,8 +207,9 @@ window.rechazarPrestamoPanel = function(id) {
             if (res.status < 300) { cargarPrestamosPanelDedicado(); cargarDispositivos(); }
         });
 };
-window.cancelarPrestamoPanel = function(id) {
-    if (!confirm('¿Cancelar esta solicitud de préstamo?')) return;
+window.cancelarPrestamoPanel = async function(id) {
+    const confirmado = await confirmarAccion('¿Cancelar esta solicitud de préstamo?');
+    if (!confirmado) return;
     fetch(apiBase + '/prestamos/' + id, { method: 'DELETE' })
         .then(function(res) { return res.json().then(function(d) { return { status: res.status, body: d }; }); })
         .then(function(res) {
@@ -271,14 +272,14 @@ function guardarPrestamo(e) {
     .then(res => res.json().then(data => ({status: res.status, body: data})))
     .then(res => {
         if (res.status >= 200 && res.status < 300) {
-            alert(res.body.mensaje);
+            showToast(res.body.mensaje, 'success');
             modalCrearPrestamo.style.display = 'none';
             cargarPrestamos();
         } else {
-            alert(res.body.error || 'Error al solicitar préstamo');
+            showToast(res.body.error || 'Error al solicitar préstamo', 'error');
         }
     })
-    .catch(err => alert('Error de conexión con el servidor'));
+    .catch(err => showToast('Error de conexión con el servidor', 'error'));
 }
 
 function abrirModalDetallePrestamo(id) {
@@ -319,15 +320,15 @@ function cambiarEstadoPrestamo(id, nuevoEstado) {
     .then(res => res.json().then(data => ({status: res.status, body: data})))
     .then(res => {
         if (res.status >= 200 && res.status < 300) {
-            alert(res.body.mensaje);
+            showToast(res.body.mensaje, 'success');
             modalDetallePrestamo.style.display = 'none';
             cargarPrestamos();
             cargarDispositivos(); // Actualizar contadores del dashboard
         } else {
-            alert(res.body.error || 'Error al cambiar estado');
+            showToast(res.body.error || 'Error al cambiar estado', 'error');
         }
     })
-    .catch(err => alert('Error de conexión con el servidor'));
+    .catch(err => showToast('Error de conexión con el servidor', 'error'));
 }
 
 document.addEventListener('DOMContentLoaded', function() {

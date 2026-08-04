@@ -81,7 +81,7 @@ function exportarInventarioCSV() {
         .then(res => res.json())
         .then(dispositivos => {
             if (!Array.isArray(dispositivos) || dispositivos.length === 0) {
-                alert('No hay dispositivos para exportar');
+                showToast('No hay dispositivos para exportar', 'warning');
                 return;
             }
 
@@ -111,7 +111,7 @@ function exportarInventarioCSV() {
 
 function exportarInventarioXLSX() {
     if (typeof XLSX === 'undefined') {
-        alert('La librería de Excel (SheetJS) no se ha cargado. Por favor, verifica tu conexión a internet o recarga la página.');
+        showToast('La librería de Excel (SheetJS) no se ha cargado. Verifica tu conexión a internet o recarga la página.', 'error');
         return;
     }
 
@@ -119,7 +119,7 @@ function exportarInventarioXLSX() {
         .then(res => res.json())
         .then(dispositivos => {
             if (!Array.isArray(dispositivos) || dispositivos.length === 0) {
-                alert('No hay dispositivos para exportar');
+                showToast('No hay dispositivos para exportar', 'warning');
                 return;
             }
 
@@ -140,7 +140,7 @@ function exportarInventarioXLSX() {
         })
         .catch(err => {
             console.error('Error al exportar XLSX:', err);
-            alert('Error al exportar el inventario');
+            showToast('Error al exportar el inventario', 'error');
         });
 }
 

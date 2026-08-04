@@ -277,6 +277,32 @@ toastStyle.textContent = '@keyframes slideIn{from{transform:translateX(120%);opa
 document.head.appendChild(toastStyle);
 
 // ---------------------------------------------
+// MODAL DE CONFIRMACIÓN (reemplaza confirm() nativo)
+// ---------------------------------------------
+function confirmarAccion(mensaje) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('modal-confirmacion');
+        const msgEl = document.getElementById('confirmacion-mensaje');
+        const btnAceptar = document.getElementById('btn-confirmacion-aceptar');
+        const btnCancelar = document.getElementById('btn-confirmacion-cancelar');
+
+        msgEl.textContent = mensaje;
+        modal.style.display = 'flex';
+
+        function limpiar() {
+            modal.style.display = 'none';
+            btnAceptar.removeEventListener('click', onAceptar);
+            btnCancelar.removeEventListener('click', onCancelar);
+        }
+        function onAceptar() { limpiar(); resolve(true); }
+        function onCancelar() { limpiar(); resolve(false); }
+
+        btnAceptar.addEventListener('click', onAceptar);
+        btnCancelar.addEventListener('click', onCancelar);
+    });
+}
+
+// ---------------------------------------------
 // VALIDACIONES DE TEXTO LIBRE
 // ---------------------------------------------
 function esTextoLibreValido(texto) {

@@ -68,35 +68,35 @@ function guardarUsuario(e) {
     .then(res => res.json().then(data => ({status: res.status, body: data})))
     .then(res => {
         if (res.status >= 200 && res.status < 300) {
-            alert(res.body.mensaje);
+            showToast(res.body.mensaje, 'success');
             modalUsuario.style.display = 'none';
             cargarUsuarios();
         } else {
             const detalle = res.body.detalle ? ' (' + res.body.detalle + ')' : '';
-            alert((res.body.error || 'Ocurrió un error al guardar') + detalle);
+            showToast((res.body.error || 'Ocurrió un error al guardar') + detalle, 'error');
         }
     })
     .catch(err => {
-        alert('Error de conexión con el servidor');
+        showToast('Error de conexión con el servidor', 'error');
     });
 }
 
-function eliminarUsuario(id) {
-    if (confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
-        fetch(`${apiBase}/usuarios/${id}`, {
-            method: 'DELETE'
-        })
-        .then(res => res.json().then(data => ({status: res.status, body: data})))
-        .then(res => {
-            if (res.status >= 200 && res.status < 300) {
-                alert(res.body.mensaje);
-                cargarUsuarios();
-            } else {
-                alert(res.body.error || 'Ocurrió un error al eliminar');
-            }
-        })
-        .catch(err => alert('Error de conexión con el servidor'));
-    }
+async function eliminarUsuario(id) {
+    const confirmado = await confirmarAccion('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.');
+    if (!confirmado) return;
+    fetch(`${apiBase}/usuarios/${id}`, {
+        method: 'DELETE'
+    })
+    .then(res => res.json().then(data => ({status: res.status, body: data})))
+    .then(res => {
+        if (res.status >= 200 && res.status < 300) {
+            showToast(res.body.mensaje, 'success');
+            cargarUsuarios();
+        } else {
+            showToast(res.body.error || 'Ocurrió un error al eliminar', 'error');
+        }
+    })
+    .catch(err => showToast('Error de conexión con el servidor', 'error'));
 }
 
 function renderTablaUsuarios() {

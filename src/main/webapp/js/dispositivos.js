@@ -74,11 +74,11 @@ function renderTablaDispositivos() {
             ];
             fila.push(
                 '<td style="padding:12px 14px;text-align:center;">',
-                '  <button class="btn-editar-disp" data-id="' + d.idDispositivo + '" title="Editar" style="background:none;border:none;cursor:pointer;padding:5px;color:#f59e0b;">',
-                '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+                '  <button class="btn-editar-disp" data-id="' + d.idDispositivo + '" title="Editar" aria-label="Editar dispositivo ' + escapeHtml(d.nombre) + '" style="background:none;border:none;cursor:pointer;padding:5px;color:#f59e0b;">',
+                '    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
                 '  </button>',
-                '  <button class="btn-eliminar-disp" data-id="' + d.idDispositivo + '" title="Eliminar" style="background:none;border:none;cursor:pointer;padding:5px;color:#ef4444;">',
-                '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+                '  <button class="btn-eliminar-disp" data-id="' + d.idDispositivo + '" title="Eliminar" aria-label="Eliminar dispositivo ' + escapeHtml(d.nombre) + '" style="background:none;border:none;cursor:pointer;padding:5px;color:#ef4444;">',
+                '    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
                 '  </button>',
                 '</td>'
             );
@@ -157,13 +157,14 @@ function guardarDispositivo(e) {
         .catch(function() { showToast('Error de conexión con el servidor', 'error'); });
 }
 
-function eliminarDispositivo(id) {
+async function eliminarDispositivo(id) {
     var disp = todosLosDispositivos.find(function(d) { return d.idDispositivo == id; });
     if (disp && disp.estado === 'EN_USO') {
         showToast('No se puede eliminar un dispositivo que está EN USO', 'warning');
         return;
     }
-    if (!confirm('¿Eliminar el dispositivo "' + (disp ? disp.nombre : '') + '"? Esta acción no se puede deshacer.')) return;
+    const confirmado = await confirmarAccion('¿Eliminar el dispositivo "' + (disp ? disp.nombre : '') + '"? Esta acción no se puede deshacer.');
+    if (!confirmado) return;
     fetch(apiBase + '/dispositivos/' + id, { method: 'DELETE' })
         .then(function(res) { return res.json().then(function(data) { return { status: res.status, body: data }; }); })
         .then(function(res) {

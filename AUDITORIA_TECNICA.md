@@ -251,6 +251,15 @@ Al reconstruir cada módulo desde cero registrando cada listener una sola vez, l
 
 ### Fase 4 — Mover paginación a la base de datos (pendiente, requiere decisión)
 
-No implementada todavía: implica cambiar el contrato de las APIs GET (`/api/dispositivos`, `/api/prestamos`, `/api/mantenimientos`, `/api/auditoria`), que hoy devuelven un array plano, a algo como `{ total, items }`, y actualizar en simultáneo los 4 DAO (agregar `LIMIT`/`OFFSET` + un método de conteo), los 4 controllers, y los módulos de frontend correspondientes (`dispositivos.js`, `prestamos.js`, `mantenimientos.js`, `auditoria.js`). Es el ítem de **menor prioridad** de la Fase 4 (la tabla de la Fase 4 del roadmap lo marca "Baja prioridad" frente a "Media" para los índices) y el de **mayor riesgo**, ya que cruza backend y frontend a la vez y no hay manera de probar el round-trip real (MySQL + Tomcat) en este entorno. Se dejó pendiente de una decisión explícita antes de tocarlo.
+No implementada: implica cambiar el contrato de las APIs GET (`/api/dispositivos`, `/api/prestamos`, `/api/mantenimientos`, `/api/auditoria`), que hoy devuelven un array plano, a algo como `{ total, items }`, y actualizar en simultáneo los 4 DAO (agregar `LIMIT`/`OFFSET` + un método de conteo), los 4 controllers, y los módulos de frontend correspondientes (`dispositivos.js`, `prestamos.js`, `mantenimientos.js`, `auditoria.js`). Era el ítem de **menor prioridad** de la Fase 4 y el de **mayor riesgo** (cruza backend y frontend a la vez, sin manera de probar el round-trip real en este entorno).
 
-Fases 5 (UX) y 6 (seguridad avanzada) del roadmap original también siguen pendientes.
+**Decisión explícita del usuario: omitir por ahora.** El uso es departamental (pocos cientos/miles de filas), por lo que la paginación client-side actual no es un problema real de rendimiento hoy. Queda documentado aquí para retomarlo si el volumen de datos llega a justificarlo.
+
+### Fase 5 — Mejoras UX (implementada)
+
+- **`alert()`/`confirm()` nativos reemplazados por el sistema `showToast()`/modal de confirmación consistente** en `usuarios.js`, `dispositivos.js`, `prestamos.js`, `mantenimientos.js` y `reportes.js`. Se agregó `confirmarAccion(mensaje)` a `core.js` (Promise + un modal genérico `#modal-confirmacion` en `admin.html`) para reemplazar los `confirm()` bloqueantes de eliminar usuario, eliminar dispositivo, cancelar préstamo y aprobar/rechazar solicitud de contraseña; las funciones que los usaban pasaron a `async`.
+  - **Excepción deliberada**: el `alert()` que muestra la clave temporal generada al aprobar una solicitud de contraseña (`password-requests.js`) se dejó sin cambiar a propósito — un toast se autodesvanece a los 3.5s y el administrador necesita tiempo para copiar la clave y entregarla al usuario; convertirlo habría sido una regresión de UX, no una mejora.
+- **Accesibilidad**: los botones de ícono sin texto visible (editar/eliminar dispositivo en `dispositivos.js`) tenían solo `title`; se agregó `aria-label` descriptivo y `aria-hidden="true"` a los SVG decorativos. Las badges de estado (`getEstadoBadge`, `getEstadoBadgeDisp`, `getEstadoBadgeMantenimiento` en `core.js`) ya combinaban color y texto (no dependían solo del color), por lo que no requirieron cambios.
+- Verificado con `node --check` en los 7 archivos tocados y `mvn package` para confirmar que el WAR sigue construyéndose.
+
+Fase 6 (seguridad avanzada) del roadmap original sigue pendiente.

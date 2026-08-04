@@ -41,9 +41,10 @@ function renderTablaPasswordRequests(solicitudes) {
     });
 }
 
-window.procesarSolicitudPassword = function(id, accion) {
+window.procesarSolicitudPassword = async function(id, accion) {
     const confirmMsg = accion === 'approve' ? '¿Aprobar solicitud? Se generará una clave temporal.' : '¿Rechazar solicitud?';
-    if (!confirm(confirmMsg)) return;
+    const confirmado = await confirmarAccion(confirmMsg);
+    if (!confirmado) return;
 
     fetch(`${apiBase}/admin/password-requests/${id}/${accion}`, {
         method: 'PUT',
