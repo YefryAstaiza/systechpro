@@ -3,7 +3,9 @@ package com.systechpro.controllers;
 import com.systechpro.dao.DispositivoDAO;
 import com.systechpro.dao.MantenimientoDAO;
 import com.systechpro.models.Dispositivo;
+import com.systechpro.models.EstadoMantenimiento;
 import com.systechpro.models.Mantenimiento;
+import com.systechpro.models.Rol;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -39,7 +41,7 @@ public class TecnicoController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"TECNICO".equals(rol)) {
+        if (!Rol.TECNICO.name().equals(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Acceso restringido"));
             return;
@@ -72,13 +74,13 @@ public class TecnicoController extends HttpServlet {
         int recientesAgregados = 0;
 
         for (Mantenimiento m : mantenimientos) {
-            if ("EN_PROCESO".equals(m.getEstado())) {
+            if (EstadoMantenimiento.EN_PROCESO.name().equals(m.getEstado())) {
                 mantenimientosEnProceso++;
                 if (!dispositivosEnMantenimientoIds.contains(m.getIdDispositivo())) {
                     dispositivosEnMantenimientoIds.add(m.getIdDispositivo());
                 }
             }
-            if ("FINALIZADO".equals(m.getEstado())) {
+            if (EstadoMantenimiento.FINALIZADO.name().equals(m.getEstado())) {
                 mantenimientosFinalizados++;
             }
 
@@ -119,14 +121,14 @@ public class TecnicoController extends HttpServlet {
         map.put("fechaInicio", formatearFecha(m.getFechaInicio()));
         map.put("estado", m.getEstado());
         map.put("estadoTexto", traducirEstado(m.getEstado()));
-        map.put("estadoClass", "EN_PROCESO".equals(m.getEstado()) ? "status-en-proceso" : "status-finalizado");
+        map.put("estadoClass", EstadoMantenimiento.EN_PROCESO.name().equals(m.getEstado()) ? "status-en-proceso" : "status-finalizado");
         map.put("descripcion", m.getDescripcion());
         return map;
     }
 
     private String traducirEstado(String estado) {
-        if ("FINALIZADO".equals(estado)) return "Finalizado";
-        if ("EN_PROCESO".equals(estado)) return "En proceso";
+        if (EstadoMantenimiento.FINALIZADO.name().equals(estado)) return "Finalizado";
+        if (EstadoMantenimiento.EN_PROCESO.name().equals(estado)) return "En proceso";
         return estado != null ? estado : "N/A";
     }
 

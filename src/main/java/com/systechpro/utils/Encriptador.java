@@ -1,9 +1,12 @@
 package com.systechpro.utils;
 
 import org.mindrot.jbcrypt.BCrypt;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Encriptador {
-    
+    private static final Logger LOGGER = Logger.getLogger(Encriptador.class.getName());
+
     /**
      * Encripta una contraseña usando BCrypt.
      */
@@ -24,7 +27,7 @@ public class Encriptador {
         try {
             return BCrypt.checkpw(passwordIngresada, passwordAlmacenada);
         } catch (Exception e) {
-            System.err.println("Error al verificar contraseña BCrypt: " + e.getMessage());
+            LOGGER.log(Level.WARNING, "Error al verificar contraseña BCrypt", e);
             return false;
         }
     }

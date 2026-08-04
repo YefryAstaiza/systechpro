@@ -5,9 +5,12 @@ import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class UsuarioDAO {
-    
+    private static final Logger LOGGER = Logger.getLogger(UsuarioDAO.class.getName());
+
     public Usuario buscarPorCorreo(String correo) {
         String sql = "SELECT * FROM usuario WHERE correo = ?";
         try (Connection conn = GestorJDBC.getConnection();
@@ -20,7 +23,7 @@ public class UsuarioDAO {
                 return mapearUsuario(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Error al buscar por correo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al buscar por correo", e);
         }
         return null;
     }
@@ -38,7 +41,7 @@ public class UsuarioDAO {
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al insertar usuario: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al insertar usuario", e);
             return false;
         }
     }
@@ -55,7 +58,7 @@ public class UsuarioDAO {
                 usuarios.add(mapearUsuario(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar usuarios: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar usuarios", e);
         }
         return usuarios;
     }
@@ -88,7 +91,7 @@ public class UsuarioDAO {
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al actualizar usuario: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al actualizar usuario", e);
             return false;
         }
     }
@@ -102,7 +105,7 @@ public class UsuarioDAO {
             pstmt.setInt(3, id);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al actualizar password force change: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al actualizar password force change", e);
             return false;
         }
     }
@@ -118,7 +121,7 @@ public class UsuarioDAO {
                 return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            System.err.println("Error al verificar correo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al verificar correo", e);
         }
         return false;
     }
@@ -131,7 +134,7 @@ public class UsuarioDAO {
             pstmt.setInt(1, id);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al eliminar usuario: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al eliminar usuario", e);
             return false;
         }
     }
@@ -147,7 +150,7 @@ public class UsuarioDAO {
                 return mapearUsuario(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Error al buscar usuario: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al buscar usuario", e);
         }
         return null;
     }

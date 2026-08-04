@@ -7,8 +7,11 @@ import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MantenimientoDAO {
+    private static final Logger LOGGER = Logger.getLogger(MantenimientoDAO.class.getName());
 
     private final DispositivoDAO dispositivoDAO = new DispositivoDAO();
 
@@ -33,7 +36,7 @@ public class MantenimientoDAO {
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al insertar mantenimiento: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al insertar mantenimiento", e);
             return false;
         }
     }
@@ -50,7 +53,7 @@ public class MantenimientoDAO {
                 mantenimientos.add(mapearMantenimiento(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar mantenimientos: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar mantenimientos", e);
         }
         return mantenimientos;
     }
@@ -69,7 +72,7 @@ public class MantenimientoDAO {
                 mantenimientos.add(mapearMantenimiento(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar mantenimientos por dispositivo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar mantenimientos por dispositivo", e);
         }
         return mantenimientos;
     }
@@ -87,7 +90,7 @@ public class MantenimientoDAO {
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al actualizar mantenimiento: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al actualizar mantenimiento", e);
             return false;
         }
     }
@@ -103,7 +106,7 @@ public class MantenimientoDAO {
                 return mapearMantenimiento(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Error al buscar mantenimiento: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al buscar mantenimiento", e);
         }
         return null;
     }

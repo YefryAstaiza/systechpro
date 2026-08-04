@@ -4,6 +4,9 @@ import com.systechpro.dao.PrestamoDAO;
 import com.systechpro.dao.DispositivoDAO;
 import com.systechpro.models.Prestamo;
 import com.systechpro.models.Dispositivo;
+import com.systechpro.models.EstadoDispositivo;
+import com.systechpro.models.EstadoPrestamo;
+import com.systechpro.models.Rol;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,7 +28,7 @@ public class PrestamoController extends HttpServlet {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private boolean tienePermisoAdmin(String rol) {
-        return "ADMINISTRADOR".equals(rol) || "TECNICO".equals(rol);
+        return Rol.ADMINISTRADOR.name().equals(rol) || Rol.TECNICO.name().equals(rol);
     }
 
     @Override
@@ -62,7 +65,7 @@ public class PrestamoController extends HttpServlet {
                 }
                 objectMapper.writeValue(response.getWriter(), prestamos);
             } else if (pathInfo.equals("/pendientes") && tienePermisoAdmin(rol)) {
-                List<Prestamo> prestamos = prestamoDAO.listarPorEstado("PENDIENTE");
+                List<Prestamo> prestamos = prestamoDAO.listarPorEstado(EstadoPrestamo.PENDIENTE.name());
                 objectMapper.writeValue(response.getWriter(), prestamos);
             } else {
                 String idStr = pathInfo.substring(1);
@@ -134,7 +137,7 @@ public class PrestamoController extends HttpServlet {
                 return;
             }
             
-            if (!"DISPONIBLE".equals(dispositivo.getEstado())) {
+            if (!EstadoDispositivo.DISPONIBLE.name().equals(dispositivo.getEstado())) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "El dispositivo no está disponible"));
                 return;
@@ -147,7 +150,7 @@ public class PrestamoController extends HttpServlet {
             prestamo.setIdSalon(idSalon);
             prestamo.setFechaInicio(Timestamp.valueOf(inicio));
             prestamo.setFechaFin(Timestamp.valueOf(fin));
-            prestamo.setEstado("PENDIENTE");
+            prestamo.setEstado(EstadoPrestamo.PENDIENTE.name());
 
             boolean resultado = prestamoDAO.insertar(prestamo);
 
@@ -206,7 +209,7 @@ public class PrestamoController extends HttpServlet {
             Map<String, Object> datos = objectMapper.readValue(request.getInputStream(), Map.class);
             String nuevoEstado = (String) datos.get("estado");
 
-            if (nuevoEstado == null || (!nuevoEstado.equals("APROBADO") && !nuevoEstado.equals("RECHAZADO") && !nuevoEstado.equals("DEVUELTO"))) {
+            if (nuevoEstado == null || (!nuevoEstado.equals(EstadoPrestamo.APROBADO.name()) && !nuevoEstado.equals(EstadoPrestamo.RECHAZADO.name()) && !nuevoEstado.equals(EstadoPrestamo.DEVUELTO.name()))) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Estado inválido"));
                 return;
@@ -220,7 +223,10 @@ public class PrestamoController extends HttpServlet {
                 return;
             }
 
-            if (!"PENDIENTE".equals(prestamoActual.getEstado()) && !"EN_USO".equals(prestamoActual.getEstado()) && !nuevoEstado.equals("DEVUELTO")) {
+            // NOTA: la comparación con EstadoDispositivo.EN_USO es preexistente; prestamo.estado nunca toma
+            // ese valor (solo dispositivo.estado lo hace), por lo que esta rama del OR nunca se cumple.
+            // Se preserva el comportamiento original tal cual; revisar si la intención era otra condición.
+            if (!EstadoPrestamo.PENDIENTE.name().equals(prestamoActual.getEstado()) && !EstadoDispositivo.EN_USO.name().equals(prestamoActual.getEstado()) && !nuevoEstado.equals(EstadoPrestamo.DEVUELTO.name())) {
                  response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                  objectMapper.writeValue(response.getWriter(), Map.of("error", "No se puede cambiar el estado de este préstamo"));
                  return;
@@ -229,10 +235,10 @@ public class PrestamoController extends HttpServlet {
             boolean resultado = prestamoDAO.actualizarEstado(id, nuevoEstado);
 
             if (resultado) {
-                if ("APROBADO".equals(nuevoEstado)) {
-                    dispositivoDAO.actualizarEstado(prestamoActual.getIdDispositivo(), "EN_USO");
-                } else if ("RECHAZADO".equals(nuevoEstado) || "DEVUELTO".equals(nuevoEstado)) {
-                    dispositivoDAO.actualizarEstado(prestamoActual.getIdDispositivo(), "DISPONIBLE");
+                if (EstadoPrestamo.APROBADO.name().equals(nuevoEstado)) {
+                    dispositivoDAO.actualizarEstado(prestamoActual.getIdDispositivo(), EstadoDispositivo.EN_USO.name());
+                } else if (EstadoPrestamo.RECHAZADO.name().equals(nuevoEstado) || EstadoPrestamo.DEVUELTO.name().equals(nuevoEstado)) {
+                    dispositivoDAO.actualizarEstado(prestamoActual.getIdDispositivo(), EstadoDispositivo.DISPONIBLE.name());
                 }
                 
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Estado del préstamo actualizado"));

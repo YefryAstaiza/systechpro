@@ -5,8 +5,11 @@ import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class AuditoriaDAO {
+    private static final Logger LOGGER = Logger.getLogger(AuditoriaDAO.class.getName());
 
     public boolean insertar(Auditoria auditoria) {
         String sql = "INSERT INTO auditoria (id_usuario, tabla_afectada, accion, id_registro, descripcion, ip) VALUES (?, ?, ?, ?, ?, ?)";
@@ -28,7 +31,7 @@ public class AuditoriaDAO {
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al insertar auditoria: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al insertar auditoria", e);
             return false;
         }
     }
@@ -60,7 +63,7 @@ public class AuditoriaDAO {
                 lista.add(a);
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar auditoria: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar auditoria", e);
         }
         return lista;
     }

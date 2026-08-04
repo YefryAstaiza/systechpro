@@ -7,8 +7,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ReporteDAO {
+    private static final Logger LOGGER = Logger.getLogger(ReporteDAO.class.getName());
 
     public Map<String, Integer> obtenerEstadisticasDispositivos() {
         Map<String, Integer> stats = new HashMap<>();
@@ -22,7 +25,7 @@ public class ReporteDAO {
                 stats.put(rs.getString("estado"), rs.getInt("total"));
             }
         } catch (SQLException e) {
-            System.err.println("Error en obtenerEstadisticasDispositivos: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error en obtenerEstadisticasDispositivos", e);
         }
         return stats;
     }
@@ -39,7 +42,7 @@ public class ReporteDAO {
                 stats.put(rs.getString("tipo"), rs.getInt("total"));
             }
         } catch (SQLException e) {
-            System.err.println("Error en obtenerEstadisticasMantenimientos: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error en obtenerEstadisticasMantenimientos", e);
         }
         return stats;
     }

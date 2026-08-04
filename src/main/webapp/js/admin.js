@@ -17,6 +17,17 @@ let mantenimientosPage = 1;
 const PANEL_PAGE_SIZE = 10;
 let autoRefreshTimer = null;
 
+// Escapa datos antes de insertarlos como HTML (previene XSS almacenado en campos de texto libre)
+function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 const permisos = {
     ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes', 'password-requests'],
     TECNICO: ['inicio','mantenimientos'],
@@ -607,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const c = colors[type] || colors.info;
         const ic = icons[type] || icons.info;
         toast.style.cssText = 'background:white;border-left:4px solid ' + c + ';border-radius:8px;padding:12px 18px;box-shadow:0 4px 20px rgba(0,0,0,0.15);display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:#1e293b;pointer-events:all;min-width:260px;max-width:380px;animation:slideIn .3s ease;';
-        toast.innerHTML = '<span style="color:' + c + ';font-size:18px;font-weight:700;">' + ic + '</span><span>' + message + '</span>';
+        toast.innerHTML = '<span style="color:' + c + ';font-size:18px;font-weight:700;">' + ic + '</span><span>' + escapeHtml(message) + '</span>';
         container.appendChild(toast);
         setTimeout(function() {
             toast.style.animation = 'fadeOut .3s ease';
@@ -771,8 +782,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 tr.style.cssText = 'border-bottom:1px solid #f1f5f9;transition:background .15s;';
                 var fila = [
                     '<td style="padding:12px 14px;font-weight:600;color:#64748b;">' + codigo + '</td>',
-                    '<td style="padding:12px 14px;font-weight:500;color:#1e293b;">' + d.nombre + '</td>',
-                    '<td style="padding:12px 14px;color:#475569;">' + d.tipo + '</td>',
+                    '<td style="padding:12px 14px;font-weight:500;color:#1e293b;">' + escapeHtml(d.nombre) + '</td>',
+                    '<td style="padding:12px 14px;color:#475569;">' + escapeHtml(d.tipo) + '</td>',
                     '<td style="padding:12px 14px;">' + getEstadoBadgeDisp(d.estado) + '</td>',
                     '<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.fechaCreacion ? formatearFecha(d.fechaCreacion) : '\u2014') + '</td>'
                 ];
@@ -1103,8 +1114,8 @@ document.addEventListener('DOMContentLoaded', function() {
             pagina.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${p.nombreUsuario}</td>
-                    <td>${p.nombreDispositivo}</td>
+                    <td>${escapeHtml(p.nombreUsuario)}</td>
+                    <td>${escapeHtml(p.nombreDispositivo)}</td>
                     <td>${formatearFecha(p.fechaInicio)}</td>
                     <td>${getEstadoBadge(p.estado)}</td>
                     <td><button class="view-btn btn-ver-prestamo" data-id="${p.idPrestamo}">Ver</button></td>
@@ -1142,8 +1153,8 @@ document.addEventListener('DOMContentLoaded', function() {
             pagina.forEach(m => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
-                    <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                    <td>${escapeHtml(m.nombreDispositivo || m.idDispositivo || '-')}</td>
+                    <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${escapeHtml(m.tipo)}</span></td>
                     <td>${formatearFecha(m.fechaInicio)}</td>
                     <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
                     <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
@@ -1183,9 +1194,9 @@ document.addEventListener('DOMContentLoaded', function() {
             pagina.forEach(u => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${u.nombre}</td>
-                    <td>${u.correo}</td>
-                    <td><span class="badge" style="background:#2c3e50; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${u.rol}</span></td>
+                    <td>${escapeHtml(u.nombre)}</td>
+                    <td>${escapeHtml(u.correo)}</td>
+                    <td><span class="badge" style="background:#2c3e50; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${escapeHtml(u.rol)}</span></td>
                     <td>
                         <button class="btn-editar" data-id="${u.idUsuario}" style="background:#f39c12; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px; margin-right:5px;">Editar</button>
                         <button class="btn-eliminar" data-id="${u.idUsuario}" style="background:#e74c3c; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Eliminar</button>
@@ -1237,11 +1248,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${formatearFecha(log.fechaEvento)}</td>
-                    <td>${log.nombreUsuario}</td>
-                    <td><span class="badge" style="background:${badgeColor}; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${log.accion}</span></td>
-                    <td>${log.tablaAfectada}</td>
-                    <td>${log.descripcion}</td>
-                    <td>${log.ip}</td>
+                    <td>${escapeHtml(log.nombreUsuario)}</td>
+                    <td><span class="badge" style="background:${badgeColor}; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${escapeHtml(log.accion)}</span></td>
+                    <td>${escapeHtml(log.tablaAfectada)}</td>
+                    <td>${escapeHtml(log.descripcion)}</td>
+                    <td>${escapeHtml(log.ip)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1273,32 +1284,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (rol === 'TECNICO') {
                     tr.innerHTML = `
                         <td>#${m.idMantenimiento}</td>
-                        <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
-                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                        <td>${escapeHtml(m.nombreDispositivo || m.idDispositivo || '-')}</td>
+                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${escapeHtml(m.tipo)}</span></td>
                         <td>${formatearFecha(m.fechaInicio)}</td>
                         <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
                         <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
-                        <td>${m.descripcion || '-'}</td>
+                        <td>${escapeHtml(m.descripcion || '-')}</td>
                         <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
                     `;
                 } else if (rol === 'ADMINISTRADOR') {
                     tr.innerHTML = `
                         <td>#${m.idMantenimiento}</td>
-                        <td>${m.nombreDispositivo || m.idDispositivo || '-'}</td>
-                        <td>${m.nombreUsuario || '-'}</td>
-                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                        <td>${escapeHtml(m.nombreDispositivo || m.idDispositivo || '-')}</td>
+                        <td>${escapeHtml(m.nombreUsuario || '-')}</td>
+                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${escapeHtml(m.tipo)}</span></td>
                         <td>${formatearFecha(m.fechaInicio)}</td>
                         <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
                         <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
-                        <td>${m.descripcion || '-'}</td>
+                        <td>${escapeHtml(m.descripcion || '-')}</td>
                         <td>${m.fechaCreacion ? formatearFecha(m.fechaCreacion) : '-'}</td>
                         <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
                     `;
                 } else {
                     tr.innerHTML = `
-                        <td>${m.nombreDispositivo}</td>
-                        <td>${m.nombreUsuario}</td>
-                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${m.tipo}</span></td>
+                        <td>${escapeHtml(m.nombreDispositivo)}</td>
+                        <td>${escapeHtml(m.nombreUsuario)}</td>
+                        <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${escapeHtml(m.tipo)}</span></td>
                         <td>${formatearFecha(m.fechaInicio)}</td>
                         <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
                         <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
@@ -1356,8 +1367,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
                     tr.innerHTML = [
                         '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
-                        '<td style="padding:11px 14px;font-weight:500;">' + (p.nombreDispositivo || p.idDispositivo || '-') + '</td>',
-                        '<td style="padding:11px 14px;color:#64748b;">' + ubicacionSalon + '</td>',
+                        '<td style="padding:11px 14px;font-weight:500;">' + escapeHtml(p.nombreDispositivo || p.idDispositivo || '-') + '</td>',
+                        '<td style="padding:11px 14px;color:#64748b;">' + escapeHtml(ubicacionSalon) + '</td>',
                         '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
                         '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
                         '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
@@ -1366,9 +1377,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     tr.innerHTML = [
                         '<td style="padding:11px 14px;color:#64748b;font-weight:600;">#' + p.idPrestamo + '</td>',
-                        '<td style="padding:11px 14px;">' + p.nombreUsuario + '</td>',
-                        '<td style="padding:11px 14px;font-weight:500;">' + p.nombreDispositivo + '</td>',
-                        '<td style="padding:11px 14px;color:#64748b;">' + ubicacionSalon + '</td>',
+                        '<td style="padding:11px 14px;">' + escapeHtml(p.nombreUsuario) + '</td>',
+                        '<td style="padding:11px 14px;font-weight:500;">' + escapeHtml(p.nombreDispositivo) + '</td>',
+                        '<td style="padding:11px 14px;color:#64748b;">' + escapeHtml(ubicacionSalon) + '</td>',
                         '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
                         '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
                         '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
@@ -1483,7 +1494,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const selectD = document.getElementById('prestamo-dispositivo');
                 selectD.innerHTML = '<option value="">Seleccione un dispositivo...</option>';
                 dispositivos.forEach(d => {
-                    selectD.innerHTML += `<option value="${d.idDispositivo}">${d.nombre} (${d.tipo})</option>`;
+                    selectD.innerHTML += `<option value="${d.idDispositivo}">${escapeHtml(d.nombre)} (${escapeHtml(d.tipo)})</option>`;
                 });
             });
 
@@ -1494,7 +1505,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(sedes => {
                 prestamoSede.innerHTML = '<option value="">Seleccione una sede...</option>';
                 sedes.forEach(s => {
-                    prestamoSede.innerHTML += `<option value="${s.idSede}" data-codigo="${s.codigo}">${s.nombre} (${s.codigo})</option>`;
+                    prestamoSede.innerHTML += `<option value="${s.idSede}" data-codigo="${escapeHtml(s.codigo)}">${escapeHtml(s.nombre)} (${escapeHtml(s.codigo)})</option>`;
                 });
             });
 
@@ -1731,8 +1742,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 pageItems.forEach(m => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td style="padding:12px 14px;font-weight:500;color:#1e293b;">${m.nombreDispositivo || m.idDispositivo || '-'}</td>
-                        <td style="padding:12px 14px;color:#475569;">${m.tipo || '-'}</td>
+                        <td style="padding:12px 14px;font-weight:500;color:#1e293b;">${escapeHtml(m.nombreDispositivo || m.idDispositivo || '-')}</td>
+                        <td style="padding:12px 14px;color:#475569;">${escapeHtml(m.tipo || '-')}</td>
                         <td style="padding:12px 14px;color:#64748b;">${formatearFecha(m.fechaInicio)}</td>
                         <td style="padding:12px 14px;color:#64748b;">${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
                         <td style="padding:12px 14px;">${getEstadoBadgeMantenimiento(m.estado)}</td>
@@ -1785,7 +1796,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(selectD) {
                     selectD.innerHTML = '<option value="">Seleccione un dispositivo...</option>';
                     dispositivos.forEach(d => {
-                        selectD.innerHTML += `<option value="${d.idDispositivo}">${d.nombre} (${d.tipo})</option>`;
+                        selectD.innerHTML += `<option value="${d.idDispositivo}">${escapeHtml(d.nombre)} (${escapeHtml(d.tipo)})</option>`;
                     });
                 }
             });
@@ -1796,7 +1807,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(sedes => {
                     sedeSelect.innerHTML = '<option value="">Seleccione una sede...</option>';
                     sedes.forEach(s => {
-                        sedeSelect.innerHTML += `<option value="${s.idSede}" data-codigo="${s.codigo}" data-nombre="${s.nombre}">${s.nombre} (${s.codigo})</option>`;
+                        sedeSelect.innerHTML += `<option value="${s.idSede}" data-codigo="${escapeHtml(s.codigo)}" data-nombre="${escapeHtml(s.nombre)}">${escapeHtml(s.nombre)} (${escapeHtml(s.codigo)})</option>`;
                     });
                 })
                 .catch(() => {
@@ -1951,11 +1962,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="padding:12px 14px;">${formatearFecha(log.fechaEvento)}</td>
-                    <td style="padding:12px 14px;">${log.nombreUsuario || log.idUsuario}</td>
-                    <td style="padding:12px 14px;"><span class="badge" style="background:#e0f2fe;color:#0369a1;">${log.accion}</span></td>
-                    <td style="padding:12px 14px;">${log.tablaAfectada || '-'}</td>
-                    <td style="padding:12px 14px;">${log.descripcion}</td>
-                    <td style="padding:12px 14px;color:#94a3b8;">${log.ip || '-'}</td>
+                    <td style="padding:12px 14px;">${escapeHtml(log.nombreUsuario || log.idUsuario)}</td>
+                    <td style="padding:12px 14px;"><span class="badge" style="background:#e0f2fe;color:#0369a1;">${escapeHtml(log.accion)}</span></td>
+                    <td style="padding:12px 14px;">${escapeHtml(log.tablaAfectada || '-')}</td>
+                    <td style="padding:12px 14px;">${escapeHtml(log.descripcion)}</td>
+                    <td style="padding:12px 14px;color:#94a3b8;">${escapeHtml(log.ip || '-')}</td>
                 `;
                 tablaAuditoriaBody.appendChild(tr);
             });
@@ -2184,7 +2195,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="padding:12px 14px;">${sol.idSolicitud}</td>
-                <td style="padding:12px 14px; font-weight:600;">${sol.nombreUsuario}</td>
+                <td style="padding:12px 14px; font-weight:600;">${escapeHtml(sol.nombreUsuario)}</td>
                 <td style="padding:12px 14px;">${formatearFecha(sol.fechaSolicitud)}</td>
                 <td style="padding:12px 14px;">${getEstadoBadge(sol.estado)}</td>
                 <td style="padding:12px 14px; font-family:monospace; font-weight:bold; color:#14477b;">${sol.passwordTemporal || '---'}</td>

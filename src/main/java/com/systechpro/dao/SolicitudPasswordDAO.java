@@ -5,8 +5,11 @@ import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SolicitudPasswordDAO {
+    private static final Logger LOGGER = Logger.getLogger(SolicitudPasswordDAO.class.getName());
 
     public boolean insertar(SolicitudPassword solicitud) {
         String sql = "INSERT INTO solicitud_password (id_usuario, estado) VALUES (?, 'PENDIENTE')";
@@ -15,7 +18,7 @@ public class SolicitudPasswordDAO {
             pstmt.setInt(1, solicitud.getIdUsuario());
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al insertar solicitud password: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al insertar solicitud password", e);
             return false;
         }
     }
@@ -37,7 +40,7 @@ public class SolicitudPasswordDAO {
                 solicitudes.add(mapearSolicitud(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar solicitudes password: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar solicitudes password", e);
         }
         return solicitudes;
     }
@@ -52,7 +55,7 @@ public class SolicitudPasswordDAO {
             pstmt.setInt(4, idSolicitud);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al actualizar estado solicitud password: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al actualizar estado solicitud password", e);
             return false;
         }
     }
@@ -72,7 +75,7 @@ public class SolicitudPasswordDAO {
                 return mapearSolicitud(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Error al buscar solicitud pendiente: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al buscar solicitud pendiente", e);
         }
         return null;
     }
@@ -92,7 +95,7 @@ public class SolicitudPasswordDAO {
                 return mapearSolicitud(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Error al buscar solicitud por id: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al buscar solicitud por id", e);
         }
         return null;
     }

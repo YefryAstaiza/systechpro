@@ -5,8 +5,11 @@ import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PrestamoDAO {
+    private static final Logger LOGGER = Logger.getLogger(PrestamoDAO.class.getName());
 
     // Base query that joins the tables for frontend visualization
     private static final String BASE_QUERY_JOIN = 
@@ -36,7 +39,7 @@ public class PrestamoDAO {
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al insertar préstamo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al insertar préstamo", e);
             return false;
         }
     }
@@ -53,7 +56,7 @@ public class PrestamoDAO {
                 prestamos.add(mapearPrestamoJoin(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar préstamos: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar préstamos", e);
         }
         return prestamos;
     }
@@ -72,7 +75,7 @@ public class PrestamoDAO {
                 prestamos.add(mapearPrestamoJoin(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar préstamos por usuario: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar préstamos por usuario", e);
         }
         return prestamos;
     }
@@ -91,7 +94,7 @@ public class PrestamoDAO {
                 prestamos.add(mapearPrestamoJoin(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar préstamos por estado: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar préstamos por estado", e);
         }
         return prestamos;
     }
@@ -106,7 +109,7 @@ public class PrestamoDAO {
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al actualizar estado del préstamo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al actualizar estado del préstamo", e);
             return false;
         }
     }
@@ -122,7 +125,7 @@ public class PrestamoDAO {
                 return mapearPrestamoJoin(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Error al buscar préstamo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al buscar préstamo", e);
         }
         return null;
     }

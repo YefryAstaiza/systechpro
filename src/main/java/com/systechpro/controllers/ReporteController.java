@@ -1,6 +1,7 @@
 package com.systechpro.controllers;
 
 import com.systechpro.dao.ReporteDAO;
+import com.systechpro.models.Rol;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -32,7 +33,7 @@ public class ReporteController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"ADMINISTRADOR".equals(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equals(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Acceso denegado. Solo administradores."));
             return;

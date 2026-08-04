@@ -13,8 +13,25 @@ CREATE TABLE IF NOT EXISTS usuario (
     correo VARCHAR(100) UNIQUE NOT NULL,
     contrasena VARCHAR(255) NOT NULL,
     rol ENUM('ADMINISTRADOR', 'DOCENTE', 'TECNICO', 'ADMINISTRATIVO') NOT NULL,
+    cambio_obligatorio BOOLEAN DEFAULT FALSE,
 
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ======================================
+-- TABLA: SOLICITUD_PASSWORD
+-- ======================================
+CREATE TABLE IF NOT EXISTS solicitud_password (
+    id_solicitud INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('PENDIENTE', 'APROBADA', 'RECHAZADA') DEFAULT 'PENDIENTE',
+    fecha_resolucion TIMESTAMP NULL,
+    id_resolutor INT NULL,
+    password_temporal VARCHAR(255) NULL,
+
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
+    FOREIGN KEY (id_resolutor) REFERENCES usuario(id_usuario)
 );
 
 -- ======================================
@@ -65,7 +82,7 @@ CREATE TABLE IF NOT EXISTS prestamo (
 
     fecha_inicio DATETIME NOT NULL,
     fecha_fin DATETIME NOT NULL,
-    estado ENUM('PENDIENTE', 'APROBADO', 'RECHAZADO') DEFAULT 'PENDIENTE',
+    estado ENUM('PENDIENTE', 'APROBADO', 'RECHAZADO', 'DEVUELTO') DEFAULT 'PENDIENTE',
 
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

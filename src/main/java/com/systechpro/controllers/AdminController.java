@@ -1,6 +1,7 @@
 package com.systechpro.controllers;
 
 import com.systechpro.dao.SolicitudPasswordDAO;
+import com.systechpro.models.Rol;
 import com.systechpro.models.SolicitudPassword;
 import com.systechpro.models.Usuario;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +39,7 @@ public class AdminController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"ADMINISTRADOR".equalsIgnoreCase(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equalsIgnoreCase(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Acceso restringido"));
             return;
@@ -72,7 +73,7 @@ public class AdminController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"ADMINISTRADOR".equalsIgnoreCase(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equalsIgnoreCase(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Acceso restringido"));
             return;

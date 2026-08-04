@@ -2,7 +2,10 @@ package com.systechpro.controllers;
 
 import com.systechpro.dao.MantenimientoDAO;
 import com.systechpro.dao.DispositivoDAO;
+import com.systechpro.models.EstadoDispositivo;
+import com.systechpro.models.EstadoMantenimiento;
 import com.systechpro.models.Mantenimiento;
+import com.systechpro.models.Rol;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -85,7 +88,7 @@ public class MantenimientoController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"ADMINISTRADOR".equals(rol) && !"TECNICO".equals(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equals(rol) && !Rol.TECNICO.name().equals(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Solo administradores o técnicos"));
             return;
@@ -105,7 +108,7 @@ public class MantenimientoController extends HttpServlet {
                 return;
             }
 
-            String estado = "EN_PROCESO";
+            String estado = EstadoMantenimiento.EN_PROCESO.name();
             Timestamp fechaInicio = ahoraBogota();
             Timestamp fechaFin = null;
 
@@ -121,10 +124,10 @@ public class MantenimientoController extends HttpServlet {
             boolean resultado = mantenimientoDAO.insertar(mantenimiento);
 
             if (resultado) {
-                if ("FINALIZADO".equals(estado)) {
-                    dispositivoDAO.actualizarEstado(idDispositivo, "DISPONIBLE");
+                if (EstadoMantenimiento.FINALIZADO.name().equals(estado)) {
+                    dispositivoDAO.actualizarEstado(idDispositivo, EstadoDispositivo.DISPONIBLE.name());
                 } else {
-                    dispositivoDAO.actualizarEstado(idDispositivo, "MANTENIMIENTO");
+                    dispositivoDAO.actualizarEstado(idDispositivo, EstadoDispositivo.MANTENIMIENTO.name());
                 }
                 
                 response.setStatus(HttpServletResponse.SC_CREATED);
@@ -137,17 +140,6 @@ public class MantenimientoController extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Error en el servidor"));
         }
-    }
-
-    private Timestamp parseTimestamp(String value) {
-        if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException("Valor de fecha vacío");
-        }
-        String normalized = value.replace('T', ' ');
-        if (normalized.length() == 16) {
-            normalized += ":00";
-        }
-        return Timestamp.valueOf(normalized);
     }
 
     private Timestamp ahoraBogota() {
@@ -169,7 +161,7 @@ public class MantenimientoController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"ADMINISTRADOR".equals(rol) && !"TECNICO".equals(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equals(rol) && !Rol.TECNICO.name().equals(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Solo administradores o técnicos"));
             return;
@@ -190,6 +182,12 @@ public class MantenimientoController extends HttpServlet {
             Map<String, Object> datos = objectMapper.readValue(request.getInputStream(), Map.class);
             String estado = (String) datos.get("estado");
 
+            if (!EstadoMantenimiento.esValido(estado)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Estado de mantenimiento inválido"));
+                return;
+            }
+
             Mantenimiento mantenimiento = mantenimientoDAO.buscarPorId(id);
             if (mantenimiento == null) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -198,10 +196,10 @@ public class MantenimientoController extends HttpServlet {
             }
 
             mantenimiento.setEstado(estado);
-            if ("FINALIZADO".equals(estado)) {
+            if (EstadoMantenimiento.FINALIZADO.name().equals(estado)) {
                 mantenimiento.setFechaFin(ahoraBogota());
                 // Device returns to available
-                dispositivoDAO.actualizarEstado(mantenimiento.getIdDispositivo(), "DISPONIBLE");
+                dispositivoDAO.actualizarEstado(mantenimiento.getIdDispositivo(), EstadoDispositivo.DISPONIBLE.name());
             }
 
             boolean resultado = mantenimientoDAO.actualizar(mantenimiento);

@@ -5,8 +5,11 @@ import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DispositivoDAO {
+    private static final Logger LOGGER = Logger.getLogger(DispositivoDAO.class.getName());
 
     private static final String BASE_QUERY =
         "SELECT d.*, " +
@@ -35,7 +38,7 @@ public class DispositivoDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al insertar dispositivo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al insertar dispositivo", e);
             return false;
         }
     }
@@ -52,7 +55,7 @@ public class DispositivoDAO {
                 dispositivos.add(mapearDispositivo(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar dispositivos: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar dispositivos", e);
         }
         return dispositivos;
     }
@@ -77,7 +80,7 @@ public class DispositivoDAO {
                 dispositivos.add(mapearDispositivo(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al filtrar dispositivos: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al filtrar dispositivos", e);
         }
         return dispositivos;
     }
@@ -95,7 +98,7 @@ public class DispositivoDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al actualizar dispositivo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al actualizar dispositivo", e);
             return false;
         }
     }
@@ -110,7 +113,7 @@ public class DispositivoDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al actualizar estado: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al actualizar estado", e);
             return false;
         }
     }
@@ -123,7 +126,7 @@ public class DispositivoDAO {
             pstmt.setInt(1, id);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al eliminar dispositivo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al eliminar dispositivo", e);
             return false;
         }
     }
@@ -139,7 +142,7 @@ public class DispositivoDAO {
                 return mapearDispositivo(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Error al buscar dispositivo: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al buscar dispositivo", e);
         }
         return null;
     }

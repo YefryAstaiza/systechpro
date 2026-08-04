@@ -34,6 +34,15 @@
             <version>8.3.0</version>
         </dependency>
 
+        <!-- Pool de conexiones JDBC: ya viene incluido en Tomcat 10+ (lib/tomcat-jdbc.jar), se declara como
+             "provided" para que el WAR no lo empaquete y use el que trae el servidor en tiempo de ejecución -->
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jdbc</artifactId>
+            <version>10.1.19</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Jackson for JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

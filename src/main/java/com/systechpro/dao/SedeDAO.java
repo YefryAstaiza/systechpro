@@ -5,9 +5,12 @@ import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SedeDAO {
-    
+    private static final Logger LOGGER = Logger.getLogger(SedeDAO.class.getName());
+
     public List<Sede> listar() {
         List<Sede> sedes = new ArrayList<>();
         String sql = "SELECT * FROM sede";
@@ -24,7 +27,7 @@ public class SedeDAO {
                 sedes.add(s);
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar sedes: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar sedes", e);
         }
         return sedes;
     }
@@ -44,7 +47,7 @@ public class SedeDAO {
                 return s;
             }
         } catch (SQLException e) {
-            System.err.println("Error al buscar sede: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al buscar sede", e);
         }
         return null;
     }

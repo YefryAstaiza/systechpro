@@ -4,6 +4,9 @@ import com.systechpro.dao.DispositivoDAO;
 import com.systechpro.dao.AuditoriaDAO;
 import com.systechpro.models.Auditoria;
 import com.systechpro.models.Dispositivo;
+import com.systechpro.models.EstadoDispositivo;
+import com.systechpro.models.Rol;
+import com.systechpro.utils.ValidadorTexto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -23,30 +26,17 @@ public class DispositivoController extends HttpServlet {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final List<String> TIPOS_VALIDOS = Arrays.asList("COMPUTADOR", "PROYECTOR", "IMPRESORA", "TABLET", "OTRO");
-    private static final List<String> ESTADOS_VALIDOS = Arrays.asList("DISPONIBLE", "EN_USO", "MANTENIMIENTO");
 
     private boolean validarRol(String rol) {
-        // Asumiendo que el ADMIN es quien puede modificar dispositivos. (ajustar si otros roles pueden)
-        return "ADMINISTRADOR".equals(rol);
+        return Rol.ADMINISTRADOR.name().equals(rol);
     }
 
     private boolean validarNombreDispositivo(String nombre) {
-        if (nombre == null) return false;
-        String texto = nombre.trim();
-        if (texto.length() < 5 || texto.length() > 80) return false;
-        if (!texto.matches("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,_\\-\\(\\)\\/]+$")) return false;
-        if (!texto.matches(".*[A-Za-zÁÉÍÓÚÜÑáéíóúüñ].*")) return false;
-        if (texto.matches("^\\d+$")) return false;
-        if (texto.matches(".*[0-9].*") && !texto.matches(".*[ \\-_\\/].*")) return false;
-        if (texto.replaceAll("[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]", "").length() < 2) return false;
-        return true;
+        return ValidadorTexto.esTextoLibreValido(nombre);
     }
 
     private boolean validarDescripcionDispositivo(String descripcion) {
-        if (descripcion == null || descripcion.trim().isEmpty()) return true;
-        String texto = descripcion.trim();
-        if (texto.length() > 250) return false;
-        return texto.matches("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,_;:\\-\\(\\)\\[\\]\\/\\n\\r]*$");
+        return ValidadorTexto.esDescripcionValida(descripcion);
     }
 
     @Override
@@ -147,7 +137,7 @@ public class DispositivoController extends HttpServlet {
                 return;
             }
 
-            if (!ESTADOS_VALIDOS.contains(dispositivo.getEstado())) {
+            if (!EstadoDispositivo.esValido(dispositivo.getEstado())) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Estado de dispositivo inválido"));
                 return;
@@ -234,7 +224,7 @@ public class DispositivoController extends HttpServlet {
                 return;
             }
 
-            if (!ESTADOS_VALIDOS.contains(dispositivo.getEstado())) {
+            if (!EstadoDispositivo.esValido(dispositivo.getEstado())) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Estado de dispositivo inválido"));
                 return;
@@ -301,7 +291,7 @@ public class DispositivoController extends HttpServlet {
                 return;
             }
             
-            if ("EN_USO".equals(dispositivoExistente.getEstado())) {
+            if (EstadoDispositivo.EN_USO.name().equals(dispositivoExistente.getEstado())) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "No se puede eliminar un dispositivo que está EN_USO"));
                 return;

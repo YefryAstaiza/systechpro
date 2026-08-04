@@ -3,8 +3,10 @@ package com.systechpro.controllers;
 import com.systechpro.dao.UsuarioDAO;
 import com.systechpro.dao.AuditoriaDAO;
 import com.systechpro.models.Auditoria;
+import com.systechpro.models.Rol;
 import com.systechpro.models.Usuario;
 import com.systechpro.utils.Encriptador;
+import com.systechpro.utils.ValidadorTexto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -23,8 +25,7 @@ public class UsuarioController extends HttpServlet {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private boolean validarRol(String rol) {
-        return "ADMINISTRADOR".equals(rol) || "DOCENTE".equals(rol) || 
-               "TECNICO".equals(rol) || "ADMINISTRATIVO".equals(rol);
+        return Rol.esValido(rol);
     }
 
     private boolean validarCorreo(String correo) {
@@ -32,15 +33,7 @@ public class UsuarioController extends HttpServlet {
     }
 
     private boolean validarTextoLibre(String texto) {
-        if (texto == null) return false;
-        String valor = texto.trim();
-        if (valor.length() < 5 || valor.length() > 80) return false;
-        if (!valor.matches("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,_\\-\\(\\)\\/]+$")) return false;
-        if (!valor.matches(".*[A-Za-zÁÉÍÓÚÜÑáéíóúüñ].*")) return false;
-        if (valor.matches("^\\d+$")) return false;
-        if (valor.matches(".*[0-9].*") && !valor.matches(".*[ \\-_\\/].*")) return false;
-        if (valor.replaceAll("[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]", "").length() < 2) return false;
-        return true;
+        return ValidadorTexto.esTextoLibreValido(texto);
     }
 
     @Override
@@ -58,7 +51,7 @@ public class UsuarioController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"ADMINISTRADOR".equals(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equals(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Solo administradores"));
             return;
@@ -111,7 +104,7 @@ public class UsuarioController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"ADMINISTRADOR".equals(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equals(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Solo administradores"));
             return;
@@ -196,7 +189,7 @@ public class UsuarioController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"ADMINISTRADOR".equals(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equals(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Solo administradores"));
             return;
@@ -290,7 +283,7 @@ public class UsuarioController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!"ADMINISTRADOR".equals(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equals(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Solo administradores"));
             return;

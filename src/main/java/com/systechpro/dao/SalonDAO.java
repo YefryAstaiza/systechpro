@@ -5,9 +5,12 @@ import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SalonDAO {
-    
+    private static final Logger LOGGER = Logger.getLogger(SalonDAO.class.getName());
+
     public List<Salon> listar() {
         List<Salon> salones = new ArrayList<>();
         String sql = "SELECT * FROM salon";
@@ -24,7 +27,7 @@ public class SalonDAO {
                 salones.add(s);
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar salones: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar salones", e);
         }
         return salones;
     }
@@ -47,7 +50,7 @@ public class SalonDAO {
                 salones.add(s);
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar salones por sede: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al listar salones por sede", e);
         }
         return salones;
     }
@@ -67,7 +70,7 @@ public class SalonDAO {
                 return s;
             }
         } catch (SQLException e) {
-            System.err.println("Error al buscar salon: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error al buscar salon", e);
         }
         return null;
     }
