@@ -214,10 +214,31 @@ Estos no estaban en la Fase 2 y Fase 5 originales; se documentan aquí para una 
 - Limpieza de `styles.css` (798 → ~607 líneas): eliminadas las reglas que solo aplicaban al dashboard/CRUD ya borrado (`#dashboard-view`, `header`, `.dashboard-layout nav`, `.nav-btn`, `.panel`, `.add-btn`, tablas genéricas, `.action-btn`/`.edit-btn`/`.delete-btn`, `.status-*`, `.view`/`.view.active` ya cubiertas por `#login-view`). De paso se corrigió otro bug de la duplicación de estilos (F8): la sección legada redefinía `.user-info` con un `gap` distinto al de la sección de administración, y por orden de cascada esa redefinición ganaba silenciosamente sobre el `admin.html` real.
 - Verificado con `node --check` sobre `app.js` y `admin.js`, y revisión manual de que ningún ID/clase eliminado siga siendo referenciado.
 
+### Fase 3 — División de `admin.js` en módulos (implementada)
+
+`admin.js` (2.277 líneas) se dividió en 9 archivos cargados como `<script>` clásicos (sin ES modules, comparten el mismo scope global que antes — se eligió deliberadamente sobre `type="module"` para minimizar el riesgo de reescritura, ya que preserva el comportamiento exacto del archivo original sin introducir un grafo de `import`/`export`):
+
+- `core.js` — estado compartido (`rolGlobal`, `apiBase`, etc.), permisos de sidebar, navegación de paneles, `showToast`, validaciones, fechas y badges de estado.
+- `usuarios.js`, `dispositivos.js`, `prestamos.js`, `mantenimientos.js`, `auditoria.js`, `reportes.js`, `password-requests.js` — un archivo por entidad, cada uno con su propio estado, sus funciones y el *wiring* de sus propios botones/formularios/paginación.
+- `init.js` (cargado al final) — verificación de sesión, auto-refresh y navegación global (logout, "Inicio").
+
+**Método de verificación** (no hay navegador disponible en este entorno, así que no pudo probarse visualmente): `node --check` sobre los 9 archivos; un script de análisis estático que extrae toda declaración de función/variable de nivel superior y toda llamada a función a través de los 9 archivos, confirmando que ninguna llamada queda sin una definición correspondiente; una verificación manual de que ningún nombre de variable ni de función quede declarado dos veces entre archivos (lo cual sería un `SyntaxError` real en tiempo de ejecución, ya que los `<script>` clásicos comparten el mismo scope global); y una comparación de todo `getElementById('X')` usado contra los `id="..."` presentes en `admin.html`.
+
+**Código muerto adicional eliminado durante la división** (se hizo evidente al tener que decidir, para cada bloque de código, a qué archivo pertenecía):
+- La primera definición de `parseFecha` (la segunda, más completa, ya era la que efectivamente se ejecutaba — ver F4 en la tabla de hallazgos).
+- La primera definición de `renderTablaAuditoria` (la segunda la sobrescribía silenciosamente).
+- `renderTablaRecientesTecnico`, definida pero nunca invocada en ningún punto del archivo original.
+- 7 variables (`panelDashboard`, `panelUsuarios`, `panelDispositivos`, `panelPrestamos`, `panelMantenimientos`, `panelAuditoria`, `panelReportes`) y la función `ocultarPaneles()`, declaradas pero nunca usadas.
+
+**Tres bugs reales encontrados y corregidos** (causados por el mismo patrón: una sección llamada "EVENTOS PAGINACIÓN EXTRAS" cerca del final del archivo original duplicaba registros de `addEventListener` ya hechos antes, sobre los *mismos* botones):
+- Los botones "Anterior/Siguiente" del panel de **Préstamos** tenían el listener de paginación registrado dos veces → cada click avanzaba o retrocedía la página **dos veces** en vez de una.
+- Lo mismo ocurría con los botones de paginación del panel de **Mantenimientos**.
+- Lo mismo ocurría con los botones de paginación de **Auditoría**.
+
+Al reconstruir cada módulo desde cero registrando cada listener una sola vez, los tres quedan corregidos.
+
 ### Pendiente (no implementado en esta sesión)
 
-Del roadmap de Fase 3 quedan sin hacer, por ser los ítems de mayor riesgo/esfuerzo y requerir prueba visual en navegador (no disponible en este entorno):
-- Dividir `admin.js` (2.277 líneas) en módulos por entidad.
-- Mover los estilos inline de `admin.html` a clases CSS reutilizables (F7).
+- **F7 (mover estilos inline de `admin.html` a clases CSS) se decidió aplazar.** Es el ítem de menor prioridad e impacto de todo el roadmap de Fase 3 ("Baja prioridad, Bajo impacto, Alta dificultad por volumen" en la tabla de la Fase 4), es puramente cosmético (no corrige ningún bug ni riesgo), y a diferencia de la división de `admin.js` — que se pudo verificar exhaustivamente con análisis estático porque es lógica, no apariencia — cualquier error al mover cientos de atributos `style="..."` solo sería detectable mirando la página renderizada en un navegador, algo que no está disponible en este entorno. Se recomienda hacerlo en una sesión con acceso a probar visualmente el resultado.
 
 Fases 4 (SQL), 5 (UX) y 6 (seguridad avanzada) del roadmap original también siguen pendientes.
