@@ -7,6 +7,7 @@ import com.systechpro.models.Auditoria;
 import com.systechpro.models.Usuario;
 import com.systechpro.models.SolicitudPassword;
 import com.systechpro.utils.Encriptador;
+import com.systechpro.utils.LoginRateLimiter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,6 +23,7 @@ import java.util.Map;
 public class AuthController extends HttpServlet {
     private final UsuarioDAO usuarioDAO = new UsuarioDAO();
     private final AuditoriaDAO auditoriaDAO = new AuditoriaDAO();
+    private final SolicitudPasswordDAO solicitudPasswordDAO = new SolicitudPasswordDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -57,11 +59,20 @@ public class AuthController extends HttpServlet {
                 return;
             }
 
+            if (LoginRateLimiter.estaBloqueado(correo)) {
+                long minutos = (LoginRateLimiter.segundosRestantesBloqueo(correo) / 60) + 1;
+                response.setStatus(429); // Too Many Requests
+                objectMapper.writeValue(response.getWriter(), Map.of("error",
+                    "Demasiados intentos fallidos. Intenta de nuevo en " + minutos + " minuto(s)."));
+                return;
+            }
+
             // Buscar usuario por correo y luego verificar la contraseña con BCrypt
             Usuario usuario = usuarioDAO.buscarPorCorreo(correo);
 
             if (usuario != null && Encriptador.verificarPassword(password, usuario.getContrasena())) {
-                
+                LoginRateLimiter.registrarExito(correo);
+
                 if (usuario.isCambioObligatorio()) {
                     Map<String, Object> resp = new HashMap<>();
                     resp.put("success", true);
@@ -98,6 +109,7 @@ public class AuthController extends HttpServlet {
                 
                 objectMapper.writeValue(response.getWriter(), respuesta);
             } else {
+                LoginRateLimiter.registrarFallo(correo);
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Credenciales inválidas"));
             }
@@ -120,16 +132,15 @@ public class AuthController extends HttpServlet {
                 return;
             }
             
-            SolicitudPasswordDAO solDAO = new SolicitudPasswordDAO();
-            if (solDAO.buscarPendientePorUsuario(u.getIdUsuario()) != null) {
+            if (solicitudPasswordDAO.buscarPendientePorUsuario(u.getIdUsuario()) != null) {
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Ya tienes una solicitud pendiente. Contacta a un administrador."));
                 return;
             }
-            
+
             SolicitudPassword sol = new SolicitudPassword();
             sol.setIdUsuario(u.getIdUsuario());
-            
-            if (solDAO.insertar(sol)) {
+
+            if (solicitudPasswordDAO.insertar(sol)) {
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Solicitud enviada. Contacta a un administrador para la aprobación."));
             } else {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -156,6 +167,8 @@ public class AuthController extends HttpServlet {
             
             String hashed = Encriptador.encriptarBCrypt(newPass);
             if (usuarioDAO.actualizarPasswordForceChange(idUsuario, hashed, false)) {
+                // La clave temporal ya se usó: se limpia para que deje de exponerse en el listado de solicitudes
+                solicitudPasswordDAO.limpiarPasswordTemporal(idUsuario);
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Contraseña actualizada. Ya puedes iniciar sesión."));
             } else {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

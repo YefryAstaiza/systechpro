@@ -1,9 +1,11 @@
 package com.systechpro.controllers;
 
 import com.systechpro.dao.SolicitudPasswordDAO;
+import com.systechpro.dao.UsuarioDAO;
 import com.systechpro.models.Rol;
 import com.systechpro.models.SolicitudPassword;
 import com.systechpro.models.Usuario;
+import com.systechpro.utils.Encriptador;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,6 +23,7 @@ import java.util.Map;
 public class AdminController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final SolicitudPasswordDAO solicitudPasswordDAO = new SolicitudPasswordDAO();
+    private final UsuarioDAO usuarioDAO = new UsuarioDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final String PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -94,13 +97,31 @@ public class AdminController extends HttpServlet {
         try {
             int idSolicitud = Integer.parseInt(parts[2]);
             String accion = parts[3];
-            Usuario usuario = (Usuario) session.getAttribute("usuario");
+            Usuario usuarioSesion = (Usuario) session.getAttribute("usuario");
             String estado;
             String passwordTemporal = null;
 
             if ("approve".equalsIgnoreCase(accion)) {
+                SolicitudPassword solicitud = solicitudPasswordDAO.buscarPorId(idSolicitud);
+                if (solicitud == null) {
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                    objectMapper.writeValue(response.getWriter(), Map.of("error", "Solicitud no encontrada"));
+                    return;
+                }
+
                 estado = "APROBADA";
                 passwordTemporal = generarClaveTemporal(10);
+
+                // Aplicar la clave temporal al usuario real (antes solo se guardaba en la solicitud
+                // y nunca se escribía en usuario.contrasena, por lo que la clave "temporal" jamás
+                // servía para iniciar sesión).
+                String hashTemporal = Encriptador.encriptarBCrypt(passwordTemporal);
+                boolean passwordAplicada = usuarioDAO.actualizarPasswordForceChange(solicitud.getIdUsuario(), hashTemporal, true);
+                if (!passwordAplicada) {
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    objectMapper.writeValue(response.getWriter(), Map.of("error", "Error al aplicar la contraseña temporal al usuario"));
+                    return;
+                }
             } else if ("reject".equalsIgnoreCase(accion)) {
                 estado = "RECHAZADA";
             } else {
@@ -108,7 +129,7 @@ public class AdminController extends HttpServlet {
                 return;
             }
 
-            boolean actualizado = solicitudPasswordDAO.actualizarEstado(idSolicitud, estado, usuario.getIdUsuario(), passwordTemporal);
+            boolean actualizado = solicitudPasswordDAO.actualizarEstado(idSolicitud, estado, usuarioSesion.getIdUsuario(), passwordTemporal);
             if (actualizado) {
                 Map<String, Object> resp = new HashMap<>();
                 resp.put("success", true);

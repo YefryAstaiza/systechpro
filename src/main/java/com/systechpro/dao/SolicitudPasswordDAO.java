@@ -11,6 +11,10 @@ import java.util.logging.Logger;
 public class SolicitudPasswordDAO {
     private static final Logger LOGGER = Logger.getLogger(SolicitudPasswordDAO.class.getName());
 
+    // Tras aprobarse, la clave temporal deja de mostrarse en el listado pasadas estas horas,
+    // aunque nunca se haya usado (defensa adicional a la purga explícita en el cambio de contraseña).
+    private static final long PASSWORD_TEMPORAL_EXPIRACION_HORAS = 24;
+
     public boolean insertar(SolicitudPassword solicitud) {
         String sql = "INSERT INTO solicitud_password (id_usuario, estado) VALUES (?, 'PENDIENTE')";
         try (Connection conn = GestorJDBC.getConnection();
@@ -100,19 +104,47 @@ public class SolicitudPasswordDAO {
         return null;
     }
 
+    /**
+     * Elimina la clave temporal de la solicitud aprobada más reciente de un usuario.
+     * Se invoca una vez que esa clave ya cumplió su propósito (el usuario cambió su contraseña).
+     */
+    public boolean limpiarPasswordTemporal(int idUsuario) {
+        String sql = "UPDATE solicitud_password SET password_temporal = NULL " +
+                     "WHERE id_usuario = ? AND estado = 'APROBADA' AND password_temporal IS NOT NULL";
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idUsuario);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al limpiar password temporal", e);
+            return false;
+        }
+    }
+
     private SolicitudPassword mapearSolicitud(ResultSet rs) throws SQLException {
         SolicitudPassword s = new SolicitudPassword();
         s.setIdSolicitud(rs.getInt("id_solicitud"));
         s.setIdUsuario(rs.getInt("id_usuario"));
         s.setFechaSolicitud(rs.getTimestamp("fecha_solicitud"));
         s.setEstado(rs.getString("estado"));
-        s.setFechaResolucion(rs.getTimestamp("fecha_resolucion"));
+        Timestamp fechaResolucion = rs.getTimestamp("fecha_resolucion");
+        s.setFechaResolucion(fechaResolucion);
         s.setIdResolutor(rs.getObject("id_resolutor") != null ? rs.getInt("id_resolutor") : null);
-        s.setPasswordTemporal(rs.getString("password_temporal"));
-        
+        s.setPasswordTemporal(passwordTemporalVigente(rs.getString("password_temporal"), fechaResolucion));
+
         s.setNombreUsuario(rs.getString("nombre_usuario"));
         s.setCorreoUsuario(rs.getString("correo_usuario"));
         s.setNombreResolutor(rs.getString("nombre_resolutor"));
         return s;
+    }
+
+    /**
+     * Deja de exponer la clave temporal (aunque siga en la base de datos) una vez
+     * pasada la ventana de expiración desde que se aprobó la solicitud.
+     */
+    private String passwordTemporalVigente(String passwordTemporal, Timestamp fechaResolucion) {
+        if (passwordTemporal == null || fechaResolucion == null) return passwordTemporal;
+        long horasTranscurridas = (System.currentTimeMillis() - fechaResolucion.getTime()) / (1000 * 60 * 60);
+        return horasTranscurridas >= PASSWORD_TEMPORAL_EXPIRACION_HORAS ? null : passwordTemporal;
     }
 }

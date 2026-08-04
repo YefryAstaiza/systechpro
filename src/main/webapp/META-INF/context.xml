@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Empaquetado dentro del propio WAR para que la mitigación de CSRF (cookie de
+    sesión con SameSite=Lax) viaje con la aplicación sin depender de la
+    configuración global del Tomcat donde se despliegue.
+-->
+<Context>
+    <CookieProcessor className="org.apache.tomcat.util.http.Rfc6265CookieProcessor" sameSiteCookies="lax" />
+</Context>
