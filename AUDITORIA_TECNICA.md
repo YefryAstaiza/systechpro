@@ -237,9 +237,19 @@ Estos no estaban en la Fase 2 y Fase 5 originales; se documentan aquí para una 
 
 Al reconstruir cada módulo desde cero registrando cada listener una sola vez, los tres quedan corregidos.
 
-### Pendiente (no implementado en esta sesión)
+### Fase 3 — F7: estilos inline de `admin.html` a clases CSS (implementada)
 
-- **F7 (mover estilos inline de `admin.html` a clases CSS) se decidió aplazar.** Es el ítem de menor prioridad e impacto de todo el roadmap de Fase 3 ("Baja prioridad, Bajo impacto, Alta dificultad por volumen" en la tabla de la Fase 4), es puramente cosmético (no corrige ningún bug ni riesgo), y a diferencia de la división de `admin.js` — que se pudo verificar exhaustivamente con análisis estático porque es lógica, no apariencia — cualquier error al mover cientos de atributos `style="..."` solo sería detectable mirando la página renderizada en un navegador, algo que no está disponible en este entorno. Se recomienda hacerlo en una sesión con acceso a probar visualmente el resultado.
+Se retomó una vez que se confirmó un entorno local real disponible para verificar visualmente (ver más abajo, "Verificación en entorno real"). `admin.html` tenía 214 atributos `style="..."` inline; se extrajeron los patrones más repetidos a clases reutilizables en `styles.css` (`.modal-overlay`, `.modal-card`, `.modal-footer-actions`(`--bordered`), `.btn-cancel`, `.form-group`, `.form-label`(`-sm`), `.form-input`, `.panel-header-row`, `.pagination-bar`, `.pagination-buttons`, `.pagination-btn`, `.th-cell`(`--center`/`--nowrap`), `.hidden`), reduciendo el conteo de **214 a 103** (-52%).
+
+De paso se encontró y corrigió algo mejor que una simple extracción: `admin.html` tenía un bloque `<style>` suelto en el `<head>` (con el comentario "Force styling directly in HTML to bypass any browser cache") que ya definía `.dashboard-panel { display: none; }` globalmente — por lo que los `style="display: none;"` en los 9 `<section class="dashboard-panel">` eran **completamente redundantes**. Se movieron esas reglas a `styles.css` (junto con la regla de opacidad de los íconos del sidebar que vivía en el mismo bloque) y se eliminó el `<style>` embebido por completo.
+
+No se tocaron los estilos inline generados dinámicamente por JS (celdas de tabla, badges, `<option>` de selects en `core.js`/`dispositivos.js`/`prestamos.js`/`mantenimientos.js`/`auditoria.js`) — es un volumen de trabajo comparable al ya hecho aquí, con el mismo perfil "bajo impacto/alto esfuerzo", y quedó fuera de esta pasada.
+
+### Verificación en entorno real
+
+Durante esta fase se descubrió que la máquina ya tenía Tomcat 10.1.54 y MySQL (XAMPP) corriendo localmente, lo que permitió pasar de solo análisis estático a verificación real: redeploy completo (WAR + limpieza de la carpeta explotada + las dos migraciones SQL pendientes de la Fase 4), login real con `admin@systechpro.com`, y llamadas autenticadas a `/api/dispositivos` y `/api/prestamos` confirmando que el pool de conexiones, los enums, y los índices nuevos funcionan de punta a punta. El detalle completo (rutas, credenciales, procedimiento de redeploy) quedó en la memoria persistente del asistente, no en este documento, ya que es información de entorno de desarrollo y no una decisión de arquitectura del proyecto.
+
+Se agregó también un botón de diagnóstico permanente ("🧪 Probar código nuevo") en el Panel de Control, que dispara el toast y el modal de confirmación propios — sirve para confirmar rápidamente, en cualquier despliegue futuro, que el navegador no está sirviendo una versión vieja cacheada en una pestaña abierta desde antes del redeploy (causa real de una confusión durante esta verificación).
 
 ### Fase 4 — Índices en columnas de filtro frecuente (implementada)
 
@@ -247,7 +257,7 @@ Al reconstruir cada módulo desde cero registrando cada listener una sola vez, l
 - `idx_prestamo_estado_dispositivo` (compuesto, `estado, id_dispositivo`) — sirve tanto a `PrestamoDAO.listarPorEstado` (`WHERE p.estado = ?`) como a la subconsulta de "última ubicación" de `DispositivoDAO.BASE_QUERY` (`WHERE estado = 'APROBADO' GROUP BY id_dispositivo`), evitando así dos índices separados.
 - `idx_mantenimiento_estado` — no hay una consulta SQL que filtre por él todavía, pero se agrega de forma preventiva tal como señalaba el hallazgo BD3.
 - Agregados directamente en `database.sql` (para instalaciones nuevas) y en `update_db_indices_rendimiento.sql` (para instalaciones existentes), siguiendo el mismo patrón de migración separada usado en Fases 1 y 2.
-- No se pudo verificar contra un servidor MySQL real (no disponible en este entorno); se revisó manualmente que la sintaxis `CREATE INDEX ... ON tabla(columnas)` es válida y que cada índice se declara después de que su tabla ya existe en el script.
+- Verificado posteriormente contra un MySQL real (ver "Verificación en entorno real" más abajo): las migraciones corrieron sin errores y los índices quedaron creados correctamente.
 
 ### Fase 4 — Mover paginación a la base de datos (pendiente, requiere decisión)
 

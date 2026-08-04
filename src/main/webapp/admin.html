@@ -5,19 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - SysTechPro</title>
-    <link rel="stylesheet" href="css/styles.css?v=6">
+    <link rel="stylesheet" href="css/styles.css?v=7">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Force styling directly in HTML to bypass any browser cache */
-        .sidebar-nav .nav-link svg {
-            stroke: #ffffff !important;
-            opacity: 1 !important;
-        }
-
-        .dashboard-panel {
-            display: none;
-        }
-    </style>
 </head>
 
 <body>
@@ -64,7 +53,7 @@
                         </svg>
                         Préstamos
                     </a>
-                    <a href="#" class="nav-link" id="nav-mis-solicitudes-btn" style="display:none;">
+                    <a href="#" class="nav-link hidden" id="nav-mis-solicitudes-btn">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
@@ -102,7 +91,7 @@
                         </svg>
                         Auditoría
                     </a>
-                    <a href="#" class="nav-link" id="nav-password-requests-btn" style="display:none;">
+                    <a href="#" class="nav-link hidden" id="nav-password-requests-btn">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -209,12 +198,12 @@
                                 </tbody>
                             </table>
                             <div id="dash-solicitudes-paginacion"
-                                style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
-                                <div style="display:flex;gap:8px;">
+                                class="pagination-bar">
+                                <div class="pagination-buttons">
                                     <button id="btn-dash-solicitudes-prev"
-                                        style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                                        class="pagination-btn">Anterior</button>
                                     <button id="btn-dash-solicitudes-next"
-                                        style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                                        class="pagination-btn">Siguiente</button>
                                 </div>
                                 <div id="dash-solicitudes-pagina" style="font-weight:600;">Página 1</div>
                             </div>
@@ -268,9 +257,8 @@
                     </div>
                 </section>
 
-                <section class="dashboard-panel" id="panel-usuarios" style="display: none;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <section class="dashboard-panel" id="panel-usuarios">
+                    <div class="panel-header-row">
                         <h2>Gestión de Usuarios</h2>
                         <button class="add-btn" id="btn-nuevo-usuario"
                             style="background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">+
@@ -291,49 +279,47 @@
                         </tbody>
                     </table>
                     <div id="usuarios-paginacion"
-                        style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
-                        <div style="display:flex;gap:8px;">
+                        class="pagination-bar">
+                        <div class="pagination-buttons">
                             <button id="btn-usuarios-prev"
-                                style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                                class="pagination-btn">Anterior</button>
                             <button id="btn-usuarios-next"
-                                style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                                class="pagination-btn">Siguiente</button>
                         </div>
                         <div id="usuarios-pagina" style="font-weight:600;">Página 1</div>
                     </div>
                 </section>
 
                 <!-- Modal para Crear/Editar Usuario -->
-                <div id="modal-usuario"
-                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-                    <div
-                        style="background: white; width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div id="modal-usuario" class="modal-overlay">
+                    <div class="modal-card">
                         <h3 id="modal-usuario-title" style="margin-top: 0;">Crear Usuario</h3>
                         <form id="form-usuario">
                             <input type="hidden" id="usuario-id">
 
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px;">Nombre Completo</label>
+                            <div class="form-group">
+                                <label class="form-label">Nombre Completo</label>
                                 <input type="text" id="usuario-nombre" required
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                    class="form-input">
                             </div>
 
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px;">Correo Electrónico</label>
+                            <div class="form-group">
+                                <label class="form-label">Correo Electrónico</label>
                                 <input type="email" id="usuario-correo" required
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                    class="form-input">
                             </div>
 
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px;">Contraseña <small id="hint-password"
+                            <div class="form-group">
+                                <label class="form-label">Contraseña <small id="hint-password"
                                         style="color: gray; font-size: 11px;"></small></label>
                                 <input type="password" id="usuario-password"
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                    class="form-input">
                             </div>
 
                             <div style="margin-bottom: 20px;">
-                                <label style="display: block; margin-bottom: 5px;">Rol</label>
+                                <label class="form-label">Rol</label>
                                 <select id="usuario-rol" required
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                    class="form-input">
                                     <option value="ADMINISTRADOR">Administrador</option>
                                     <option value="DOCENTE">Docente</option>
                                     <option value="TECNICO">Técnico</option>
@@ -341,9 +327,9 @@
                                 </select>
                             </div>
 
-                            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <div class="modal-footer-actions">
                                 <button type="button" id="btn-cancelar-usuario"
-                                    style="padding: 8px 15px; background: #ddd; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                                    class="btn-cancel">Cancelar</button>
                                 <button type="submit"
                                     style="padding: 8px 15px; background: #14477b; color: white; border: none; border-radius: 4px; cursor: pointer;">Guardar</button>
                             </div>
@@ -352,7 +338,7 @@
                 </div>
 
                 <!-- SECCION: DISPOSITIVOS (REDISEÑADO) -->
-                <section class="dashboard-panel" id="panel-dispositivos" style="display: none;">
+                <section class="dashboard-panel" id="panel-dispositivos">
                     <h2 style="margin-bottom: 18px; font-size: 1.4rem; font-weight: 700;">Gestión de Dispositivos</h2>
                     <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: nowrap;">
 
@@ -397,22 +383,22 @@
                                     <thead>
                                         <tr style="background:#f1f5f9;">
                                             <th
-                                                style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;white-space:nowrap;">
+                                                class="th-cell--nowrap">
                                                 Código</th>
                                             <th
-                                                style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">
+                                                class="th-cell">
                                                 Nombre</th>
                                             <th
-                                                style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">
+                                                class="th-cell">
                                                 Tipo</th>
                                             <th
-                                                style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">
+                                                class="th-cell">
                                                 Estado</th>
                                             <th
-                                                style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">
+                                                class="th-cell">
                                                 Fecha Creación</th>
                                             <th
-                                                style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">
+                                                class="th-cell--center">
                                                 Acciones</th>
                                         </tr>
                                     </thead>
@@ -448,7 +434,7 @@
 
                                 <div style="margin-bottom:14px;">
                                     <label
-                                        style="display:block;margin-bottom:5px;font-size:13px;font-weight:600;color:#374151;">Nombre
+                                        class="form-label-sm">Nombre
                                         del dispositivo</label>
                                     <input type="text" id="dispositivo-nombre" required
                                         placeholder="Ej: Proyector Epson"
@@ -457,7 +443,7 @@
 
                                 <div style="margin-bottom:14px;">
                                     <label
-                                        style="display:block;margin-bottom:5px;font-size:13px;font-weight:600;color:#374151;">Tipo</label>
+                                        class="form-label-sm">Tipo</label>
                                     <select id="dispositivo-tipo" required
                                         style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:14px;background:white;box-sizing:border-box;">
                                         <option value="">Computador, Proyector, Cámara, Acces...</option>
@@ -471,7 +457,7 @@
 
                                 <div style="margin-bottom:14px;">
                                     <label
-                                        style="display:block;margin-bottom:5px;font-size:13px;font-weight:600;color:#374151;">Estado</label>
+                                        class="form-label-sm">Estado</label>
                                     <select id="dispositivo-estado" required
                                         style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:14px;background:white;box-sizing:border-box;">
                                         <option value="">Disponible, En uso, Mantenimiento</option>
@@ -483,7 +469,7 @@
 
                                 <div style="margin-bottom:14px;">
                                     <label
-                                        style="display:block;margin-bottom:5px;font-size:13px;font-weight:600;color:#374151;">Descripción
+                                        class="form-label-sm">Descripción
                                         (opcional)</label>
                                     <textarea id="dispositivo-descripcion" rows="3"
                                         placeholder="Descripción del equipo..."
@@ -513,9 +499,8 @@
                 </section>
 
                 <!-- Panel Mantenimientos -->
-                <section class="dashboard-panel" id="panel-mantenimientos" style="display: none;">
-                    <div class="panel-header"
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <section class="dashboard-panel" id="panel-mantenimientos">
+                    <div class="panel-header panel-header-row">
                         <h2>Gestión de Mantenimientos</h2>
                         <button class="add-btn" id="btn-nuevo-mantenimiento"
                             style="background: #e67e22; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">+
@@ -538,21 +523,20 @@
                         </tbody>
                     </table>
                     <div id="mantenimientos-paginacion"
-                        style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
-                        <div style="display:flex;gap:8px;">
+                        class="pagination-bar">
+                        <div class="pagination-buttons">
                             <button id="btn-mantenimientos-prev"
-                                style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                                class="pagination-btn">Anterior</button>
                             <button id="btn-mantenimientos-next"
-                                style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                                class="pagination-btn">Siguiente</button>
                         </div>
                         <div id="mantenimientos-pagina" style="font-weight:600;">Página 1</div>
                     </div>
                 </section>
 
                 <!-- Panel Auditoría -->
-                <section class="dashboard-panel" id="panel-auditoria" style="display: none;">
-                    <div class="panel-header"
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <section class="dashboard-panel" id="panel-auditoria">
+                    <div class="panel-header panel-header-row">
                         <h2>Registro de Auditoría</h2>
                     </div>
 
@@ -572,21 +556,20 @@
                         </tbody>
                     </table>
                     <div id="auditoria-paginacion"
-                        style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
-                        <div style="display:flex;gap:8px;">
+                        class="pagination-bar">
+                        <div class="pagination-buttons">
                             <button id="btn-auditoria-prev"
-                                style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                                class="pagination-btn">Anterior</button>
                             <button id="btn-auditoria-next"
-                                style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                                class="pagination-btn">Siguiente</button>
                         </div>
                         <div id="auditoria-pagina" style="font-weight:600;">Página 1</div>
                     </div>
                 </section>
 
                 <!-- Panel Reportes -->
-                <section class="dashboard-panel" id="panel-reportes" style="display: none;">
-                    <div class="panel-header"
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <section class="dashboard-panel" id="panel-reportes">
+                    <div class="panel-header panel-header-row">
                         <h2>Análisis y Reportes</h2>
                         <div style="display: flex; gap: 10px;">
                             <button class="primary-btn" id="btn-exportar-csv" style="background: #64748b;">
@@ -629,7 +612,7 @@
                 </section>
 
                 <!-- Panel Préstamos (dedicado) -->
-                <section class="dashboard-panel" id="panel-prestamos" style="display: none;">
+                <section class="dashboard-panel" id="panel-prestamos">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                         <h2>Gestión de Préstamos</h2>
                         <button class="add-btn" id="btn-nuevo-prestamo-panel"
@@ -659,21 +642,21 @@
                             style="width:100%;border-collapse:collapse;font-size:14px;">
                             <thead>
                                 <tr style="background:#f1f5f9;">
-                                    <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;"># ID
+                                    <th class="th-cell"># ID
                                     </th>
-                                    <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Usuario
+                                    <th class="th-cell">Usuario
                                     </th>
-                                    <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">
+                                    <th class="th-cell">
                                         Dispositivo</th>
-                                    <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Salón
+                                    <th class="th-cell">Salón
                                     </th>
-                                    <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha
+                                    <th class="th-cell">Fecha
                                         Inicio</th>
-                                    <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Fecha
+                                    <th class="th-cell">Fecha
                                         Fin</th>
-                                    <th style="padding:12px 14px;text-align:left;font-weight:600;color:#475569;">Estado
+                                    <th class="th-cell">Estado
                                     </th>
-                                    <th style="padding:12px 14px;text-align:center;font-weight:600;color:#475569;">
+                                    <th class="th-cell--center">
                                         Acciones</th>
                                 </tr>
                             </thead>
@@ -682,12 +665,12 @@
                             </tbody>
                         </table>
                         <div id="prestamos-paginacion"
-                            style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
-                            <div style="display:flex;gap:8px;">
+                            class="pagination-bar">
+                            <div class="pagination-buttons">
                                 <button id="btn-prestamos-prev"
-                                    style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                                    class="pagination-btn">Anterior</button>
                                 <button id="btn-prestamos-next"
-                                    style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                                    class="pagination-btn">Siguiente</button>
                             </div>
                             <div id="prestamos-pagina" style="font-weight:600;">Página 1</div>
                         </div>
@@ -695,8 +678,8 @@
                 </section>
 
                 <!-- Panel Solicitudes Password -->
-                <section class="dashboard-panel" id="panel-password-requests" style="display: none;">
-                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <section class="dashboard-panel" id="panel-password-requests">
+                    <div class="panel-header panel-header-row">
                         <h2>Solicitudes de Restablecimiento de Contraseña</h2>
                     </div>
 
@@ -719,7 +702,7 @@
                     </div>
                 </section>
 
-                <section class="dashboard-panel panel" id="panel-inicio-tecnico" style="display:none;">
+                <section class="dashboard-panel panel" id="panel-inicio-tecnico">
                     <div class="tecnico-header">
                         <h2>Inicio Técnico</h2>
                         <div class="tecnico-buttons">
@@ -804,12 +787,12 @@
                                 <tbody id="tabla-recientes-body"></tbody>
                             </table>
                             <div id="tecnico-recientes-paginacion"
-                                style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#64748b;">
-                                <div style="display:flex;gap:8px;">
+                                class="pagination-bar">
+                                <div class="pagination-buttons">
                                     <button id="btn-recientes-prev"
-                                        style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Anterior</button>
+                                        class="pagination-btn">Anterior</button>
                                     <button id="btn-recientes-next"
-                                        style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:13px;">Siguiente</button>
+                                        class="pagination-btn">Siguiente</button>
                                 </div>
                                 <div id="recientes-pagina" style="font-weight:600;">Página 1</div>
                             </div>
@@ -817,7 +800,7 @@
                     </div>
                 </section>
 
-                <section class="dashboard-panel panel" id="panel-inicio-docente" style="display:none;">
+                <section class="dashboard-panel panel" id="panel-inicio-docente">
                     <div class="tecnico-header">
                         <h2 id="titulo-inicio">Inicio</h2>
                         <div class="tecnico-buttons">
@@ -891,16 +874,14 @@
                 </section>
 
                 <!-- Modal para Crear Solicitud de Préstamo -->
-                <div id="modal-crear-prestamo"
-                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-                    <div
-                        style="background: white; width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div id="modal-crear-prestamo" class="modal-overlay">
+                    <div class="modal-card">
                         <h3 style="margin-top: 0;">Solicitar Préstamo</h3>
                         <form id="form-crear-prestamo">
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px;">Dispositivo Disponible</label>
+                            <div class="form-group">
+                                <label class="form-label">Dispositivo Disponible</label>
                                 <select id="prestamo-dispositivo" required
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                    class="form-input">
                                     <!-- Dinámico -->
                                 </select>
                             </div>
@@ -942,21 +923,21 @@
                                 </div>
                             </div>
 
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px;">Fecha de Inicio</label>
+                            <div class="form-group">
+                                <label class="form-label">Fecha de Inicio</label>
                                 <input type="datetime-local" id="prestamo-inicio" required
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                    class="form-input">
                             </div>
 
                             <div style="margin-bottom: 20px;">
-                                <label style="display: block; margin-bottom: 5px;">Fecha de Fin (Estimada)</label>
+                                <label class="form-label">Fecha de Fin (Estimada)</label>
                                 <input type="datetime-local" id="prestamo-fin" required
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                    class="form-input">
                             </div>
 
-                            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <div class="modal-footer-actions">
                                 <button type="button" id="btn-cancelar-prestamo"
-                                    style="padding: 8px 15px; background: #ddd; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                                    class="btn-cancel">Cancelar</button>
                                 <button type="submit"
                                     style="padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">Solicitar</button>
                             </div>
@@ -965,10 +946,8 @@
                 </div>
 
                 <!-- Modal para Detalle de Préstamo (Admin/Técnico) -->
-                <div id="modal-detalle-prestamo"
-                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-                    <div
-                        style="background: white; width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div id="modal-detalle-prestamo" class="modal-overlay">
+                    <div class="modal-card">
                         <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Detalle de
                             Solicitud</h3>
 
@@ -982,9 +961,9 @@
                         </div>
 
                         <div
-                            style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee; padding-top: 15px;">
+                            class="modal-footer-actions--bordered">
                             <button type="button" id="btn-cerrar-detalle"
-                                style="padding: 8px 15px; background: #ddd; border: none; border-radius: 4px; cursor: pointer;">Cerrar</button>
+                                class="btn-cancel">Cerrar</button>
                             <button type="button" id="btn-rechazar-prestamo"
                                 style="display: none; padding: 8px 15px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer;">Rechazar</button>
                             <button type="button" id="btn-aprobar-prestamo"
@@ -994,60 +973,59 @@
                 </div>
 
                 <!-- Modal para Crear Mantenimiento -->
-                <div id="modal-crear-mantenimiento"
-                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                <div id="modal-crear-mantenimiento" class="modal-overlay">
                     <div
                         style="background: white; width: min(450px, 95vw); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                         <h3 style="margin-top: 0;">Registrar Mantenimiento</h3>
                         <form id="form-crear-mantenimiento">
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px;">Dispositivo Disponible</label>
+                            <div class="form-group">
+                                <label class="form-label">Dispositivo Disponible</label>
                                 <select id="mantenimiento-dispositivo" required
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                    class="form-input">
                                     <!-- Dinámico -->
                                 </select>
                             </div>
                             <div style="margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                 <div>
-                                    <label style="display: block; margin-bottom: 5px;">Sede (obligatoria)</label>
+                                    <label class="form-label">Sede (obligatoria)</label>
                                     <select id="mantenimiento-sede" required
-                                        style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                        class="form-input">
                                         <option value="">Seleccione una sede...</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label style="display: block; margin-bottom: 5px;">Número de salón</label>
+                                    <label class="form-label">Número de salón</label>
                                     <select id="mantenimiento-salon" required
-                                        style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                        class="form-input">
                                         <option value="">Seleccione una sede primero</option>
                                     </select>
                                 </div>
                             </div>
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px;">Tipo de Mantenimiento</label>
+                            <div class="form-group">
+                                <label class="form-label">Tipo de Mantenimiento</label>
                                 <select id="mantenimiento-tipo" required
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                                    class="form-input">
                                     <option value="PREVENTIVO">PREVENTIVO</option>
                                     <option value="CORRECTIVO">CORRECTIVO</option>
                                 </select>
                             </div>
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px;">Estado</label>
+                            <div class="form-group">
+                                <label class="form-label">Estado</label>
                                 <select id="mantenimiento-estado" disabled
                                     style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; background: #f5f5f5; color: #334155;">
                                     <option value="EN_PROCESO" selected>EN PROCESO</option>
                                 </select>
                             </div>
                             <div style="margin-bottom: 20px;">
-                                <label style="display: block; margin-bottom: 5px;">Descripción del
+                                <label class="form-label">Descripción del
                                     Problema/Trabajo</label>
                                 <textarea id="mantenimiento-descripcion" required rows="3"
-                                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+                                    class="form-input"></textarea>
                             </div>
 
-                            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <div class="modal-footer-actions">
                                 <button type="button" id="btn-cancelar-mantenimiento"
-                                    style="padding: 8px 15px; background: #ddd; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                                    class="btn-cancel">Cancelar</button>
                                 <button type="submit"
                                     style="padding: 8px 15px; background: #e67e22; color: white; border: none; border-radius: 4px; cursor: pointer;">Registrar</button>
                             </div>
@@ -1056,10 +1034,8 @@
                 </div>
 
                 <!-- Modal Detalle Mantenimiento -->
-                <div id="modal-detalle-mantenimiento"
-                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-                    <div
-                        style="background: white; width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div id="modal-detalle-mantenimiento" class="modal-overlay">
+                    <div class="modal-card">
                         <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Detalle de
                             Mantenimiento</h3>
 
@@ -1074,9 +1050,9 @@
                         </div>
 
                         <div
-                            style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee; padding-top: 15px;">
+                            class="modal-footer-actions--bordered">
                             <button type="button" id="btn-cerrar-detalle-mant"
-                                style="padding: 8px 15px; background: #ddd; border: none; border-radius: 4px; cursor: pointer;">Cerrar</button>
+                                class="btn-cancel">Cerrar</button>
                             <button type="button" id="btn-finalizar-mantenimiento"
                                 style="display: none; padding: 8px 15px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer;">Finalizar
                                 Mantenimiento</button>
@@ -1091,7 +1067,7 @@
                         style="background: white; width: min(360px, 90vw); padding: 22px; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.2);">
                         <p id="confirmacion-mensaje"
                             style="margin: 0 0 20px; color: #1e293b; font-size: 15px; line-height: 1.5;"></p>
-                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <div class="modal-footer-actions">
                             <button type="button" id="btn-confirmacion-cancelar"
                                 style="padding: 8px 16px; background: #f1f5f9; color: #374151; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancelar</button>
                             <button type="button" id="btn-confirmacion-aceptar"
