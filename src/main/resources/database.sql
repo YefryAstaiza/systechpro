@@ -166,3 +166,56 @@ CREATE TABLE IF NOT EXISTS notificacion (
 
 -- Índice para el caso de uso principal: contar/listar no leídas de un usuario
 CREATE INDEX idx_notificacion_usuario_leida ON notificacion(id_usuario, leida);
+
+-- ======================================
+-- TABLA: PRESTAMO_MONITORIA (checkout rápido, sin aprobación, sin fecha de fin)
+-- ======================================
+CREATE TABLE IF NOT EXISTS prestamo_monitoria (
+    id_monitoria INT AUTO_INCREMENT PRIMARY KEY,
+    id_dispositivo INT NOT NULL,
+    id_usuario INT NOT NULL,
+    fecha_toma TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_devolucion TIMESTAMP NULL,
+    estado ENUM('ACTIVO', 'DEVUELTO') DEFAULT 'ACTIVO',
+
+    FOREIGN KEY (id_dispositivo) REFERENCES dispositivo(id_dispositivo),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
+CREATE INDEX idx_monitoria_estado ON prestamo_monitoria(estado);
+CREATE INDEX idx_monitoria_dispositivo_estado ON prestamo_monitoria(id_dispositivo, estado);
+
+-- ======================================
+-- TABLA: CORTE_DIARIO (snapshot histórico, no una vista en vivo)
+-- ======================================
+CREATE TABLE IF NOT EXISTS corte_diario (
+    id_corte INT AUTO_INCREMENT PRIMARY KEY,
+    fecha_corte TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total_dispositivos INT NOT NULL,
+    disponibles INT NOT NULL,
+    en_monitoria INT NOT NULL,
+    id_generador INT NOT NULL,
+
+    FOREIGN KEY (id_generador) REFERENCES usuario(id_usuario)
+);
+
+-- ======================================
+-- TABLA: CORTE_DIARIO_DETALLE
+-- Datos de dispositivo/usuario duplicados a propósito (snapshot congelado en el
+-- momento del corte; no debe cambiar si luego se renombra o elimina algo).
+-- ======================================
+CREATE TABLE IF NOT EXISTS corte_diario_detalle (
+    id_detalle INT AUTO_INCREMENT PRIMARY KEY,
+    id_corte INT NOT NULL,
+    id_dispositivo INT NOT NULL,
+    nombre_dispositivo VARCHAR(100) NOT NULL,
+    id_usuario INT NOT NULL,
+    nombre_usuario VARCHAR(100) NOT NULL,
+    fecha_toma TIMESTAMP NOT NULL,
+
+    FOREIGN KEY (id_corte) REFERENCES corte_diario(id_corte),
+    FOREIGN KEY (id_dispositivo) REFERENCES dispositivo(id_dispositivo),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
+CREATE INDEX idx_corte_detalle_corte ON corte_diario_detalle(id_corte);

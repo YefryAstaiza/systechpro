@@ -20,10 +20,10 @@ function escapeHtml(value) {
 // PERMISOS Y NAVEGACIÓN POR ROL
 // ---------------------------------------------
 const permisos = {
-    ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes', 'password-requests'],
-    TECNICO: ['inicio','mantenimientos'],
-    DOCENTE: ['inicio','mis-solicitudes'],
-    ADMINISTRATIVO: ['inicio','mis-solicitudes']
+    ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes', 'password-requests', 'corte-diario'],
+    TECNICO: ['inicio','mantenimientos','corte-diario'],
+    DOCENTE: ['inicio','mis-solicitudes','monitoria'],
+    ADMINISTRATIVO: ['inicio','mis-solicitudes','monitoria']
 };
 
 const modulos = {
@@ -36,7 +36,9 @@ const modulos = {
     reportes: 'nav-reportes-btn',
     historial: 'nav-historial-btn',
     'mis-solicitudes': 'nav-mis-solicitudes-btn',
-    'password-requests': 'nav-password-requests-btn'
+    'password-requests': 'nav-password-requests-btn',
+    monitoria: 'nav-monitoria-btn',
+    'corte-diario': 'nav-corte-diario-btn'
 };
 
 const panelInicioByRol = {
@@ -77,7 +79,9 @@ function getNavIdForSection(sectionId) {
         'panel-mantenimientos': 'nav-mantenimientos-btn',
         'panel-auditoria': 'nav-auditoria-btn',
         'panel-reportes': 'nav-reportes-btn',
-        'panel-password-requests': 'nav-password-requests-btn'
+        'panel-password-requests': 'nav-password-requests-btn',
+        'panel-monitoria': 'nav-monitoria-btn',
+        'panel-corte-diario': 'nav-corte-diario-btn'
     };
     return map[sectionId] || null;
 }
