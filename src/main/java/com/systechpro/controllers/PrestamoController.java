@@ -248,6 +248,19 @@ public class PrestamoController extends HttpServlet {
                  return;
             }
 
+            // El dispositivo pudo dejar de estar disponible entre que se creó la solicitud y que se aprueba
+            // (otra solicitud del mismo dispositivo ya fue aprobada, o entró a mantenimiento). Sin esta
+            // validación quedaban préstamos "APROBADO" duplicados o huérfanos que no coincidían con el
+            // estado real del dispositivo (visible en el corte diario y en el conteo de Dispositivos).
+            if (EstadoPrestamo.APROBADO.name().equals(nuevoEstado)) {
+                Dispositivo dispositivoActual = dispositivoDAO.buscarPorId(prestamoActual.getIdDispositivo());
+                if (dispositivoActual == null || !EstadoDispositivo.DISPONIBLE.name().equals(dispositivoActual.getEstado())) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    objectMapper.writeValue(response.getWriter(), Map.of("error", "El dispositivo ya no está disponible"));
+                    return;
+                }
+            }
+
             boolean resultado = prestamoDAO.actualizarEstado(id, nuevoEstado);
 
             if (resultado) {

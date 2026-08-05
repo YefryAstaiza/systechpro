@@ -114,6 +114,21 @@ public class MantenimientoController extends HttpServlet {
                 return;
             }
 
+            // Evita registros de mantenimiento duplicados/huérfanos para un dispositivo que ya está
+            // en uso o ya tiene otro mantenimiento en curso (sin esto, el conteo de "en mantenimiento"
+            // del corte diario y de Dispositivos dejaba de coincidir con la realidad).
+            Dispositivo dispositivoActual = dispositivoDAO.buscarPorId(idDispositivo);
+            if (dispositivoActual == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Dispositivo no encontrado"));
+                return;
+            }
+            if (!EstadoDispositivo.DISPONIBLE.name().equals(dispositivoActual.getEstado())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "El dispositivo no está disponible para mantenimiento"));
+                return;
+            }
+
             String estado = EstadoMantenimiento.EN_PROCESO.name();
             Timestamp fechaInicio = ahoraBogota();
             Timestamp fechaFin = null;

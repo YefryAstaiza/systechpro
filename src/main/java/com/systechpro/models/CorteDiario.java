@@ -9,6 +9,7 @@ public class CorteDiario {
     private int totalDispositivos;
     private int disponibles;
     private int enPrestamo;
+    private int enMantenimiento;
     private int idGenerador;
 
     // Campos extra para mostrar sin necesidad de otro fetch
@@ -31,6 +32,9 @@ public class CorteDiario {
 
     public int getEnPrestamo() { return enPrestamo; }
     public void setEnPrestamo(int enPrestamo) { this.enPrestamo = enPrestamo; }
+
+    public int getEnMantenimiento() { return enMantenimiento; }
+    public void setEnMantenimiento(int enMantenimiento) { this.enMantenimiento = enMantenimiento; }
 
     public int getIdGenerador() { return idGenerador; }
     public void setIdGenerador(int idGenerador) { this.idGenerador = idGenerador; }

@@ -20,9 +20,9 @@ public class CorteDiarioDAO {
      * dentro de una sola transacción.
      */
     public CorteDiario generar(int idGenerador, int totalDispositivos, int disponibles,
-                                List<Prestamo> activos) {
-        String sqlHeader = "INSERT INTO corte_diario (total_dispositivos, disponibles, en_prestamo, id_generador) " +
-                            "VALUES (?, ?, ?, ?)";
+                                int enPrestamo, int enMantenimiento, List<Prestamo> activos) {
+        String sqlHeader = "INSERT INTO corte_diario (total_dispositivos, disponibles, en_prestamo, en_mantenimiento, id_generador) " +
+                            "VALUES (?, ?, ?, ?, ?)";
         String sqlDetalle = "INSERT INTO corte_diario_detalle " +
                              "(id_corte, id_dispositivo, nombre_dispositivo, id_usuario, nombre_usuario, fecha_toma) " +
                              "VALUES (?, ?, ?, ?, ?, ?)";
@@ -36,8 +36,9 @@ public class CorteDiarioDAO {
             try (PreparedStatement pstmt = conn.prepareStatement(sqlHeader, Statement.RETURN_GENERATED_KEYS)) {
                 pstmt.setInt(1, totalDispositivos);
                 pstmt.setInt(2, disponibles);
-                pstmt.setInt(3, activos.size());
-                pstmt.setInt(4, idGenerador);
+                pstmt.setInt(3, enPrestamo);
+                pstmt.setInt(4, enMantenimiento);
+                pstmt.setInt(5, idGenerador);
                 pstmt.executeUpdate();
 
                 ResultSet keys = pstmt.getGeneratedKeys();
@@ -149,6 +150,7 @@ public class CorteDiarioDAO {
         c.setTotalDispositivos(rs.getInt("total_dispositivos"));
         c.setDisponibles(rs.getInt("disponibles"));
         c.setEnPrestamo(rs.getInt("en_prestamo"));
+        c.setEnMantenimiento(rs.getInt("en_mantenimiento"));
         c.setIdGenerador(rs.getInt("id_generador"));
         c.setNombreGenerador(rs.getString("nombre_generador"));
         return c;

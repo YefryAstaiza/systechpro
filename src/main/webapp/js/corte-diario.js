@@ -12,7 +12,7 @@ function renderHistorialCortes(cortes) {
     if (!tbody) return;
 
     if (!cortes.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="padding:16px;text-align:center;color:#94a3b8;">Aún no se ha generado ningún corte.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:16px;text-align:center;color:#94a3b8;">Aún no se ha generado ningún corte.</td></tr>';
         return;
     }
 
@@ -22,6 +22,7 @@ function renderHistorialCortes(cortes) {
             '<td class="th-cell">' + c.totalDispositivos + '</td>' +
             '<td class="th-cell">' + c.disponibles + '</td>' +
             '<td class="th-cell">' + c.enPrestamo + '</td>' +
+            '<td class="th-cell">' + c.enMantenimiento + '</td>' +
             '<td class="th-cell">' + escapeHtml(c.nombreGenerador) + '</td>' +
             '<td class="th-cell--center"><button class="btn-secondary" onclick="verDetalleCorte(' + c.idCorte + ')">Ver</button></td>' +
         '</tr>'
@@ -55,6 +56,7 @@ function verDetalleCorte(idCorte) {
             if (resumen) {
                 resumen.textContent = formatearFecha(corte.fechaCorte) + ' — Total: ' + corte.totalDispositivos +
                     ' · Disponibles: ' + corte.disponibles + ' · En préstamo: ' + corte.enPrestamo +
+                    ' · En mantenimiento: ' + corte.enMantenimiento +
                     ' · Generado por: ' + corte.nombreGenerador;
             }
             if (tbody) {

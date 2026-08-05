@@ -18,8 +18,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Corte diario: snapshot manual e histórico del inventario (total, disponibles,
@@ -75,14 +79,38 @@ public class CorteDiarioController extends HttpServlet {
         if (usuario == null) return;
 
         try {
+            // disponibles/en_prestamo/en_mantenimiento se cuentan desde dispositivo.estado (única fuente
+            // de verdad) para que la suma siempre cuadre con el total, sin importar el estado de las
+            // tablas prestamo/mantenimiento (que solo se usan para completar el detalle "quién y desde cuándo").
             List<Dispositivo> todos = dispositivoDAO.listar();
             int total = todos.size();
-            int disponibles = (int) todos.stream()
-                    .filter(d -> EstadoDispositivo.DISPONIBLE.name().equals(d.getEstado()))
-                    .count();
-            List<Prestamo> activos = prestamoDAO.listarPorEstado(EstadoPrestamo.APROBADO.name());
+            int disponibles = 0;
+            int enMantenimiento = 0;
+            Set<Integer> idsEnUso = new HashSet<>();
+            for (Dispositivo d : todos) {
+                if (EstadoDispositivo.DISPONIBLE.name().equals(d.getEstado())) {
+                    disponibles++;
+                } else if (EstadoDispositivo.MANTENIMIENTO.name().equals(d.getEstado())) {
+                    enMantenimiento++;
+                } else if (EstadoDispositivo.EN_USO.name().equals(d.getEstado())) {
+                    idsEnUso.add(d.getIdDispositivo());
+                }
+            }
 
-            CorteDiario corte = corteDAO.generar(usuario.getIdUsuario(), total, disponibles, activos);
+            // Un dispositivo EN_USO puede tener más de un préstamo APROBADO si quedó algo huérfano;
+            // nos quedamos con el más reciente por dispositivo (ya viene ordenado por fecha_inicio DESC).
+            Map<Integer, Prestamo> prestamoPorDispositivo = new LinkedHashMap<>();
+            for (Prestamo p : prestamoDAO.listarPorEstado(EstadoPrestamo.APROBADO.name())) {
+                if (idsEnUso.contains(p.getIdDispositivo())) {
+                    prestamoPorDispositivo.putIfAbsent(p.getIdDispositivo(), p);
+                }
+            }
+            List<Prestamo> activos = new ArrayList<>(prestamoPorDispositivo.values());
+
+            // enPrestamo se toma de idsEnUso.size() (no de activos.size()) para que la suma con
+            // disponibles/enMantenimiento cuadre siempre con el total, aunque algún dispositivo EN_USO
+            // no tenga (todavía) un préstamo que lo respalde.
+            CorteDiario corte = corteDAO.generar(usuario.getIdUsuario(), total, disponibles, idsEnUso.size(), enMantenimiento, activos);
             if (corte == null) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Error al generar el corte"));

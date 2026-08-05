@@ -169,8 +169,8 @@ CREATE INDEX idx_notificacion_usuario_leida ON notificacion(id_usuario, leida);
 
 -- ======================================
 -- TABLA: CORTE_DIARIO (snapshot histórico, no una vista en vivo)
--- "en_prestamo" = préstamos formales en estado APROBADO (aún no DEVUELTO)
--- en el momento del corte.
+-- disponibles/en_prestamo/en_mantenimiento se cuentan directamente desde
+-- dispositivo.estado (única fuente de verdad) para que siempre sumen el total.
 -- ======================================
 CREATE TABLE IF NOT EXISTS corte_diario (
     id_corte INT AUTO_INCREMENT PRIMARY KEY,
@@ -178,6 +178,7 @@ CREATE TABLE IF NOT EXISTS corte_diario (
     total_dispositivos INT NOT NULL,
     disponibles INT NOT NULL,
     en_prestamo INT NOT NULL,
+    en_mantenimiento INT NOT NULL DEFAULT 0,
     id_generador INT NOT NULL,
 
     FOREIGN KEY (id_generador) REFERENCES usuario(id_usuario)
