@@ -400,7 +400,17 @@ function getEstadoBadge(estado) {
     if(estado === 'DISPONIBLE' || estado === 'APROBADO') return '<span class="badge approved"><span class="dot"></span>' + estado + '</span>';
     if(estado === 'EN_USO' || estado === 'PENDIENTE') return '<span class="badge pending"><span class="dot"></span>' + estado + '</span>';
     if(estado === 'MANTENIMIENTO' || estado === 'RECHAZADO') return '<span class="badge rejected"><span class="dot"></span>' + estado + '</span>';
+    if(estado === 'DEVUELTO') return '<span class="badge returned"><span class="dot"></span>' + estado + '</span>';
     return estado;
+}
+
+function getTipoBadgeMantenimiento(tipo) {
+    var cfg = {
+        'PREVENTIVO': { bg: '#dbeafe', color: '#2563eb' },
+        'CORRECTIVO': { bg: '#ffedd5', color: '#ea580c' }
+    };
+    var s = cfg[tipo] || { bg: '#f3e8ff', color: '#8e44ad' };
+    return '<span class="badge" style="background:' + s.bg + '; color:' + s.color + '; padding:4px 8px; border-radius:12px; font-size:12px;">' + escapeHtml(tipo) + '</span>';
 }
 
 function getEstadoBadgeMantenimiento(estado) {

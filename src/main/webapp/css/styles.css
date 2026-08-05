@@ -397,6 +397,13 @@
 .badge.rejected .dot {
     background: #e74c3c;
 }
+.badge.returned {
+    background: #eff6ff;
+    color: #2563eb;
+}
+.badge.returned .dot {
+    background: #2563eb;
+}
 .view-btn {
     background: #f4f7f6;
     color: #14477b;

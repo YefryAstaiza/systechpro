@@ -136,7 +136,7 @@ function renderTablaMantenimientosPanel() {
                 tr.innerHTML = `
                     <td>#${m.idMantenimiento}</td>
                     <td>${escapeHtml(m.nombreDispositivo || m.idDispositivo || '-')}</td>
-                    <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${escapeHtml(m.tipo)}</span></td>
+                    <td>${getTipoBadgeMantenimiento(m.tipo)}</td>
                     <td>${formatearFecha(m.fechaInicio)}</td>
                     <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
                     <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
@@ -148,7 +148,7 @@ function renderTablaMantenimientosPanel() {
                     <td>#${m.idMantenimiento}</td>
                     <td>${escapeHtml(m.nombreDispositivo || m.idDispositivo || '-')}</td>
                     <td>${escapeHtml(m.nombreUsuario || '-')}</td>
-                    <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${escapeHtml(m.tipo)}</span></td>
+                    <td>${getTipoBadgeMantenimiento(m.tipo)}</td>
                     <td>${formatearFecha(m.fechaInicio)}</td>
                     <td>${m.fechaFin ? formatearFecha(m.fechaFin) : 'En curso'}</td>
                     <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
@@ -160,7 +160,7 @@ function renderTablaMantenimientosPanel() {
                 tr.innerHTML = `
                     <td>${escapeHtml(m.nombreDispositivo)}</td>
                     <td>${escapeHtml(m.nombreUsuario)}</td>
-                    <td><span class="badge" style="background:#8e44ad; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">${escapeHtml(m.tipo)}</span></td>
+                    <td>${getTipoBadgeMantenimiento(m.tipo)}</td>
                     <td>${formatearFecha(m.fechaInicio)}</td>
                     <td>${getEstadoBadgeMantenimiento(m.estado)}</td>
                     <td style="text-align:center;"><button class="view-btn btn-ver-mantenimiento" data-id="${m.idMantenimiento}">Ver</button></td>
