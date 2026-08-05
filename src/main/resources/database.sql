@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS usuario (
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Índice para el filtro por rol (búsqueda/paginación de Usuarios)
+CREATE INDEX idx_usuario_rol ON usuario(rol);
+
 -- ======================================
 -- TABLA: SOLICITUD_PASSWORD
 -- ======================================
@@ -33,6 +36,9 @@ CREATE TABLE IF NOT EXISTS solicitud_password (
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
     FOREIGN KEY (id_resolutor) REFERENCES usuario(id_usuario)
 );
+
+-- Índice para el filtro por estado en la búsqueda/paginación de Solicitudes Clave
+CREATE INDEX idx_solicitud_password_estado ON solicitud_password(estado);
 
 -- ======================================
 -- TABLA: SEDE
@@ -100,6 +106,9 @@ CREATE TABLE IF NOT EXISTS prestamo (
 -- subconsulta de "última ubicación" de DispositivoDAO (WHERE estado = 'APROBADO' GROUP BY id_dispositivo)
 CREATE INDEX idx_prestamo_estado_dispositivo ON prestamo(estado, id_dispositivo);
 
+-- Índice para el filtro por rango de fechas en la búsqueda/paginación de Préstamos
+CREATE INDEX idx_prestamo_fecha_inicio ON prestamo(fecha_inicio);
+
 -- ======================================
 -- TABLA: MANTENIMIENTO
 -- ======================================
@@ -134,9 +143,13 @@ CREATE TABLE IF NOT EXISTS auditoria (
     descripcion TEXT,
     ip VARCHAR(45), -- NUEVO CAMPO
     fecha_evento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	
+
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
 );
+
+-- Índice para el filtro por rango de fechas en la búsqueda/paginación de Auditoría
+-- (el módulo donde más importa, por el volumen que suele tener esta tabla)
+CREATE INDEX idx_auditoria_fecha_evento ON auditoria(fecha_evento);
 
 -- ======================================
 -- TABLA: LOGIN

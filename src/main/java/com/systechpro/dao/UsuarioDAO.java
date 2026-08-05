@@ -63,6 +63,56 @@ public class UsuarioDAO {
         return usuarios;
     }
 
+    private String construirFiltro(String busqueda, String rolFiltro, List<Object> params) {
+        StringBuilder where = new StringBuilder("WHERE 1=1 ");
+        if (busqueda != null && !busqueda.isEmpty()) {
+            where.append("AND (nombre LIKE ? OR correo LIKE ?) ");
+            String comodin = "%" + busqueda + "%";
+            params.add(comodin);
+            params.add(comodin);
+        }
+        if (rolFiltro != null && !rolFiltro.isEmpty()) {
+            where.append("AND rol = ? ");
+            params.add(rolFiltro);
+        }
+        return where.toString();
+    }
+
+    /** Búsqueda por nombre/correo + filtro de rol, paginada en SQL (LIMIT/OFFSET, no en memoria). */
+    public List<Usuario> listar(String busqueda, String rolFiltro, int pagina, int tamanoPagina) {
+        List<Usuario> usuarios = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        String where = construirFiltro(busqueda, rolFiltro, params);
+        String sql = "SELECT * FROM usuario " + where + "ORDER BY id_usuario DESC LIMIT ? OFFSET ?";
+        params.add(tamanoPagina);
+        params.add((pagina - 1) * tamanoPagina);
+
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.size(); i++) pstmt.setObject(i + 1, params.get(i));
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) usuarios.add(mapearUsuario(rs));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al listar usuarios filtrados", e);
+        }
+        return usuarios;
+    }
+
+    public int contarTotal(String busqueda, String rolFiltro) {
+        List<Object> params = new ArrayList<>();
+        String where = construirFiltro(busqueda, rolFiltro, params);
+        String sql = "SELECT COUNT(*) FROM usuario " + where;
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.size(); i++) pstmt.setObject(i + 1, params.get(i));
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al contar usuarios filtrados", e);
+        }
+        return 0;
+    }
+
     public List<Integer> listarIdsPorRol(String rol) {
         List<Integer> ids = new ArrayList<>();
         String sql = "SELECT id_usuario FROM usuario WHERE rol = ?";

@@ -10,6 +10,7 @@ import com.systechpro.models.EstadoMantenimiento;
 import com.systechpro.models.Mantenimiento;
 import com.systechpro.models.Rol;
 import com.systechpro.models.Usuario;
+import com.systechpro.utils.PaginacionUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,8 +52,20 @@ public class MantenimientoController extends HttpServlet {
 
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
-                List<Mantenimiento> mantenimientos = mantenimientoDAO.listar();
-                objectMapper.writeValue(response.getWriter(), mantenimientos);
+                String busqueda = request.getParameter("q");
+                String estadoFiltro = request.getParameter("estado");
+                int pagina = PaginacionUtil.parsePagina(request.getParameter("pagina"));
+                int tamano = PaginacionUtil.parseTamano(request.getParameter("tamano"));
+
+                List<Mantenimiento> mantenimientos = mantenimientoDAO.listar(busqueda, estadoFiltro, pagina, tamano);
+                int total = mantenimientoDAO.contarTotal(busqueda, estadoFiltro);
+
+                Map<String, Object> resp = new HashMap<>();
+                resp.put("datos", mantenimientos);
+                resp.put("total", total);
+                resp.put("pagina", pagina);
+                resp.put("tamanoPagina", tamano);
+                objectMapper.writeValue(response.getWriter(), resp);
             } else if (pathInfo.startsWith("/dispositivo/")) {
                 // Historial de mantenimiento de un dispositivo
                 String idStr = pathInfo.substring("/dispositivo/".length());

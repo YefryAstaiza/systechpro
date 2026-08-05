@@ -7,6 +7,7 @@ import com.systechpro.models.Rol;
 import com.systechpro.models.SolicitudPassword;
 import com.systechpro.models.Usuario;
 import com.systechpro.utils.Encriptador;
+import com.systechpro.utils.PaginacionUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -53,8 +54,20 @@ public class AdminController extends HttpServlet {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null || pathInfo.equals("/password-requests")) {
             try {
-                List<SolicitudPassword> solicitudes = solicitudPasswordDAO.listar();
-                objectMapper.writeValue(response.getWriter(), solicitudes);
+                String busqueda = request.getParameter("q");
+                String estadoFiltro = request.getParameter("estado");
+                int pagina = PaginacionUtil.parsePagina(request.getParameter("pagina"));
+                int tamano = PaginacionUtil.parseTamano(request.getParameter("tamano"));
+
+                List<SolicitudPassword> solicitudes = solicitudPasswordDAO.listar(busqueda, estadoFiltro, pagina, tamano);
+                int total = solicitudPasswordDAO.contarTotal(busqueda, estadoFiltro);
+
+                Map<String, Object> resp = new HashMap<>();
+                resp.put("datos", solicitudes);
+                resp.put("total", total);
+                resp.put("pagina", pagina);
+                resp.put("tamanoPagina", tamano);
+                objectMapper.writeValue(response.getWriter(), resp);
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Error en el servidor"));

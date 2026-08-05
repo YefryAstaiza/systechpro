@@ -58,6 +58,55 @@ public class MantenimientoDAO {
         return mantenimientos;
     }
     
+    private String construirFiltro(String busqueda, String estadoFiltro, List<Object> params) {
+        StringBuilder where = new StringBuilder("WHERE 1=1 ");
+        if (busqueda != null && !busqueda.isEmpty()) {
+            where.append("AND d.nombre LIKE ? ");
+            params.add("%" + busqueda + "%");
+        }
+        if (estadoFiltro != null && !estadoFiltro.isEmpty()) {
+            where.append("AND m.estado = ? ");
+            params.add(estadoFiltro);
+        }
+        return where.toString();
+    }
+
+    /** Búsqueda por dispositivo + filtro de estado, paginada en SQL (LIMIT/OFFSET, no en memoria). */
+    public List<Mantenimiento> listar(String busqueda, String estadoFiltro, int pagina, int tamanoPagina) {
+        List<Mantenimiento> mantenimientos = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        String where = construirFiltro(busqueda, estadoFiltro, params);
+        String sql = BASE_QUERY_JOIN + where + "ORDER BY m.fecha_inicio DESC LIMIT ? OFFSET ?";
+        params.add(tamanoPagina);
+        params.add((pagina - 1) * tamanoPagina);
+
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.size(); i++) pstmt.setObject(i + 1, params.get(i));
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) mantenimientos.add(mapearMantenimiento(rs));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al listar mantenimientos filtrados", e);
+        }
+        return mantenimientos;
+    }
+
+    public int contarTotal(String busqueda, String estadoFiltro) {
+        List<Object> params = new ArrayList<>();
+        String where = construirFiltro(busqueda, estadoFiltro, params);
+        String sql = "SELECT COUNT(*) FROM mantenimiento m " +
+                     "JOIN dispositivo d ON m.id_dispositivo = d.id_dispositivo " + where;
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.size(); i++) pstmt.setObject(i + 1, params.get(i));
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al contar mantenimientos filtrados", e);
+        }
+        return 0;
+    }
+
     public List<Mantenimiento> listarPorDispositivo(int idDispositivo) {
         List<Mantenimiento> mantenimientos = new ArrayList<>();
         String sql = BASE_QUERY_JOIN + "WHERE m.id_dispositivo = ? ORDER BY m.fecha_inicio DESC";

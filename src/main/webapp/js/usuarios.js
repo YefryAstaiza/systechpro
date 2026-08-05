@@ -1,6 +1,9 @@
 // usuarios.js - Gestión de usuarios (solo ADMINISTRADOR)
 let usuariosActuales = [];
-let usuariosPage = 1;
+let buscadorUsuarios = null; // se inicializa en DOMContentLoaded (busqueda.js)
+
+const USUARIOS_PANEL_IDS = { info: 'usuarios-pagina', prev: 'btn-usuarios-prev', next: 'btn-usuarios-next' };
+const USUARIOS_TAMANO_PAGINA = 10;
 
 function abrirModalUsuario(usuario = null) {
     const formUsuario = document.getElementById('form-usuario');
@@ -24,14 +27,29 @@ function abrirModalUsuario(usuario = null) {
     modalUsuario.style.display = 'flex';
 }
 
-function cargarUsuarios() {
-    fetch(`${apiBase}/usuarios`)
+function cargarUsuarios(estadoBuscador) {
+    const tbody = document.getElementById('tabla-usuarios-body');
+    if (!tbody) return;
+    const e = estadoBuscador || (buscadorUsuarios ? buscadorUsuarios.estado : { pagina: 1, q: '', filtros: {} });
+
+    const params = new URLSearchParams();
+    if (e.q) params.set('q', e.q);
+    if (e.filtros.rol) params.set('rol', e.filtros.rol);
+    params.set('pagina', e.pagina);
+    params.set('tamano', USUARIOS_TAMANO_PAGINA);
+
+    fetch(`${apiBase}/usuarios?` + params.toString())
         .then(res => res.json())
-        .then(usuarios => {
-            usuariosActuales = Array.isArray(usuarios) ? usuarios : [];
-            renderTablaUsuarios();
+        .then(resp => {
+            usuariosActuales = Array.isArray(resp.datos) ? resp.datos : [];
+            renderTablaUsuarios(usuariosActuales);
+            renderInfoPaginacion(USUARIOS_PANEL_IDS, resp.pagina || 1, resp.tamanoPagina || USUARIOS_TAMANO_PAGINA, resp.total || 0);
         })
         .catch(error => console.error('Error cargando usuarios:', error));
+}
+
+function recargarUsuarios() {
+    cargarUsuarios(buscadorUsuarios ? buscadorUsuarios.estado : undefined);
 }
 
 function guardarUsuario(e) {
@@ -70,7 +88,7 @@ function guardarUsuario(e) {
         if (res.status >= 200 && res.status < 300) {
             showToast(res.body.mensaje, 'success');
             modalUsuario.style.display = 'none';
-            cargarUsuarios();
+            recargarUsuarios();
         } else {
             const detalle = res.body.detalle ? ' (' + res.body.detalle + ')' : '';
             showToast((res.body.error || 'Ocurrió un error al guardar') + detalle, 'error');
@@ -91,7 +109,7 @@ async function eliminarUsuario(id) {
     .then(res => {
         if (res.status >= 200 && res.status < 300) {
             showToast(res.body.mensaje, 'success');
-            cargarUsuarios();
+            recargarUsuarios();
         } else {
             showToast(res.body.error || 'Ocurrió un error al eliminar', 'error');
         }
@@ -99,21 +117,14 @@ async function eliminarUsuario(id) {
     .catch(err => showToast('Error de conexión con el servidor', 'error'));
 }
 
-function renderTablaUsuarios() {
+function renderTablaUsuarios(lista) {
     const tbody = document.getElementById('tabla-usuarios-body');
     if (!tbody) return;
-    const lista = Array.isArray(usuariosActuales) ? usuariosActuales.slice() : [];
-    lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
-    const total = lista.length;
-    const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
-    if (usuariosPage > totalPages) usuariosPage = totalPages;
-    const inicio = (usuariosPage - 1) * PANEL_PAGE_SIZE;
-    const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
     tbody.innerHTML = '';
-    if (pagina.length === 0) {
+    if (!lista.length) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron usuarios</td></tr>';
     } else {
-        pagina.forEach(u => {
+        lista.forEach(u => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${escapeHtml(u.nombre)}</td>
@@ -140,12 +151,6 @@ function renderTablaUsuarios() {
             });
         });
     }
-    const pageLabel = document.getElementById('usuarios-pagina');
-    if (pageLabel) pageLabel.textContent = 'Página ' + usuariosPage + ' de ' + totalPages;
-    const btnPrev = document.getElementById('btn-usuarios-prev');
-    const btnNext = document.getElementById('btn-usuarios-next');
-    if (btnPrev) btnPrev.disabled = usuariosPage <= 1;
-    if (btnNext) btnNext.disabled = usuariosPage >= totalPages;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -158,11 +163,19 @@ document.addEventListener('DOMContentLoaded', function() {
     btnCancelarUsuario.addEventListener('click', () => modalUsuario.style.display = 'none');
     formUsuario.addEventListener('submit', guardarUsuario);
 
+    buscadorUsuarios = crearBuscadorPaginado({ onCargar: cargarUsuarios });
+
+    const usuBuscar = document.getElementById('usu-buscar');
+    if (usuBuscar) usuBuscar.addEventListener('input', (e) => buscadorUsuarios.onBuscar(e.target.value));
+
+    const usuFiltroRol = document.getElementById('usu-filtro-rol');
+    if (usuFiltroRol) usuFiltroRol.addEventListener('change', (e) => buscadorUsuarios.onFiltro('rol', e.target.value));
+
     const quickAddUserBtn = document.getElementById('quick-add-user-btn');
     if (quickAddUserBtn) {
         quickAddUserBtn.addEventListener('click', () => {
             mostrarPanel('panel-usuarios');
-            cargarUsuarios();
+            buscadorUsuarios.cargarInicial();
             abrirModalUsuario();
         });
     }
@@ -170,22 +183,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnUsuariosPrev = document.getElementById('btn-usuarios-prev');
     const btnUsuariosNext = document.getElementById('btn-usuarios-next');
     if (btnUsuariosPrev) {
-        btnUsuariosPrev.addEventListener('click', function() {
-            if (usuariosPage > 1) { usuariosPage--; renderTablaUsuarios(); }
-        });
+        btnUsuariosPrev.addEventListener('click', () => buscadorUsuarios.irAPagina(buscadorUsuarios.estado.pagina - 1));
     }
     if (btnUsuariosNext) {
-        btnUsuariosNext.addEventListener('click', function() {
-            const total = (Array.isArray(usuariosActuales) ? usuariosActuales.length : 0);
-            const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
-            if (usuariosPage < totalPages) { usuariosPage++; renderTablaUsuarios(); }
-        });
+        btnUsuariosNext.addEventListener('click', () => buscadorUsuarios.irAPagina(buscadorUsuarios.estado.pagina + 1));
     }
 
     const navUsuariosBtn = document.getElementById('nav-usuarios-btn');
     navUsuariosBtn.addEventListener('click', (e) => {
         e.preventDefault();
         mostrarPanel('panel-usuarios');
-        cargarUsuarios();
+        buscadorUsuarios.cargarInicial();
     });
 });

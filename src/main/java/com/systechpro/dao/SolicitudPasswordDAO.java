@@ -49,6 +49,60 @@ public class SolicitudPasswordDAO {
         return solicitudes;
     }
 
+    private String construirFiltro(String busqueda, String estadoFiltro, List<Object> params) {
+        StringBuilder where = new StringBuilder("WHERE 1=1 ");
+        if (busqueda != null && !busqueda.isEmpty()) {
+            where.append("AND u.nombre LIKE ? ");
+            params.add("%" + busqueda + "%");
+        }
+        if (estadoFiltro != null && !estadoFiltro.isEmpty()) {
+            where.append("AND s.estado = ? ");
+            params.add(estadoFiltro);
+        }
+        return where.toString();
+    }
+
+    /** Búsqueda por usuario + filtro de estado, paginada en SQL (LIMIT/OFFSET, no en memoria). */
+    public List<SolicitudPassword> listar(String busqueda, String estadoFiltro, int pagina, int tamanoPagina) {
+        List<SolicitudPassword> solicitudes = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        String where = construirFiltro(busqueda, estadoFiltro, params);
+        String sql = "SELECT s.*, u.nombre as nombre_usuario, u.correo as correo_usuario, " +
+                     "r.nombre as nombre_resolutor " +
+                     "FROM solicitud_password s " +
+                     "JOIN usuario u ON s.id_usuario = u.id_usuario " +
+                     "LEFT JOIN usuario r ON s.id_resolutor = r.id_usuario " +
+                     where + "ORDER BY s.fecha_solicitud DESC LIMIT ? OFFSET ?";
+        params.add(tamanoPagina);
+        params.add((pagina - 1) * tamanoPagina);
+
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.size(); i++) pstmt.setObject(i + 1, params.get(i));
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) solicitudes.add(mapearSolicitud(rs));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al listar solicitudes password filtradas", e);
+        }
+        return solicitudes;
+    }
+
+    public int contarTotal(String busqueda, String estadoFiltro) {
+        List<Object> params = new ArrayList<>();
+        String where = construirFiltro(busqueda, estadoFiltro, params);
+        String sql = "SELECT COUNT(*) FROM solicitud_password s " +
+                     "JOIN usuario u ON s.id_usuario = u.id_usuario " + where;
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.size(); i++) pstmt.setObject(i + 1, params.get(i));
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al contar solicitudes password filtradas", e);
+        }
+        return 0;
+    }
+
     public boolean actualizarEstado(int idSolicitud, String estado, int idResolutor, String passwordTemporal) {
         String sql = "UPDATE solicitud_password SET estado = ?, id_resolutor = ?, fecha_resolucion = CURRENT_TIMESTAMP, password_temporal = ? WHERE id_solicitud = ?";
         try (Connection conn = GestorJDBC.getConnection();

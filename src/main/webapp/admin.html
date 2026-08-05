@@ -292,6 +292,27 @@
                             Nuevo Usuario</button>
                     </div>
 
+                    <!-- Filtros -->
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+                        <div style="position:relative;flex:1;min-width:220px;">
+                            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.5;"
+                                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input type="text" id="usu-buscar" placeholder="Buscar por nombre o correo..."
+                                style="width:100%;padding:9px 9px 9px 34px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;">
+                        </div>
+                        <select id="usu-filtro-rol"
+                            style="padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:white;cursor:pointer;">
+                            <option value="">Todos los roles</option>
+                            <option value="ADMINISTRADOR">Administrador</option>
+                            <option value="DOCENTE">Docente</option>
+                            <option value="TECNICO">Técnico</option>
+                            <option value="ADMINISTRATIVO">Administrativo</option>
+                        </select>
+                    </div>
+
                     <table class="requests-table">
                         <thead>
                             <tr>
@@ -313,7 +334,7 @@
                             <button id="btn-usuarios-next"
                                 class="pagination-btn">Siguiente</button>
                         </div>
-                        <div id="usuarios-pagina" style="font-weight:600;">Página 1</div>
+                        <div id="usuarios-pagina" style="font-weight:600;">Mostrando 0 resultados</div>
                     </div>
                 </section>
 
@@ -534,6 +555,25 @@
                             Registrar Mantenimiento</button>
                     </div>
 
+                    <!-- Filtros -->
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+                        <div style="position:relative;flex:1;min-width:220px;">
+                            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.5;"
+                                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input type="text" id="mant-buscar" placeholder="Buscar por dispositivo..."
+                                style="width:100%;padding:9px 9px 9px 34px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;">
+                        </div>
+                        <select id="mant-filtro-estado"
+                            style="padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:white;cursor:pointer;">
+                            <option value="">Todos los estados</option>
+                            <option value="EN_PROCESO">En proceso</option>
+                            <option value="FINALIZADO">Finalizado</option>
+                        </select>
+                    </div>
+
                     <table class="requests-table">
                         <thead>
                             <tr>
@@ -557,7 +597,7 @@
                             <button id="btn-mantenimientos-next"
                                 class="pagination-btn">Siguiente</button>
                         </div>
-                        <div id="mantenimientos-pagina" style="font-weight:600;">Página 1</div>
+                        <div id="mantenimientos-pagina" style="font-weight:600;">Mostrando 0 resultados</div>
                     </div>
                 </section>
 
@@ -565,6 +605,27 @@
                 <section class="dashboard-panel" id="panel-auditoria">
                     <div class="panel-header panel-header-row">
                         <h2>Registro de Auditoría</h2>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+                        <div style="position:relative;flex:1;min-width:220px;">
+                            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.5;"
+                                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input type="text" id="aud-buscar" placeholder="Buscar por usuario o descripción..."
+                                style="width:100%;padding:9px 9px 9px 34px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;">
+                        </div>
+                        <label style="font-size:13px;color:#64748b;">Desde
+                            <input type="date" id="aud-fecha-desde"
+                                style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;">
+                        </label>
+                        <label style="font-size:13px;color:#64748b;">Hasta
+                            <input type="date" id="aud-fecha-hasta"
+                                style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;">
+                        </label>
                     </div>
 
                     <table class="requests-table">
@@ -590,7 +651,7 @@
                             <button id="btn-auditoria-next"
                                 class="pagination-btn">Siguiente</button>
                         </div>
-                        <div id="auditoria-pagina" style="font-weight:600;">Página 1</div>
+                        <div id="auditoria-pagina" style="font-weight:600;">Mostrando 0 resultados</div>
                     </div>
                 </section>
 
@@ -684,14 +745,32 @@
                     </div>
 
                     <!-- Filtros -->
-                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+                        <div style="position:relative;flex:1;min-width:220px;">
+                            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.5;"
+                                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input type="text" id="prest-buscar" placeholder="Buscar por dispositivo o usuario..."
+                                style="width:100%;padding:9px 9px 9px 34px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;">
+                        </div>
                         <select id="prest-filtro-estado"
-                            style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:white;">
+                            style="padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:white;cursor:pointer;">
                             <option value="">Todos los estados</option>
                             <option value="PENDIENTE">Pendiente</option>
                             <option value="APROBADO">Aprobado</option>
                             <option value="RECHAZADO">Rechazado</option>
+                            <option value="DEVUELTO">Devuelto</option>
                         </select>
+                        <label style="font-size:13px;color:#64748b;">Desde
+                            <input type="date" id="prest-fecha-desde"
+                                style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;">
+                        </label>
+                        <label style="font-size:13px;color:#64748b;">Hasta
+                            <input type="date" id="prest-fecha-hasta"
+                                style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;">
+                        </label>
                     </div>
 
                     <div style="overflow-x:auto;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);">
@@ -729,7 +808,7 @@
                                 <button id="btn-prestamos-next"
                                     class="pagination-btn">Siguiente</button>
                             </div>
-                            <div id="prestamos-pagina" style="font-weight:600;">Página 1</div>
+                            <div id="prestamos-pagina" style="font-weight:600;">Mostrando 0 resultados</div>
                         </div>
                     </div>
                 </section>
@@ -738,6 +817,26 @@
                 <section class="dashboard-panel" id="panel-password-requests">
                     <div class="panel-header panel-header-row">
                         <h2>Solicitudes de Restablecimiento de Contraseña</h2>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+                        <div style="position:relative;flex:1;min-width:220px;">
+                            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.5;"
+                                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input type="text" id="pwreq-buscar" placeholder="Buscar por usuario..."
+                                style="width:100%;padding:9px 9px 9px 34px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;">
+                        </div>
+                        <select id="pwreq-filtro-estado"
+                            style="padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:white;cursor:pointer;">
+                            <option value="">Todos los estados</option>
+                            <option value="PENDIENTE">Pendiente</option>
+                            <option value="APROBADA">Aprobada</option>
+                            <option value="RECHAZADA">Rechazada</option>
+                        </select>
                     </div>
 
                     <div style="overflow-x:auto;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);">
@@ -756,6 +855,16 @@
                                 <!-- Dinámico -->
                             </tbody>
                         </table>
+                        <div id="password-requests-paginacion"
+                            class="pagination-bar">
+                            <div class="pagination-buttons">
+                                <button id="btn-password-requests-prev"
+                                    class="pagination-btn">Anterior</button>
+                                <button id="btn-password-requests-next"
+                                    class="pagination-btn">Siguiente</button>
+                            </div>
+                            <div id="password-requests-pagina" style="font-weight:600;">Mostrando 0 resultados</div>
+                        </div>
                     </div>
                 </section>
 
@@ -1190,13 +1299,14 @@
         </div>
         <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
         <script src="js/core.js?v=4"></script>
-        <script src="js/usuarios.js?v=2"></script>
+        <script src="js/busqueda.js?v=1"></script>
+        <script src="js/usuarios.js?v=3"></script>
         <script src="js/dispositivos.js?v=2"></script>
-        <script src="js/prestamos.js?v=3"></script>
-        <script src="js/mantenimientos.js?v=3"></script>
-        <script src="js/auditoria.js?v=2"></script>
+        <script src="js/prestamos.js?v=4"></script>
+        <script src="js/mantenimientos.js?v=4"></script>
+        <script src="js/auditoria.js?v=3"></script>
         <script src="js/reportes.js?v=3"></script>
-        <script src="js/password-requests.js?v=2"></script>
+        <script src="js/password-requests.js?v=3"></script>
         <script src="js/notificaciones.js?v=1"></script>
         <script src="js/corte-diario.js?v=1"></script>
         <script src="js/init.js?v=3"></script>

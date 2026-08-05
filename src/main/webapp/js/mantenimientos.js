@@ -1,19 +1,17 @@
 // mantenimientos.js - Registro de mantenimientos, dashboard e historial de técnico
 let mantenimientosActuales = [];
-let mantenimientosPage = 1;
 let tecnicoRecientesPage = 1;
 const TECNICO_RECIENTES_PER_PAGE = 5;
 let idMantenimientoDetalle = null;
+let buscadorMantenimientos = null; // se inicializa en DOMContentLoaded (busqueda.js)
 
+// Resumen para dashboards de Técnico/Administrador (no es el módulo con búsqueda dedicada):
+// se pide el máximo permitido, suficiente para un resumen de actividad reciente.
 function cargarMantenimientos() {
-    const tablaMantenimientosBody = document.getElementById('tabla-mantenimientos-body');
-    if (!tablaMantenimientosBody) return;
-    fetch(apiBase + '/mantenimientos')
+    fetch(apiBase + '/mantenimientos?tamano=50')
         .then(res => res.json())
-        .then(mantenimientos => {
-            mantenimientosActuales = Array.isArray(mantenimientos) ? mantenimientos : [];
-            actualizarEncabezadoMantenimientos();
-            renderTablaMantenimientosPanel();
+        .then(resp => {
+            mantenimientosActuales = Array.isArray(resp.datos) ? resp.datos : [];
 
             if (rolGlobal === 'TECNICO') {
                 tecnicoRecientesPage = 1;
@@ -25,6 +23,31 @@ function cargarMantenimientos() {
             }
         })
         .catch(error => console.error('Error cargando mantenimientos:', error));
+}
+
+const MANT_PANEL_IDS = { info: 'mantenimientos-pagina', prev: 'btn-mantenimientos-prev', next: 'btn-mantenimientos-next' };
+const MANT_TAMANO_PAGINA = 10;
+
+function cargarMantenimientosPanelDedicado(estadoBuscador) {
+    const tablaMantenimientosBody = document.getElementById('tabla-mantenimientos-body');
+    if (!tablaMantenimientosBody) return;
+    const e = estadoBuscador || (buscadorMantenimientos ? buscadorMantenimientos.estado : { pagina: 1, q: '', filtros: {} });
+
+    const params = new URLSearchParams();
+    if (e.q) params.set('q', e.q);
+    if (e.filtros.estado) params.set('estado', e.filtros.estado);
+    params.set('pagina', e.pagina);
+    params.set('tamano', MANT_TAMANO_PAGINA);
+
+    fetch(apiBase + '/mantenimientos?' + params.toString())
+        .then(res => res.json())
+        .then(resp => {
+            mantenimientosActuales = Array.isArray(resp.datos) ? resp.datos : [];
+            actualizarEncabezadoMantenimientos();
+            renderTablaMantenimientosPanel(mantenimientosActuales);
+            renderInfoPaginacion(MANT_PANEL_IDS, resp.pagina || 1, resp.tamanoPagina || MANT_TAMANO_PAGINA, resp.total || 0);
+        })
+        .catch(error => console.error('Error panel mantenimientos:', error));
 }
 
 function actualizarContadorMantenimientoAdmin(mantenimientos) {
@@ -115,22 +138,15 @@ function renderMantenimientosRecientes(mantenimientos) {
     }
 }
 
-function renderTablaMantenimientosPanel() {
+function renderTablaMantenimientosPanel(lista) {
     const tablaMantenimientosBody = document.getElementById('tabla-mantenimientos-body');
     if (!tablaMantenimientosBody) return;
-    const lista = Array.isArray(mantenimientosActuales) ? mantenimientosActuales.slice() : [];
-    lista.sort((a, b) => (parseFecha(b.fechaInicio) || 0) - (parseFecha(a.fechaInicio) || 0));
-    const total = lista.length;
-    const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
-    if (mantenimientosPage > totalPages) mantenimientosPage = totalPages;
-    const inicio = (mantenimientosPage - 1) * PANEL_PAGE_SIZE;
-    const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
     tablaMantenimientosBody.innerHTML = '';
     const rol = obtenerRolActual();
-    if (pagina.length === 0) {
+    if (!lista.length) {
         tablaMantenimientosBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No se encontraron mantenimientos</td></tr>';
     } else {
-        pagina.forEach(m => {
+        lista.forEach(m => {
             const tr = document.createElement('tr');
             if (rol === 'TECNICO') {
                 tr.innerHTML = `
@@ -175,12 +191,6 @@ function renderTablaMantenimientosPanel() {
             });
         });
     }
-    const pageLabel = document.getElementById('mantenimientos-pagina');
-    if (pageLabel) pageLabel.textContent = 'Página ' + mantenimientosPage + ' de ' + totalPages;
-    const btnPrev = document.getElementById('btn-mantenimientos-prev');
-    const btnNext = document.getElementById('btn-mantenimientos-next');
-    if (btnPrev) btnPrev.disabled = mantenimientosPage <= 1;
-    if (btnNext) btnNext.disabled = mantenimientosPage >= totalPages;
 }
 
 function abrirModalCrearMantenimiento() {
@@ -279,6 +289,7 @@ function guardarMantenimiento(e) {
             showToast(res.body.mensaje, 'success');
             modalCrearMantenimiento.style.display = 'none';
             cargarMantenimientos();
+            cargarMantenimientosPanelDedicado();
             cargarDispositivos();
         } else {
             showToast(res.body.error || 'Error al registrar mantenimiento', 'error');
@@ -377,19 +388,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    buscadorMantenimientos = crearBuscadorPaginado({ onCargar: cargarMantenimientosPanelDedicado });
+
+    const mantBuscar = document.getElementById('mant-buscar');
+    if (mantBuscar) mantBuscar.addEventListener('input', (e) => buscadorMantenimientos.onBuscar(e.target.value));
+
+    const mantFiltroEstado = document.getElementById('mant-filtro-estado');
+    if (mantFiltroEstado) mantFiltroEstado.addEventListener('change', (e) => buscadorMantenimientos.onFiltro('estado', e.target.value));
+
     const btnMantenimientosPrev = document.getElementById('btn-mantenimientos-prev');
     const btnMantenimientosNext = document.getElementById('btn-mantenimientos-next');
     if (btnMantenimientosPrev) {
-        btnMantenimientosPrev.addEventListener('click', function() {
-            if (mantenimientosPage > 1) { mantenimientosPage--; renderTablaMantenimientosPanel(); }
-        });
+        btnMantenimientosPrev.addEventListener('click', () => buscadorMantenimientos.irAPagina(buscadorMantenimientos.estado.pagina - 1));
     }
     if (btnMantenimientosNext) {
-        btnMantenimientosNext.addEventListener('click', function() {
-            const total = (Array.isArray(mantenimientosActuales) ? mantenimientosActuales.length : 0);
-            const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
-            if (mantenimientosPage < totalPages) { mantenimientosPage++; renderTablaMantenimientosPanel(); }
-        });
+        btnMantenimientosNext.addEventListener('click', () => buscadorMantenimientos.irAPagina(buscadorMantenimientos.estado.pagina + 1));
     }
 
     const navMantenimientosBtn = document.getElementById('nav-mantenimientos-btn');
@@ -397,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
         navMantenimientosBtn.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarPanel('panel-mantenimientos');
-            cargarMantenimientos();
+            buscadorMantenimientos.cargarInicial();
         });
     }
 
@@ -406,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
         navHistorialBtn.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarPanel('panel-mantenimientos', 'nav-historial-btn');
-            cargarMantenimientos();
+            buscadorMantenimientos.cargarInicial();
         });
     }
 
@@ -420,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnVerHistorial.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarPanel('panel-mantenimientos', 'nav-historial-btn');
-            cargarMantenimientos();
+            buscadorMantenimientos.cargarInicial();
         });
     }
 });

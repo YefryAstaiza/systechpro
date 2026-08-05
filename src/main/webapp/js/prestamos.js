@@ -1,25 +1,22 @@
 // prestamos.js - Solicitudes de préstamo: dashboard, panel dedicado y modales
 let prestamosActuales = [];
 let prestamosDashboard = [];
-let prestamosPanelPage = 1;
 let dashSolicitudesPage = 1;
 const DASH_SOLICITUDES_PER_PAGE = 5;
 let idPrestamoDetalle = null;
+let buscadorPrestamos = null; // se inicializa en DOMContentLoaded (busqueda.js)
 
-function actualizarTarjetasSolicitudes(prestamos) {
+// totalReal viene del backend (ya filtrado por usuario ahí); aprobadas/pendientes se
+// calculan sobre el lote recibido (el más reciente, acotado por tamano en cargarPrestamos).
+function actualizarTarjetasSolicitudes(prestamos, totalReal) {
     if (!Array.isArray(prestamos)) return;
-    var lista = prestamos.slice();
-    if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
-        lista = lista.filter(function(p) { return Number(p.idUsuario) === Number(idUsuarioGlobal); });
-    }
-    var total = lista.length;
-    var aprobadas = lista.filter(function(p) { return p.estado === 'APROBADO'; }).length;
-    var pendientes = lista.filter(function(p) { return p.estado === 'PENDIENTE'; }).length;
+    var aprobadas = prestamos.filter(function(p) { return p.estado === 'APROBADO'; }).length;
+    var pendientes = prestamos.filter(function(p) { return p.estado === 'PENDIENTE'; }).length;
 
     var totalEl = document.getElementById('card-solicitudes-totales');
     var aprobadasEl = document.getElementById('card-solicitudes-aprobadas');
     var pendientesEl = document.getElementById('card-solicitudes-pendientes');
-    if (totalEl) totalEl.textContent = total;
+    if (totalEl) totalEl.textContent = totalReal;
     if (aprobadasEl) aprobadasEl.textContent = aprobadas;
     if (pendientesEl) pendientesEl.textContent = pendientes;
 }
@@ -78,26 +75,18 @@ function renderTablaSolicitudesDashboard() {
     if (btnNext) btnNext.disabled = dashSolicitudesPage >= totalPages;
 }
 
-function renderTablaPrestamosPanel() {
+function renderTablaPrestamosPanel(lista) {
     const tablaPrestamosPanelBody = document.getElementById('tabla-prestamos-panel-body');
     if (!tablaPrestamosPanelBody) return;
     const rol = obtenerRolActual();
-    let lista = Array.isArray(prestamosActuales) ? prestamosActuales.slice() : [];
-    if (rol === 'DOCENTE' || rol === 'ADMINISTRATIVO') {
-        lista = lista.filter(function(p) { return p.idUsuario == idUsuarioGlobal; });
-    }
-    lista.sort((a, b) => (parseFecha(b.fechaInicio) || 0) - (parseFecha(a.fechaInicio) || 0));
-    const total = lista.length;
-    const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
-    if (prestamosPanelPage > totalPages) prestamosPanelPage = totalPages;
-    const inicio = (prestamosPanelPage - 1) * PANEL_PAGE_SIZE;
-    const pagina = lista.slice(inicio, inicio + PANEL_PAGE_SIZE);
+    // La lista ya viene filtrada, ordenada y paginada por el backend (búsqueda, estado,
+    // rango de fechas y el alcance por usuario para Docente/Administrativo).
     tablaPrestamosPanelBody.innerHTML = '';
-    if (pagina.length === 0) {
+    if (!lista.length) {
         const colspan = rol === 'DOCENTE' || rol === 'ADMINISTRATIVO' ? 7 : 8;
         tablaPrestamosPanelBody.innerHTML = '<tr><td colspan="' + colspan + '" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes de préstamo</td></tr>';
     } else {
-        pagina.forEach(function(p) {
+        lista.forEach(function(p) {
             const esAdminTec = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
             const esPend = p.estado === 'PENDIENTE';
             const esAprobado = p.estado === 'APROBADO';
@@ -139,23 +128,21 @@ function renderTablaPrestamosPanel() {
             tablaPrestamosPanelBody.appendChild(tr);
         });
     }
-    const pageLabel = document.getElementById('prestamos-pagina');
-    if (pageLabel) pageLabel.textContent = 'Página ' + prestamosPanelPage + ' de ' + totalPages;
-    const btnPrev = document.getElementById('btn-prestamos-prev');
-    const btnNext = document.getElementById('btn-prestamos-next');
-    if (btnPrev) btnPrev.disabled = prestamosPanelPage <= 1;
-    if (btnNext) btnNext.disabled = prestamosPanelPage >= totalPages;
 }
 
+// Resumen para el widget de "Inicio" (no es uno de los 5 módulos con búsqueda dedicada):
+// se pide el máximo permitido, ordenado por más reciente primero, suficiente para un
+// resumen de actividad reciente sin traer el historial completo.
 function cargarPrestamos() {
-    fetch(`${apiBase}/prestamos`)
+    fetch(`${apiBase}/prestamos?tamano=50`)
         .then(res => res.json())
         .then(prestamos => {
-            prestamosActuales = prestamos;
-            prestamosDashboard = Array.isArray(prestamos) ? prestamos : [];
+            var datos = (prestamos && Array.isArray(prestamos.datos)) ? prestamos.datos : [];
+            prestamosActuales = datos;
+            prestamosDashboard = datos;
             renderTablaSolicitudesDashboard();
             if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
-                actualizarTarjetasSolicitudes(prestamosDashboard);
+                actualizarTarjetasSolicitudes(datos, prestamos.total || 0);
             }
         })
         .catch(error => console.error('Error cargando prestamos:', error));
@@ -168,23 +155,33 @@ function cargarMisSolicitudes() {
     }
 }
 
-function cargarPrestamosPanelDedicado() {
-    var filtroEstado = document.getElementById('prest-filtro-estado') ? document.getElementById('prest-filtro-estado').value : '';
+const PREST_PANEL_IDS = { info: 'prestamos-pagina', prev: 'btn-prestamos-prev', next: 'btn-prestamos-next' };
+const PREST_TAMANO_PAGINA = 10;
+
+function cargarPrestamosPanelDedicado(estadoBuscador) {
     var tbody = document.getElementById('tabla-prestamos-panel-body');
     if (!tbody) return;
+    var e = estadoBuscador || (buscadorPrestamos ? buscadorPrestamos.estado : { pagina: 1, q: '', filtros: {} });
 
-    fetch(apiBase + '/prestamos')
+    var params = new URLSearchParams();
+    if (e.q) params.set('q', e.q);
+    if (e.filtros.estado) params.set('estado', e.filtros.estado);
+    if (e.filtros.fechaDesde) params.set('fechaDesde', e.filtros.fechaDesde);
+    if (e.filtros.fechaHasta) params.set('fechaHasta', e.filtros.fechaHasta);
+    params.set('pagina', e.pagina);
+    params.set('tamano', PREST_TAMANO_PAGINA);
+
+    fetch(apiBase + '/prestamos?' + params.toString())
         .then(function(res) { return res.json(); })
-        .then(function(prestamos) {
-            prestamosActuales = Array.isArray(prestamos) ? prestamos : [];
-            if (filtroEstado) {
-                prestamosActuales = prestamosActuales.filter(function(p) { return p.estado === filtroEstado; });
-            }
+        .then(function(resp) {
+            prestamosActuales = Array.isArray(resp.datos) ? resp.datos : [];
             actualizarEncabezadoPrestamosPanel();
-            renderTablaPrestamosPanel();
+            renderTablaPrestamosPanel(prestamosActuales);
+            renderInfoPaginacion(PREST_PANEL_IDS, resp.pagina || 1, resp.tamanoPagina || PREST_TAMANO_PAGINA, resp.total || 0);
         })
         .catch(function(error) { console.error('Error panel prestamos:', error); });
 }
+
 
 window.aprobarPrestamoPanel = function(id) {
     fetch(apiBase + '/prestamos/' + id + '/estado', {
@@ -405,8 +402,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const btnNuevoPrestamoPanelBtn = document.getElementById('btn-nuevo-prestamo-panel');
     if (btnNuevoPrestamoPanelBtn) btnNuevoPrestamoPanelBtn.addEventListener('click', abrirModalCrearPrestamo);
+
+    buscadorPrestamos = crearBuscadorPaginado({ onCargar: cargarPrestamosPanelDedicado });
+
+    const pRestBuscar = document.getElementById('prest-buscar');
+    if (pRestBuscar) pRestBuscar.addEventListener('input', (e) => buscadorPrestamos.onBuscar(e.target.value));
+
     const pRestFiltro = document.getElementById('prest-filtro-estado');
-    if (pRestFiltro) pRestFiltro.addEventListener('change', cargarPrestamosPanelDedicado);
+    if (pRestFiltro) pRestFiltro.addEventListener('change', (e) => buscadorPrestamos.onFiltro('estado', e.target.value));
+
+    const pRestDesde = document.getElementById('prest-fecha-desde');
+    if (pRestDesde) pRestDesde.addEventListener('change', (e) => buscadorPrestamos.onFiltro('fechaDesde', e.target.value));
+
+    const pRestHasta = document.getElementById('prest-fecha-hasta');
+    if (pRestHasta) pRestHasta.addEventListener('change', (e) => buscadorPrestamos.onFiltro('fechaHasta', e.target.value));
 
     const btnDashSolicitudesPrev = document.getElementById('btn-dash-solicitudes-prev');
     const btnDashSolicitudesNext = document.getElementById('btn-dash-solicitudes-next');
@@ -426,16 +435,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnPrestamosPrev = document.getElementById('btn-prestamos-prev');
     const btnPrestamosNext = document.getElementById('btn-prestamos-next');
     if (btnPrestamosPrev) {
-        btnPrestamosPrev.addEventListener('click', function() {
-            if (prestamosPanelPage > 1) { prestamosPanelPage--; renderTablaPrestamosPanel(); }
-        });
+        btnPrestamosPrev.addEventListener('click', () => buscadorPrestamos.irAPagina(buscadorPrestamos.estado.pagina - 1));
     }
     if (btnPrestamosNext) {
-        btnPrestamosNext.addEventListener('click', function() {
-            const total = (Array.isArray(prestamosActuales) ? prestamosActuales.length : 0);
-            const totalPages = Math.max(1, Math.ceil(total / PANEL_PAGE_SIZE));
-            if (prestamosPanelPage < totalPages) { prestamosPanelPage++; renderTablaPrestamosPanel(); }
-        });
+        btnPrestamosNext.addEventListener('click', () => buscadorPrestamos.irAPagina(buscadorPrestamos.estado.pagina + 1));
     }
 
     const navPrestamosBtn = document.getElementById('nav-prestamos-btn');
@@ -443,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
         navPrestamosBtn.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarPanel('panel-prestamos');
-            cargarPrestamosPanelDedicado();
+            buscadorPrestamos.cargarInicial();
         });
     }
 
@@ -452,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
         navMisSolicitudesBtn.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarPanel('panel-prestamos', 'nav-mis-solicitudes-btn');
-            cargarPrestamosPanelDedicado();
+            buscadorPrestamos.cargarInicial();
         });
     }
 
@@ -466,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnVerSolicitudesDocente.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarPanel('panel-prestamos', 'nav-mis-solicitudes-btn');
-            cargarPrestamosPanelDedicado();
+            buscadorPrestamos.cargarInicial();
         });
     }
 
@@ -475,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function() {
         verSolicitudesBtn.addEventListener('click', () => {
             mostrarPanel('panel-prestamos');
             if (navPrestamosBtn) navPrestamosBtn.classList.add('active');
-            cargarPrestamosPanelDedicado();
+            buscadorPrestamos.cargarInicial();
         });
     }
 });

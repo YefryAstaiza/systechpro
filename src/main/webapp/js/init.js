@@ -70,11 +70,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function actualizarTarjetasTecnico() {
-        fetch(apiBase + '/mantenimientos')
+        fetch(apiBase + '/mantenimientos?tamano=50')
             .then(res => res.json())
-            .then(mantenimientos => {
-                if (Array.isArray(mantenimientos)) {
-                    actualizarDashboardTecnico(mantenimientos);
+            .then(resp => {
+                if (resp && Array.isArray(resp.datos)) {
+                    actualizarDashboardTecnico(resp.datos);
                 }
             })
             .catch(error => console.error('Error actualizando tarjetas técnico:', error));

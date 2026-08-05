@@ -107,6 +107,78 @@ public class PrestamoDAO {
         return prestamos;
     }
     
+    /**
+     * Construye el WHERE dinámico compartido por listar()/contarTotal() paginados.
+     * Nunca concatena el texto de búsqueda: siempre va como parámetro de PreparedStatement.
+     */
+    private String construirFiltro(String busqueda, String estadoFiltro, Integer idUsuarioFiltro,
+                                    Timestamp fechaDesde, Timestamp fechaHasta, List<Object> params) {
+        StringBuilder where = new StringBuilder("WHERE 1=1 ");
+        if (busqueda != null && !busqueda.isEmpty()) {
+            where.append("AND (u.nombre LIKE ? OR d.nombre LIKE ?) ");
+            String comodin = "%" + busqueda + "%";
+            params.add(comodin);
+            params.add(comodin);
+        }
+        if (estadoFiltro != null && !estadoFiltro.isEmpty()) {
+            where.append("AND p.estado = ? ");
+            params.add(estadoFiltro);
+        }
+        if (idUsuarioFiltro != null) {
+            where.append("AND p.id_usuario = ? ");
+            params.add(idUsuarioFiltro);
+        }
+        if (fechaDesde != null) {
+            where.append("AND p.fecha_inicio >= ? ");
+            params.add(fechaDesde);
+        }
+        if (fechaHasta != null) {
+            where.append("AND p.fecha_inicio <= ? ");
+            params.add(fechaHasta);
+        }
+        return where.toString();
+    }
+
+    /** Búsqueda por usuario/dispositivo + filtros, paginada en SQL (LIMIT/OFFSET, no en memoria). */
+    public List<Prestamo> listar(String busqueda, String estadoFiltro, Integer idUsuarioFiltro,
+                                  Timestamp fechaDesde, Timestamp fechaHasta, int pagina, int tamanoPagina) {
+        List<Prestamo> prestamos = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        String where = construirFiltro(busqueda, estadoFiltro, idUsuarioFiltro, fechaDesde, fechaHasta, params);
+        String sql = BASE_QUERY_JOIN + where + "ORDER BY p.fecha_inicio DESC LIMIT ? OFFSET ?";
+        params.add(tamanoPagina);
+        params.add((pagina - 1) * tamanoPagina);
+
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.size(); i++) pstmt.setObject(i + 1, params.get(i));
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) prestamos.add(mapearPrestamoJoin(rs));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al listar préstamos filtrados", e);
+        }
+        return prestamos;
+    }
+
+    /** Mismo filtro que listar(), solo el conteo (para calcular el total de páginas). */
+    public int contarTotal(String busqueda, String estadoFiltro, Integer idUsuarioFiltro,
+                            Timestamp fechaDesde, Timestamp fechaHasta) {
+        List<Object> params = new ArrayList<>();
+        String where = construirFiltro(busqueda, estadoFiltro, idUsuarioFiltro, fechaDesde, fechaHasta, params);
+        String sql = "SELECT COUNT(*) FROM prestamo p " +
+                     "JOIN usuario u ON p.id_usuario = u.id_usuario " +
+                     "JOIN dispositivo d ON p.id_dispositivo = d.id_dispositivo " + where;
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.size(); i++) pstmt.setObject(i + 1, params.get(i));
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al contar préstamos filtrados", e);
+        }
+        return 0;
+    }
+
     public List<Prestamo> listarPorEstado(String estado) {
         List<Prestamo> prestamos = new ArrayList<>();
         String sql = BASE_QUERY_JOIN + "WHERE p.estado = ? ORDER BY p.fecha_inicio DESC";

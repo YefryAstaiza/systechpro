@@ -6,6 +6,7 @@ import com.systechpro.models.Auditoria;
 import com.systechpro.models.Rol;
 import com.systechpro.models.Usuario;
 import com.systechpro.utils.Encriptador;
+import com.systechpro.utils.PaginacionUtil;
 import com.systechpro.utils.ValidadorTexto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -15,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,12 +63,24 @@ public class UsuarioController extends HttpServlet {
 
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
-                List<Usuario> usuarios = usuarioDAO.listar();
+                String busqueda = request.getParameter("q");
+                String rolFiltro = request.getParameter("rol");
+                int pagina = PaginacionUtil.parsePagina(request.getParameter("pagina"));
+                int tamano = PaginacionUtil.parseTamano(request.getParameter("tamano"));
+
+                List<Usuario> usuarios = usuarioDAO.listar(busqueda, rolFiltro, pagina, tamano);
+                int total = usuarioDAO.contarTotal(busqueda, rolFiltro);
                 // No enviar contraseñas al frontend
                 for (Usuario u : usuarios) {
                     u.setContrasena(null);
                 }
-                objectMapper.writeValue(response.getWriter(), usuarios);
+
+                Map<String, Object> resp = new HashMap<>();
+                resp.put("datos", usuarios);
+                resp.put("total", total);
+                resp.put("pagina", pagina);
+                resp.put("tamanoPagina", tamano);
+                objectMapper.writeValue(response.getWriter(), resp);
             } else {
                 String idStr = pathInfo.substring(1);
                 int id = Integer.parseInt(idStr);

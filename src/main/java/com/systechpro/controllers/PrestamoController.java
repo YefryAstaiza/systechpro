@@ -9,6 +9,8 @@ import com.systechpro.models.Dispositivo;
 import com.systechpro.models.EstadoDispositivo;
 import com.systechpro.models.EstadoPrestamo;
 import com.systechpro.models.Rol;
+import com.systechpro.models.Usuario;
+import com.systechpro.utils.PaginacionUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,19 +58,28 @@ public class PrestamoController extends HttpServlet {
 
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
-                List<Prestamo> prestamos;
-                if (tienePermisoAdmin(rol)) {
-                    String estado = request.getParameter("estado");
-                    if (estado != null && !estado.isEmpty()) {
-                        prestamos = prestamoDAO.listarPorEstado(estado);
-                    } else {
-                        prestamos = prestamoDAO.listar();
-                    }
-                } else {
-                    int idUsuario = ((com.systechpro.models.Usuario) session.getAttribute("usuario")).getIdUsuario();
-                    prestamos = prestamoDAO.listarPorUsuario(idUsuario);
-                }
-                objectMapper.writeValue(response.getWriter(), prestamos);
+                String busqueda = request.getParameter("q");
+                String estadoFiltro = request.getParameter("estado");
+                Timestamp fechaDesde = PaginacionUtil.parseFechaInicioDia(request.getParameter("fechaDesde"));
+                Timestamp fechaHasta = PaginacionUtil.parseFechaFinDia(request.getParameter("fechaHasta"));
+                int pagina = PaginacionUtil.parsePagina(request.getParameter("pagina"));
+                int tamano = PaginacionUtil.parseTamano(request.getParameter("tamano"));
+
+                // Docente/Administrativo solo ven sus propios préstamos - se aplica como un filtro
+                // más dentro de la misma consulta paginada, no como una ruta de código aparte.
+                Integer idUsuarioFiltro = tienePermisoAdmin(rol)
+                        ? null
+                        : ((Usuario) session.getAttribute("usuario")).getIdUsuario();
+
+                List<Prestamo> prestamos = prestamoDAO.listar(busqueda, estadoFiltro, idUsuarioFiltro, fechaDesde, fechaHasta, pagina, tamano);
+                int total = prestamoDAO.contarTotal(busqueda, estadoFiltro, idUsuarioFiltro, fechaDesde, fechaHasta);
+
+                Map<String, Object> resp = new HashMap<>();
+                resp.put("datos", prestamos);
+                resp.put("total", total);
+                resp.put("pagina", pagina);
+                resp.put("tamanoPagina", tamano);
+                objectMapper.writeValue(response.getWriter(), resp);
             } else if (pathInfo.equals("/pendientes") && tienePermisoAdmin(rol)) {
                 List<Prestamo> prestamos = prestamoDAO.listarPorEstado(EstadoPrestamo.PENDIENTE.name());
                 objectMapper.writeValue(response.getWriter(), prestamos);

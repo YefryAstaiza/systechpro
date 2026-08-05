@@ -1,11 +1,26 @@
 // password-requests.js - Solicitudes de restablecimiento de contraseña (solo ADMINISTRADOR)
-window.cargarPasswordRequests = function() {
-    fetch(`${apiBase}/admin/password-requests`, { credentials: 'include' })
+let buscadorPasswordRequests = null; // se inicializa en DOMContentLoaded (busqueda.js)
+
+const PWREQ_PANEL_IDS = { info: 'password-requests-pagina', prev: 'btn-password-requests-prev', next: 'btn-password-requests-next' };
+const PWREQ_TAMANO_PAGINA = 10;
+
+window.cargarPasswordRequests = function(estadoBuscador) {
+    const tbody = document.getElementById('tabla-password-requests-body');
+    if (!tbody) return;
+    const e = estadoBuscador || (buscadorPasswordRequests ? buscadorPasswordRequests.estado : { pagina: 1, q: '', filtros: {} });
+
+    const params = new URLSearchParams();
+    if (e.q) params.set('q', e.q);
+    if (e.filtros.estado) params.set('estado', e.filtros.estado);
+    params.set('pagina', e.pagina);
+    params.set('tamano', PWREQ_TAMANO_PAGINA);
+
+    fetch(`${apiBase}/admin/password-requests?${params.toString()}`, { credentials: 'include' })
         .then(res => res.json())
-        .then(data => {
-            if (Array.isArray(data)) {
-                renderTablaPasswordRequests(data);
-            }
+        .then(resp => {
+            const solicitudes = Array.isArray(resp.datos) ? resp.datos : [];
+            renderTablaPasswordRequests(solicitudes);
+            renderInfoPaginacion(PWREQ_PANEL_IDS, resp.pagina || 1, resp.tamanoPagina || PWREQ_TAMANO_PAGINA, resp.total || 0);
         })
         .catch(error => console.error('Error cargando solicitudes de password:', error));
 };
@@ -16,7 +31,7 @@ function renderTablaPasswordRequests(solicitudes) {
     tbody.innerHTML = '';
 
     if (solicitudes.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes pendientes</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes</td></tr>';
         return;
     }
 
@@ -72,12 +87,30 @@ window.copiarClave = function(clave) {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+    buscadorPasswordRequests = crearBuscadorPaginado({ onCargar: cargarPasswordRequests });
+
+    const pwreqBuscar = document.getElementById('pwreq-buscar');
+    if (pwreqBuscar) pwreqBuscar.addEventListener('input', (e) => buscadorPasswordRequests.onBuscar(e.target.value));
+
+    const pwreqFiltroEstado = document.getElementById('pwreq-filtro-estado');
+    if (pwreqFiltroEstado) pwreqFiltroEstado.addEventListener('change', (e) => buscadorPasswordRequests.onFiltro('estado', e.target.value));
+
+    const btnPwreqPrev = document.getElementById('btn-password-requests-prev');
+    if (btnPwreqPrev) {
+        btnPwreqPrev.addEventListener('click', () => buscadorPasswordRequests.irAPagina(buscadorPasswordRequests.estado.pagina - 1));
+    }
+
+    const btnPwreqNext = document.getElementById('btn-password-requests-next');
+    if (btnPwreqNext) {
+        btnPwreqNext.addEventListener('click', () => buscadorPasswordRequests.irAPagina(buscadorPasswordRequests.estado.pagina + 1));
+    }
+
     const navPasswordRequestsBtn = document.getElementById('nav-password-requests-btn');
     if (navPasswordRequestsBtn) {
         navPasswordRequestsBtn.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarPanel('panel-password-requests');
-            cargarPasswordRequests();
+            buscadorPasswordRequests.cargarInicial();
         });
     }
 });
