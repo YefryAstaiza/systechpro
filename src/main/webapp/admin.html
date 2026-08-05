@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - SysTechPro</title>
-    <link rel="stylesheet" href="css/styles.css?v=7">
+    <link rel="stylesheet" href="css/styles.css?v=9">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -18,6 +18,24 @@
                 </div>
             </div>
             <div class="user-info">
+                <div class="notif-wrapper" id="notif-wrapper">
+                    <button class="notif-bell-btn" id="btn-notificaciones" aria-label="Notificaciones" title="Notificaciones">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="notif-badge hidden" id="notif-badge">0</span>
+                    </button>
+                    <div class="notif-dropdown hidden" id="notif-dropdown">
+                        <div class="notif-dropdown-header">
+                            <span>Notificaciones</span>
+                            <button id="btn-marcar-todas-leidas">Marcar todas como leídas</button>
+                        </div>
+                        <div class="notif-list" id="notif-list">
+                            <div class="notif-empty">No tienes notificaciones</div>
+                        </div>
+                    </div>
+                </div>
                 <span class="user-label">Usuario:</span> <span id="admin-user-name">Administrador</span>
                 <button class="logout-btn" id="btn-logout">Cerrar sesión</button>
             </div>
@@ -1087,6 +1105,7 @@
         <script src="js/auditoria.js?v=2"></script>
         <script src="js/reportes.js?v=2"></script>
         <script src="js/password-requests.js?v=2"></script>
+        <script src="js/notificaciones.js?v=1"></script>
         <script src="js/init.js?v=3"></script>
 </body>
 

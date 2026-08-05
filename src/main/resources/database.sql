@@ -149,3 +149,20 @@ CREATE TABLE IF NOT EXISTS login_log (
 
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
 );
+
+-- ======================================
+-- TABLA: NOTIFICACIÓN
+-- ======================================
+CREATE TABLE IF NOT EXISTS notificacion (
+    id_notificacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    tipo VARCHAR(30) NOT NULL,
+    mensaje VARCHAR(255) NOT NULL,
+    leida BOOLEAN DEFAULT FALSE,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
+-- Índice para el caso de uso principal: contar/listar no leídas de un usuario
+CREATE INDEX idx_notificacion_usuario_leida ON notificacion(id_usuario, leida);

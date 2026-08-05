@@ -1,5 +1,6 @@
 package com.systechpro.controllers;
 
+import com.systechpro.dao.NotificacionDAO;
 import com.systechpro.dao.SolicitudPasswordDAO;
 import com.systechpro.dao.UsuarioDAO;
 import com.systechpro.models.Rol;
@@ -24,6 +25,7 @@ public class AdminController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final SolicitudPasswordDAO solicitudPasswordDAO = new SolicitudPasswordDAO();
     private final UsuarioDAO usuarioDAO = new UsuarioDAO();
+    private final NotificacionDAO notificacionDAO = new NotificacionDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final String PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -101,14 +103,14 @@ public class AdminController extends HttpServlet {
             String estado;
             String passwordTemporal = null;
 
-            if ("approve".equalsIgnoreCase(accion)) {
-                SolicitudPassword solicitud = solicitudPasswordDAO.buscarPorId(idSolicitud);
-                if (solicitud == null) {
-                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    objectMapper.writeValue(response.getWriter(), Map.of("error", "Solicitud no encontrada"));
-                    return;
-                }
+            SolicitudPassword solicitud = solicitudPasswordDAO.buscarPorId(idSolicitud);
+            if (solicitud == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Solicitud no encontrada"));
+                return;
+            }
 
+            if ("approve".equalsIgnoreCase(accion)) {
                 estado = "APROBADA";
                 passwordTemporal = generarClaveTemporal(10);
 
@@ -131,6 +133,12 @@ public class AdminController extends HttpServlet {
 
             boolean actualizado = solicitudPasswordDAO.actualizarEstado(idSolicitud, estado, usuarioSesion.getIdUsuario(), passwordTemporal);
             if (actualizado) {
+                notificacionDAO.crear(solicitud.getIdUsuario(),
+                        estado.equals("APROBADA") ? NotificacionDAO.TIPO_PASSWORD_APROBADA : NotificacionDAO.TIPO_PASSWORD_RECHAZADA,
+                        estado.equals("APROBADA")
+                                ? "Tu solicitud de restablecimiento de contraseña fue aprobada. Consulta con un administrador tu clave temporal."
+                                : "Tu solicitud de restablecimiento de contraseña fue rechazada.");
+
                 Map<String, Object> resp = new HashMap<>();
                 resp.put("success", true);
                 resp.put("mensaje", estado.equals("APROBADA") ? "Solicitud aprobada" : "Solicitud rechazada");

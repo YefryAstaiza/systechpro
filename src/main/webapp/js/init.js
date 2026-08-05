@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     cargarMisSolicitudes();
                 }
                 iniciarAutoRefresh();
+                iniciarNotificaciones();
             } else {
                 window.location.href = 'index.html';
             }

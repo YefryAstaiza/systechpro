@@ -2,6 +2,7 @@ package com.systechpro.controllers;
 
 import com.systechpro.dao.PrestamoDAO;
 import com.systechpro.dao.DispositivoDAO;
+import com.systechpro.dao.NotificacionDAO;
 import com.systechpro.models.Prestamo;
 import com.systechpro.models.Dispositivo;
 import com.systechpro.models.EstadoDispositivo;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class PrestamoController extends HttpServlet {
     private final PrestamoDAO prestamoDAO = new PrestamoDAO();
     private final DispositivoDAO dispositivoDAO = new DispositivoDAO();
+    private final NotificacionDAO notificacionDAO = new NotificacionDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private boolean tienePermisoAdmin(String rol) {
@@ -240,7 +242,9 @@ public class PrestamoController extends HttpServlet {
                 } else if (EstadoPrestamo.RECHAZADO.name().equals(nuevoEstado) || EstadoPrestamo.DEVUELTO.name().equals(nuevoEstado)) {
                     dispositivoDAO.actualizarEstado(prestamoActual.getIdDispositivo(), EstadoDispositivo.DISPONIBLE.name());
                 }
-                
+
+                notificarCambioEstado(prestamoActual, nuevoEstado);
+
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Estado del préstamo actualizado"));
             } else {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -250,5 +254,25 @@ public class PrestamoController extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Error en el servidor"));
         }
+    }
+
+    private void notificarCambioEstado(Prestamo prestamo, String nuevoEstado) {
+        String tipo;
+        String mensaje;
+
+        if (EstadoPrestamo.APROBADO.name().equals(nuevoEstado)) {
+            tipo = NotificacionDAO.TIPO_PRESTAMO_APROBADO;
+            mensaje = "Tu solicitud de préstamo del dispositivo \"" + prestamo.getNombreDispositivo() + "\" fue aprobada.";
+        } else if (EstadoPrestamo.RECHAZADO.name().equals(nuevoEstado)) {
+            tipo = NotificacionDAO.TIPO_PRESTAMO_RECHAZADO;
+            mensaje = "Tu solicitud de préstamo del dispositivo \"" + prestamo.getNombreDispositivo() + "\" fue rechazada.";
+        } else if (EstadoPrestamo.DEVUELTO.name().equals(nuevoEstado)) {
+            tipo = NotificacionDAO.TIPO_PRESTAMO_DEVUELTO;
+            mensaje = "Se registró la devolución del dispositivo \"" + prestamo.getNombreDispositivo() + "\".";
+        } else {
+            return;
+        }
+
+        notificacionDAO.crear(prestamo.getIdUsuario(), tipo, mensaje);
     }
 }
