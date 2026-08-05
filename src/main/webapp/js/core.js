@@ -404,6 +404,19 @@ function getEstadoBadge(estado) {
     return estado;
 }
 
+// Con reservas anticipadas, "APROBADO" ya no significa "en curso ahora" - puede ser una
+// reserva para más adelante. Distingue ambos casos comparando fechaInicio con el momento actual.
+function getEstadoBadgePrestamo(prestamo) {
+    if (prestamo.estado === 'APROBADO') {
+        var inicio = parseFecha(prestamo.fechaInicio);
+        if (inicio && inicio.getTime() > Date.now()) {
+            return '<span class="badge reserved"><span class="dot"></span>RESERVADO</span>';
+        }
+        return '<span class="badge approved"><span class="dot"></span>EN CURSO</span>';
+    }
+    return getEstadoBadge(prestamo.estado);
+}
+
 function getTipoBadgeMantenimiento(tipo) {
     var cfg = {
         'PREVENTIVO': { bg: '#dbeafe', color: '#2563eb' },

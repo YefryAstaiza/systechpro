@@ -58,7 +58,7 @@ function renderTablaSolicitudesDashboard() {
                 <td>${escapeHtml(p.nombreUsuario)}</td>
                 <td>${escapeHtml(p.nombreDispositivo)}</td>
                 <td>${formatearFecha(p.fechaInicio)}</td>
-                <td>${getEstadoBadge(p.estado)}</td>
+                <td>${getEstadoBadgePrestamo(p)}</td>
                 <td><button class="view-btn btn-ver-prestamo" data-id="${p.idPrestamo}">Ver</button></td>
             `;
             tablaSolicitudesBody.appendChild(tr);
@@ -121,7 +121,7 @@ function renderTablaPrestamosPanel() {
                     '<td style="padding:11px 14px;color:#64748b;">' + escapeHtml(ubicacionSalon) + '</td>',
                     '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
                     '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
-                    '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
+                    '<td style="padding:11px 14px;">' + getEstadoBadgePrestamo(p) + '</td>',
                     '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
                 ].join('');
             } else {
@@ -132,7 +132,7 @@ function renderTablaPrestamosPanel() {
                     '<td style="padding:11px 14px;color:#64748b;">' + escapeHtml(ubicacionSalon) + '</td>',
                     '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaInicio) + '</td>',
                     '<td style="padding:11px 14px;font-size:13px;color:#64748b;">' + formatearFecha(p.fechaFin) + '</td>',
-                    '<td style="padding:11px 14px;">' + getEstadoBadge(p.estado) + '</td>',
+                    '<td style="padding:11px 14px;">' + getEstadoBadgePrestamo(p) + '</td>',
                     '<td style="padding:11px 14px;text-align:center;">' + acciones + '</td>'
                 ].join('');
             }
@@ -311,7 +311,7 @@ function abrirModalDetallePrestamo(id) {
     document.getElementById('det-prestamo-salon').textContent = generarUbicacionSalon(prestamo);
     document.getElementById('det-prestamo-inicio').textContent = formatearFecha(prestamo.fechaInicio);
     document.getElementById('det-prestamo-fin').textContent = formatearFecha(prestamo.fechaFin);
-    document.getElementById('det-prestamo-estado').innerHTML = getEstadoBadge(prestamo.estado);
+    document.getElementById('det-prestamo-estado').innerHTML = getEstadoBadgePrestamo(prestamo);
 
     const btnAprobar = document.getElementById('btn-aprobar-prestamo');
     const btnRechazar = document.getElementById('btn-rechazar-prestamo');

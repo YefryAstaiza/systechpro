@@ -404,6 +404,13 @@
 .badge.returned .dot {
     background: #2563eb;
 }
+.badge.reserved {
+    background: #ede9fe;
+    color: #7c3aed;
+}
+.badge.reserved .dot {
+    background: #7c3aed;
+}
 .view-btn {
     background: #f4f7f6;
     color: #14477b;
