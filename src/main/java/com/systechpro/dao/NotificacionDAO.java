@@ -1,10 +1,12 @@
 package com.systechpro.dao;
 
 import com.systechpro.models.Notificacion;
+import com.systechpro.utils.EmailService;
 import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,6 +23,16 @@ public class NotificacionDAO {
 
     private static final int LIMITE_LISTADO = 30;
 
+    private static final Map<String, String> ASUNTOS_POR_TIPO = Map.of(
+        TIPO_PRESTAMO_APROBADO, "Tu préstamo fue aprobado",
+        TIPO_PRESTAMO_RECHAZADO, "Tu préstamo fue rechazado",
+        TIPO_PRESTAMO_DEVUELTO, "Devolución de dispositivo registrada",
+        TIPO_PASSWORD_APROBADA, "Tu solicitud de contraseña fue aprobada",
+        TIPO_PASSWORD_RECHAZADA, "Tu solicitud de contraseña fue rechazada",
+        TIPO_MANTENIMIENTO_CREADO, "Nuevo mantenimiento registrado",
+        TIPO_MANTENIMIENTO_FINALIZADO, "Mantenimiento finalizado"
+    );
+
     public boolean crear(int idUsuario, String tipo, String mensaje) {
         String sql = "INSERT INTO notificacion (id_usuario, tipo, mensaje) VALUES (?, ?, ?)";
         try (Connection conn = GestorJDBC.getConnection();
@@ -28,10 +40,31 @@ public class NotificacionDAO {
             pstmt.setInt(1, idUsuario);
             pstmt.setString(2, tipo);
             pstmt.setString(3, mensaje);
-            return pstmt.executeUpdate() > 0;
+            boolean creada = pstmt.executeUpdate() > 0;
+            if (creada) {
+                enviarCorreo(idUsuario, tipo, mensaje);
+            }
+            return creada;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al crear notificacion", e);
             return false;
+        }
+    }
+
+    private void enviarCorreo(int idUsuario, String tipo, String mensaje) {
+        String sql = "SELECT correo FROM usuario WHERE id_usuario = ?";
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idUsuario);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                String correo = rs.getString("correo");
+                String asunto = ASUNTOS_POR_TIPO.getOrDefault(tipo, "Nueva notificación");
+                String cuerpo = mensaje + "\n\n— SysTechPro (Fundación Universitaria de Popayán)";
+                EmailService.enviarAsync(correo, asunto, cuerpo);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Error al obtener correo para notificación por email", e);
         }
     }
 
