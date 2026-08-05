@@ -49,11 +49,11 @@ public class UsuarioDAO {
     public List<Usuario> listar() {
         List<Usuario> usuarios = new ArrayList<>();
         String sql = "SELECT * FROM usuario";
-        
+
         try (Connection conn = GestorJDBC.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            
+
             while (rs.next()) {
                 usuarios.add(mapearUsuario(rs));
             }
@@ -61,6 +61,22 @@ public class UsuarioDAO {
             LOGGER.log(Level.SEVERE, "Error al listar usuarios", e);
         }
         return usuarios;
+    }
+
+    public List<Integer> listarIdsPorRol(String rol) {
+        List<Integer> ids = new ArrayList<>();
+        String sql = "SELECT id_usuario FROM usuario WHERE rol = ?";
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, rol);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                ids.add(rs.getInt("id_usuario"));
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al listar ids de usuarios por rol", e);
+        }
+        return ids;
     }
     
     public boolean actualizar(Usuario usuario) {

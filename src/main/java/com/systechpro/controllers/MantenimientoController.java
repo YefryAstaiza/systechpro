@@ -2,10 +2,14 @@ package com.systechpro.controllers;
 
 import com.systechpro.dao.MantenimientoDAO;
 import com.systechpro.dao.DispositivoDAO;
+import com.systechpro.dao.NotificacionDAO;
+import com.systechpro.dao.UsuarioDAO;
+import com.systechpro.models.Dispositivo;
 import com.systechpro.models.EstadoDispositivo;
 import com.systechpro.models.EstadoMantenimiento;
 import com.systechpro.models.Mantenimiento;
 import com.systechpro.models.Rol;
+import com.systechpro.models.Usuario;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -24,6 +28,8 @@ import java.util.Map;
 public class MantenimientoController extends HttpServlet {
     private final MantenimientoDAO mantenimientoDAO = new MantenimientoDAO();
     private final DispositivoDAO dispositivoDAO = new DispositivoDAO();
+    private final NotificacionDAO notificacionDAO = new NotificacionDAO();
+    private final UsuarioDAO usuarioDAO = new UsuarioDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -129,7 +135,9 @@ public class MantenimientoController extends HttpServlet {
                 } else {
                     dispositivoDAO.actualizarEstado(idDispositivo, EstadoDispositivo.MANTENIMIENTO.name());
                 }
-                
+
+                notificarNuevoMantenimiento(idDispositivo);
+
                 response.setStatus(HttpServletResponse.SC_CREATED);
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Mantenimiento registrado"));
             } else {
@@ -195,6 +203,9 @@ public class MantenimientoController extends HttpServlet {
                 return;
             }
 
+            boolean seFinaliza = EstadoMantenimiento.FINALIZADO.name().equals(estado)
+                    && !EstadoMantenimiento.FINALIZADO.name().equals(mantenimiento.getEstado());
+
             mantenimiento.setEstado(estado);
             if (EstadoMantenimiento.FINALIZADO.name().equals(estado)) {
                 mantenimiento.setFechaFin(ahoraBogota());
@@ -205,6 +216,10 @@ public class MantenimientoController extends HttpServlet {
             boolean resultado = mantenimientoDAO.actualizar(mantenimiento);
 
             if (resultado) {
+                if (seFinaliza) {
+                    Usuario actor = (Usuario) session.getAttribute("usuario");
+                    notificarMantenimientoFinalizado(mantenimiento, actor.getIdUsuario());
+                }
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Mantenimiento actualizado"));
             } else {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -213,6 +228,29 @@ public class MantenimientoController extends HttpServlet {
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             objectMapper.writeValue(response.getWriter(), Map.of("error", "Error en el servidor"));
+        }
+    }
+
+    private void notificarNuevoMantenimiento(int idDispositivo) {
+        Dispositivo dispositivo = dispositivoDAO.buscarPorId(idDispositivo);
+        String nombreDispositivo = dispositivo != null ? dispositivo.getNombre() : ("#" + idDispositivo);
+        String mensaje = "El dispositivo \"" + nombreDispositivo + "\" ingresó a mantenimiento.";
+
+        for (int idAdmin : usuarioDAO.listarIdsPorRol(Rol.ADMINISTRADOR.name())) {
+            notificacionDAO.crear(idAdmin, NotificacionDAO.TIPO_MANTENIMIENTO_CREADO, mensaje);
+        }
+    }
+
+    private void notificarMantenimientoFinalizado(Mantenimiento mantenimiento, int idActor) {
+        String mensaje = "El mantenimiento del dispositivo \"" + mantenimiento.getNombreDispositivo() + "\" fue finalizado.";
+
+        for (int idAdmin : usuarioDAO.listarIdsPorRol(Rol.ADMINISTRADOR.name())) {
+            notificacionDAO.crear(idAdmin, NotificacionDAO.TIPO_MANTENIMIENTO_FINALIZADO, mensaje);
+        }
+
+        // Notifica también al técnico que registró el mantenimiento, salvo que sea quien lo está finalizando
+        if (mantenimiento.getIdUsuario() != idActor) {
+            notificacionDAO.crear(mantenimiento.getIdUsuario(), NotificacionDAO.TIPO_MANTENIMIENTO_FINALIZADO, mensaje);
         }
     }
 }

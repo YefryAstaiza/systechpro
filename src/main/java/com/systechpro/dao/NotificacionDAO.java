@@ -16,6 +16,8 @@ public class NotificacionDAO {
     public static final String TIPO_PRESTAMO_DEVUELTO = "PRESTAMO_DEVUELTO";
     public static final String TIPO_PASSWORD_APROBADA = "PASSWORD_APROBADA";
     public static final String TIPO_PASSWORD_RECHAZADA = "PASSWORD_RECHAZADA";
+    public static final String TIPO_MANTENIMIENTO_CREADO = "MANTENIMIENTO_CREADO";
+    public static final String TIPO_MANTENIMIENTO_FINALIZADO = "MANTENIMIENTO_FINALIZADO";
 
     private static final int LIMITE_LISTADO = 30;
 
