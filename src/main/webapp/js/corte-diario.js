@@ -21,7 +21,7 @@ function renderHistorialCortes(cortes) {
             '<td class="th-cell--nowrap">' + formatearFecha(c.fechaCorte) + '</td>' +
             '<td class="th-cell">' + c.totalDispositivos + '</td>' +
             '<td class="th-cell">' + c.disponibles + '</td>' +
-            '<td class="th-cell">' + c.enMonitoria + '</td>' +
+            '<td class="th-cell">' + c.enPrestamo + '</td>' +
             '<td class="th-cell">' + escapeHtml(c.nombreGenerador) + '</td>' +
             '<td class="th-cell--center"><button class="btn-secondary" onclick="verDetalleCorte(' + c.idCorte + ')">Ver</button></td>' +
         '</tr>'
@@ -54,13 +54,13 @@ function verDetalleCorte(idCorte) {
             const tbody = document.getElementById('corte-detalle-tbody');
             if (resumen) {
                 resumen.textContent = formatearFecha(corte.fechaCorte) + ' — Total: ' + corte.totalDispositivos +
-                    ' · Disponibles: ' + corte.disponibles + ' · En monitoría: ' + corte.enMonitoria +
+                    ' · Disponibles: ' + corte.disponibles + ' · En préstamo: ' + corte.enPrestamo +
                     ' · Generado por: ' + corte.nombreGenerador;
             }
             if (tbody) {
                 const detalle = corte.detalle || [];
                 tbody.innerHTML = !detalle.length
-                    ? '<tr><td colspan="3" style="padding:16px;text-align:center;color:#94a3b8;">Nada estaba en monitoría en este corte.</td></tr>'
+                    ? '<tr><td colspan="3" style="padding:16px;text-align:center;color:#94a3b8;">Ningún préstamo estaba activo en este corte.</td></tr>'
                     : detalle.map(d => (
                         '<tr>' +
                             '<td class="th-cell">' + escapeHtml(d.nombreDispositivo) + '</td>' +

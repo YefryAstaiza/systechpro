@@ -125,15 +125,6 @@
                         </svg>
                         Reportes
                     </a>
-                    <a href="#" class="nav-link hidden" id="nav-monitoria-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 12l2 2 4-4"></path>
-                            <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.05 0 3.94.68 5.46 1.84"></path>
-                            <path d="M21 5l-9 9"></path>
-                        </svg>
-                        Monitoría
-                    </a>
                     <a href="#" class="nav-link hidden" id="nav-corte-diario-btn">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1096,29 +1087,6 @@
                     </div>
                 </div>
 
-                <!-- Panel de Monitoría (Docente/Administrativo): checkout rápido sin aprobación -->
-                <section class="dashboard-panel" id="panel-monitoria">
-                    <div class="panel-header panel-header-row">
-                        <h2>Monitoría</h2>
-                    </div>
-
-                    <div class="section-card">
-                        <div class="form-panel">
-                            <h3 style="margin-top:0;">Tomar un dispositivo</h3>
-                            <p>Busca un dispositivo disponible y tómalo con un clic. Tu sesión queda como registro; no necesitas escribir tu nombre ni firmar nada.</p>
-                            <input type="text" id="monitoria-buscador" class="form-input" placeholder="Buscar por nombre o tipo..." style="margin-bottom:12px;">
-                            <div id="monitoria-disponibles-lista"></div>
-                        </div>
-                    </div>
-
-                    <div class="section-card">
-                        <div class="form-panel">
-                            <h3 style="margin-top:0;">Mis dispositivos en monitoría</h3>
-                            <div id="monitoria-activas-lista"></div>
-                        </div>
-                    </div>
-                </section>
-
                 <!-- Panel de Corte Diario (Administrador/Técnico): snapshot histórico del inventario -->
                 <section class="dashboard-panel" id="panel-corte-diario">
                     <div class="panel-header panel-header-row">
@@ -1136,7 +1104,7 @@
                                             <th class="th-cell--nowrap">Fecha</th>
                                             <th class="th-cell">Total</th>
                                             <th class="th-cell">Disponibles</th>
-                                            <th class="th-cell">En monitoría</th>
+                                            <th class="th-cell">En préstamo</th>
                                             <th class="th-cell">Generado por</th>
                                             <th class="th-cell--center">Detalle</th>
                                         </tr>
@@ -1199,7 +1167,6 @@
         <script src="js/reportes.js?v=2"></script>
         <script src="js/password-requests.js?v=2"></script>
         <script src="js/notificaciones.js?v=1"></script>
-        <script src="js/monitoria.js?v=1"></script>
         <script src="js/corte-diario.js?v=1"></script>
         <script src="js/init.js?v=3"></script>
 </body>

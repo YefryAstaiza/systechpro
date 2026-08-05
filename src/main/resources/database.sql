@@ -168,32 +168,16 @@ CREATE TABLE IF NOT EXISTS notificacion (
 CREATE INDEX idx_notificacion_usuario_leida ON notificacion(id_usuario, leida);
 
 -- ======================================
--- TABLA: PRESTAMO_MONITORIA (checkout rápido, sin aprobación, sin fecha de fin)
--- ======================================
-CREATE TABLE IF NOT EXISTS prestamo_monitoria (
-    id_monitoria INT AUTO_INCREMENT PRIMARY KEY,
-    id_dispositivo INT NOT NULL,
-    id_usuario INT NOT NULL,
-    fecha_toma TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_devolucion TIMESTAMP NULL,
-    estado ENUM('ACTIVO', 'DEVUELTO') DEFAULT 'ACTIVO',
-
-    FOREIGN KEY (id_dispositivo) REFERENCES dispositivo(id_dispositivo),
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
-);
-
-CREATE INDEX idx_monitoria_estado ON prestamo_monitoria(estado);
-CREATE INDEX idx_monitoria_dispositivo_estado ON prestamo_monitoria(id_dispositivo, estado);
-
--- ======================================
 -- TABLA: CORTE_DIARIO (snapshot histórico, no una vista en vivo)
+-- "en_prestamo" = préstamos formales en estado APROBADO (aún no DEVUELTO)
+-- en el momento del corte.
 -- ======================================
 CREATE TABLE IF NOT EXISTS corte_diario (
     id_corte INT AUTO_INCREMENT PRIMARY KEY,
     fecha_corte TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_dispositivos INT NOT NULL,
     disponibles INT NOT NULL,
-    en_monitoria INT NOT NULL,
+    en_prestamo INT NOT NULL,
     id_generador INT NOT NULL,
 
     FOREIGN KEY (id_generador) REFERENCES usuario(id_usuario)
@@ -203,6 +187,7 @@ CREATE TABLE IF NOT EXISTS corte_diario (
 -- TABLA: CORTE_DIARIO_DETALLE
 -- Datos de dispositivo/usuario duplicados a propósito (snapshot congelado en el
 -- momento del corte; no debe cambiar si luego se renombra o elimina algo).
+-- fecha_toma = prestamo.fecha_inicio del préstamo activo en ese momento.
 -- ======================================
 CREATE TABLE IF NOT EXISTS corte_diario_detalle (
     id_detalle INT AUTO_INCREMENT PRIMARY KEY,

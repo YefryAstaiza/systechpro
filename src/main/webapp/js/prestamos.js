@@ -100,12 +100,15 @@ function renderTablaPrestamosPanel() {
         pagina.forEach(function(p) {
             const esAdminTec = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
             const esPend = p.estado === 'PENDIENTE';
+            const esAprobado = p.estado === 'APROBADO';
             let acciones = '';
             if (esAdminTec && esPend) {
                 acciones += '<button onclick="aprobarPrestamoPanel(' + p.idPrestamo + ')" style="background:#22c55e;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;margin-right:4px;">✓ Aprobar</button>';
                 acciones += '<button onclick="rechazarPrestamoPanel(' + p.idPrestamo + ')" style="background:#ef4444;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">✕ Rechazar</button>';
-            } else if (esPend) {
+            } else if (!esAdminTec && esPend) {
                 acciones += '<button onclick="cancelarPrestamoPanel(' + p.idPrestamo + ')" style="background:#64748b;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Cancelar</button>';
+            } else if (!esAdminTec && esAprobado) {
+                acciones += '<button onclick="devolverPrestamoPanel(' + p.idPrestamo + ')" style="background:#2563eb;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Devolver</button>';
             } else {
                 acciones = '<span style="color:#94a3b8;font-size:12px;">—</span>';
             }
@@ -215,6 +218,20 @@ window.cancelarPrestamoPanel = async function(id) {
         .then(function(res) {
             showToast(res.status < 300 ? 'Solicitud cancelada' : (res.body.error || 'Error'), res.status < 300 ? 'info' : 'error');
             if (res.status < 300) cargarPrestamosPanelDedicado();
+        });
+};
+window.devolverPrestamoPanel = async function(id) {
+    const confirmado = await confirmarAccion('¿Confirmas que ya devolviste este dispositivo?');
+    if (!confirmado) return;
+    fetch(apiBase + '/prestamos/' + id + '/estado', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'DEVUELTO' })
+    })
+        .then(function(res) { return res.json().then(function(d) { return { status: res.status, body: d }; }); })
+        .then(function(res) {
+            showToast(res.status < 300 ? (res.body.mensaje || 'Dispositivo devuelto') : (res.body.error || 'Error'), res.status < 300 ? 'success' : 'error');
+            if (res.status < 300) { cargarPrestamosPanelDedicado(); cargarDispositivos(); cargarPrestamos(); }
         });
 };
 

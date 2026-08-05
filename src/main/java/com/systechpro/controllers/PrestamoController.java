@@ -191,11 +191,7 @@ public class PrestamoController extends HttpServlet {
         }
 
         String rol = (String) session.getAttribute("rol");
-        if (!tienePermisoAdmin(rol)) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            objectMapper.writeValue(response.getWriter(), Map.of("error", "Solo los administradores o técnicos pueden aprobar/rechazar solicitudes"));
-            return;
-        }
+        com.systechpro.models.Usuario usuarioSesion = (com.systechpro.models.Usuario) session.getAttribute("usuario");
 
         String pathInfo = request.getPathInfo();
 
@@ -229,6 +225,17 @@ public class PrestamoController extends HttpServlet {
             if (prestamoActual == null) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Préstamo no encontrado"));
+                return;
+            }
+
+            // Admin/Técnico pueden aprobar, rechazar o marcar como devuelto cualquier préstamo.
+            // El propio solicitante (Docente/Administrativo) solo puede devolver SU PROPIO préstamo
+            // ya aprobado - es la única acción de autoservicio, sin pasar por un admin.
+            boolean esAutoDevolucion = EstadoPrestamo.DEVUELTO.name().equals(nuevoEstado)
+                    && prestamoActual.getIdUsuario() == usuarioSesion.getIdUsuario();
+            if (!tienePermisoAdmin(rol) && !esAutoDevolucion) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "No tienes permiso para realizar esta acción"));
                 return;
             }
 

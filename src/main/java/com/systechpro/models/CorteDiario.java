@@ -8,7 +8,7 @@ public class CorteDiario {
     private Timestamp fechaCorte;
     private int totalDispositivos;
     private int disponibles;
-    private int enMonitoria;
+    private int enPrestamo;
     private int idGenerador;
 
     // Campos extra para mostrar sin necesidad de otro fetch
@@ -29,8 +29,8 @@ public class CorteDiario {
     public int getDisponibles() { return disponibles; }
     public void setDisponibles(int disponibles) { this.disponibles = disponibles; }
 
-    public int getEnMonitoria() { return enMonitoria; }
-    public void setEnMonitoria(int enMonitoria) { this.enMonitoria = enMonitoria; }
+    public int getEnPrestamo() { return enPrestamo; }
+    public void setEnPrestamo(int enPrestamo) { this.enPrestamo = enPrestamo; }
 
     public int getIdGenerador() { return idGenerador; }
     public void setIdGenerador(int idGenerador) { this.idGenerador = idGenerador; }

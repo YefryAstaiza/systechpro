@@ -22,8 +22,8 @@ function escapeHtml(value) {
 const permisos = {
     ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes', 'password-requests', 'corte-diario'],
     TECNICO: ['inicio','mantenimientos','corte-diario'],
-    DOCENTE: ['inicio','mis-solicitudes','monitoria'],
-    ADMINISTRATIVO: ['inicio','mis-solicitudes','monitoria']
+    DOCENTE: ['inicio','mis-solicitudes'],
+    ADMINISTRATIVO: ['inicio','mis-solicitudes']
 };
 
 const modulos = {
@@ -37,7 +37,6 @@ const modulos = {
     historial: 'nav-historial-btn',
     'mis-solicitudes': 'nav-mis-solicitudes-btn',
     'password-requests': 'nav-password-requests-btn',
-    monitoria: 'nav-monitoria-btn',
     'corte-diario': 'nav-corte-diario-btn'
 };
 
@@ -80,7 +79,6 @@ function getNavIdForSection(sectionId) {
         'panel-auditoria': 'nav-auditoria-btn',
         'panel-reportes': 'nav-reportes-btn',
         'panel-password-requests': 'nav-password-requests-btn',
-        'panel-monitoria': 'nav-monitoria-btn',
         'panel-corte-diario': 'nav-corte-diario-btn'
     };
     return map[sectionId] || null;

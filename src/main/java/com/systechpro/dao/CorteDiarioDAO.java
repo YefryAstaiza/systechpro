@@ -2,7 +2,7 @@ package com.systechpro.dao;
 
 import com.systechpro.models.CorteDiario;
 import com.systechpro.models.CorteDiarioDetalle;
-import com.systechpro.models.PrestamoMonitoria;
+import com.systechpro.models.Prestamo;
 import com.systechpro.utils.GestorJDBC;
 import java.sql.*;
 import java.util.ArrayList;
@@ -15,12 +15,13 @@ public class CorteDiarioDAO {
 
     /**
      * Genera y guarda un snapshot: cuenta el inventario actual, congela quién
-     * tiene qué en monitoría en este momento, y lo persiste como historial
-     * inmutable (no una vista en vivo). Todo dentro de una sola transacción.
+     * tiene qué préstamo activo (APROBADO, aún no DEVUELTO) en este momento,
+     * y lo persiste como historial inmutable (no una vista en vivo). Todo
+     * dentro de una sola transacción.
      */
     public CorteDiario generar(int idGenerador, int totalDispositivos, int disponibles,
-                                List<PrestamoMonitoria> activas) {
-        String sqlHeader = "INSERT INTO corte_diario (total_dispositivos, disponibles, en_monitoria, id_generador) " +
+                                List<Prestamo> activos) {
+        String sqlHeader = "INSERT INTO corte_diario (total_dispositivos, disponibles, en_prestamo, id_generador) " +
                             "VALUES (?, ?, ?, ?)";
         String sqlDetalle = "INSERT INTO corte_diario_detalle " +
                              "(id_corte, id_dispositivo, nombre_dispositivo, id_usuario, nombre_usuario, fecha_toma) " +
@@ -35,7 +36,7 @@ public class CorteDiarioDAO {
             try (PreparedStatement pstmt = conn.prepareStatement(sqlHeader, Statement.RETURN_GENERATED_KEYS)) {
                 pstmt.setInt(1, totalDispositivos);
                 pstmt.setInt(2, disponibles);
-                pstmt.setInt(3, activas.size());
+                pstmt.setInt(3, activos.size());
                 pstmt.setInt(4, idGenerador);
                 pstmt.executeUpdate();
 
@@ -48,16 +49,16 @@ public class CorteDiarioDAO {
             }
 
             try (PreparedStatement pstmt = conn.prepareStatement(sqlDetalle)) {
-                for (PrestamoMonitoria m : activas) {
+                for (Prestamo p : activos) {
                     pstmt.setInt(1, idCorte);
-                    pstmt.setInt(2, m.getIdDispositivo());
-                    pstmt.setString(3, m.getNombreDispositivo());
-                    pstmt.setInt(4, m.getIdUsuario());
-                    pstmt.setString(5, m.getNombreUsuario());
-                    pstmt.setTimestamp(6, m.getFechaToma());
+                    pstmt.setInt(2, p.getIdDispositivo());
+                    pstmt.setString(3, p.getNombreDispositivo());
+                    pstmt.setInt(4, p.getIdUsuario());
+                    pstmt.setString(5, p.getNombreUsuario());
+                    pstmt.setTimestamp(6, p.getFechaInicio());
                     pstmt.addBatch();
                 }
-                if (!activas.isEmpty()) {
+                if (!activos.isEmpty()) {
                     pstmt.executeBatch();
                 }
             }
@@ -147,7 +148,7 @@ public class CorteDiarioDAO {
         c.setFechaCorte(rs.getTimestamp("fecha_corte"));
         c.setTotalDispositivos(rs.getInt("total_dispositivos"));
         c.setDisponibles(rs.getInt("disponibles"));
-        c.setEnMonitoria(rs.getInt("en_monitoria"));
+        c.setEnPrestamo(rs.getInt("en_prestamo"));
         c.setIdGenerador(rs.getInt("id_generador"));
         c.setNombreGenerador(rs.getString("nombre_generador"));
         return c;

@@ -2,11 +2,12 @@ package com.systechpro.controllers;
 
 import com.systechpro.dao.CorteDiarioDAO;
 import com.systechpro.dao.DispositivoDAO;
-import com.systechpro.dao.PrestamoMonitoriaDAO;
+import com.systechpro.dao.PrestamoDAO;
 import com.systechpro.models.CorteDiario;
 import com.systechpro.models.Dispositivo;
 import com.systechpro.models.EstadoDispositivo;
-import com.systechpro.models.PrestamoMonitoria;
+import com.systechpro.models.EstadoPrestamo;
+import com.systechpro.models.Prestamo;
 import com.systechpro.models.Rol;
 import com.systechpro.models.Usuario;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,12 +23,12 @@ import java.util.Map;
 
 /**
  * Corte diario: snapshot manual e histórico del inventario (total, disponibles,
- * y quién tiene qué en monitoría en ese momento). Solo Administrador o Técnico.
+ * y quién tiene qué préstamo activo en ese momento). Solo Administrador o Técnico.
  */
 @WebServlet(name = "CorteDiarioController", urlPatterns = {"/api/cortes/*"})
 public class CorteDiarioController extends HttpServlet {
     private final CorteDiarioDAO corteDAO = new CorteDiarioDAO();
-    private final PrestamoMonitoriaDAO monitoriaDAO = new PrestamoMonitoriaDAO();
+    private final PrestamoDAO prestamoDAO = new PrestamoDAO();
     private final DispositivoDAO dispositivoDAO = new DispositivoDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -79,9 +80,9 @@ public class CorteDiarioController extends HttpServlet {
             int disponibles = (int) todos.stream()
                     .filter(d -> EstadoDispositivo.DISPONIBLE.name().equals(d.getEstado()))
                     .count();
-            List<PrestamoMonitoria> activas = monitoriaDAO.listarActivos();
+            List<Prestamo> activos = prestamoDAO.listarPorEstado(EstadoPrestamo.APROBADO.name());
 
-            CorteDiario corte = corteDAO.generar(usuario.getIdUsuario(), total, disponibles, activas);
+            CorteDiario corte = corteDAO.generar(usuario.getIdUsuario(), total, disponibles, activos);
             if (corte == null) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Error al generar el corte"));
