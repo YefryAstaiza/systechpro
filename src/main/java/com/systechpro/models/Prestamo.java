@@ -9,6 +9,7 @@ public class Prestamo {
     private int idSalon;
     private Timestamp fechaInicio;
     private Timestamp fechaFin;
+    private Timestamp fechaDevolucion;
     private String estado; // PENDIENTE, APROBADO, RECHAZADO
 
     public Prestamo() {}
@@ -42,6 +43,9 @@ public class Prestamo {
 
     public Timestamp getFechaFin() { return fechaFin; }
     public void setFechaFin(Timestamp fechaFin) { this.fechaFin = fechaFin; }
+
+    public Timestamp getFechaDevolucion() { return fechaDevolucion; }
+    public void setFechaDevolucion(Timestamp fechaDevolucion) { this.fechaDevolucion = fechaDevolucion; }
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }

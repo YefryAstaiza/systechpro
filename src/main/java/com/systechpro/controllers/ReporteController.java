@@ -43,7 +43,11 @@ public class ReporteController extends HttpServlet {
             Map<String, Object> data = new HashMap<>();
             data.put("dispositivos", reporteDAO.obtenerEstadisticasDispositivos());
             data.put("mantenimientos", reporteDAO.obtenerEstadisticasMantenimientos());
-            
+            data.put("masPrestados", reporteDAO.obtenerDispositivosMasPrestados(5));
+            data.put("promedioHorasPrestamo", reporteDAO.obtenerPromedioHorasPrestamo());
+            data.put("alertasMantenimiento", reporteDAO.obtenerAlertasMantenimiento(3));
+            data.put("usoPorDiaSemana", reporteDAO.obtenerUsoPorDiaSemana());
+
             objectMapper.writeValue(response.getWriter(), data);
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

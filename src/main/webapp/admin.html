@@ -622,6 +622,21 @@
                         </div>
                     </div>
 
+                    <div class="dashboard-cards" style="margin-bottom:20px;">
+                        <div class="dashboard-card total">
+                            <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg></div>
+                            <div class="card-info">
+                                <div class="card-label">Tiempo promedio de préstamo</div>
+                                <div class="card-value" id="reporte-tiempo-promedio">—</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                         <div
                             style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex: 1; min-width: 300px; max-width: 45%;">
@@ -631,9 +646,24 @@
                         </div>
                         <div
                             style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex: 1; min-width: 300px; max-width: 45%;">
-                            <h3 style="text-align: center; margin-bottom: 15px; color: var(--text-color);">Tipos de
-                                Mantenimiento</h3>
-                            <canvas id="chart-mantenimientos"></canvas>
+                            <h3 style="text-align: center; margin-bottom: 15px; color: var(--text-color);">⚠ Alertas de
+                                Mantenimiento Pendiente</h3>
+                            <div id="reporte-alertas-mantenimiento"></div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                        <div
+                            style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex: 1; min-width: 300px; max-width: 45%;">
+                            <h3 style="text-align: center; margin-bottom: 15px; color: var(--text-color);">Dispositivos
+                                Más Prestados</h3>
+                            <canvas id="chart-mas-prestados"></canvas>
+                        </div>
+                        <div
+                            style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex: 1; min-width: 300px; max-width: 45%;">
+                            <h3 style="text-align: center; margin-bottom: 15px; color: var(--text-color);">Uso por Día
+                                de la Semana</h3>
+                            <canvas id="chart-uso-semana"></canvas>
                         </div>
                     </div>
                 </section>
@@ -1165,7 +1195,7 @@
         <script src="js/prestamos.js?v=2"></script>
         <script src="js/mantenimientos.js?v=3"></script>
         <script src="js/auditoria.js?v=2"></script>
-        <script src="js/reportes.js?v=2"></script>
+        <script src="js/reportes.js?v=3"></script>
         <script src="js/password-requests.js?v=2"></script>
         <script src="js/notificaciones.js?v=1"></script>
         <script src="js/corte-diario.js?v=1"></script>

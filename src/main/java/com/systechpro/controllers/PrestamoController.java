@@ -261,7 +261,9 @@ public class PrestamoController extends HttpServlet {
                 }
             }
 
-            boolean resultado = prestamoDAO.actualizarEstado(id, nuevoEstado);
+            boolean resultado = EstadoPrestamo.DEVUELTO.name().equals(nuevoEstado)
+                    ? prestamoDAO.marcarDevuelto(id)
+                    : prestamoDAO.actualizarEstado(id, nuevoEstado);
 
             if (resultado) {
                 if (EstadoPrestamo.APROBADO.name().equals(nuevoEstado)) {

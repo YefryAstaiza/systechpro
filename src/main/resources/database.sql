@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS prestamo (
 
     fecha_inicio DATETIME NOT NULL,
     fecha_fin DATETIME NOT NULL,
+    fecha_devolucion TIMESTAMP NULL,
     estado ENUM('PENDIENTE', 'APROBADO', 'RECHAZADO', 'DEVUELTO') DEFAULT 'PENDIENTE',
 
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

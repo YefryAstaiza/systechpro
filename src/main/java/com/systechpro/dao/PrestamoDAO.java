@@ -103,13 +103,26 @@ public class PrestamoDAO {
         String sql = "UPDATE prestamo SET estado = ? WHERE id_prestamo = ?";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
+
             pstmt.setString(1, estado);
             pstmt.setInt(2, id);
-            
+
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al actualizar estado del préstamo", e);
+            return false;
+        }
+    }
+
+    /** Marca un préstamo como DEVUELTO y registra el momento real de la devolución. */
+    public boolean marcarDevuelto(int id) {
+        String sql = "UPDATE prestamo SET estado = 'DEVUELTO', fecha_devolucion = CURRENT_TIMESTAMP WHERE id_prestamo = ?";
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al marcar préstamo como devuelto", e);
             return false;
         }
     }
@@ -138,6 +151,7 @@ public class PrestamoDAO {
         p.setIdSalon(rs.getInt("id_salon"));
         p.setFechaInicio(rs.getTimestamp("fecha_inicio"));
         p.setFechaFin(rs.getTimestamp("fecha_fin"));
+        p.setFechaDevolucion(rs.getTimestamp("fecha_devolucion"));
         p.setEstado(rs.getString("estado"));
         
         // Propiedades adicionales del JOIN

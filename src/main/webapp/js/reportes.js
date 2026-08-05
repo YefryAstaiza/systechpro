@@ -1,6 +1,7 @@
 // reportes.js - Gráficos de reportes y exportación de inventario (CSV/XLSX)
 let chartDispositivos = null;
-let chartMantenimientos = null;
+let chartMasPrestados = null;
+let chartUsoSemana = null;
 
 function cargarReportes() {
     fetch(apiBase + '/reportes/resumen')
@@ -11,9 +12,111 @@ function cargarReportes() {
                 return;
             }
             renderChartDispositivos(data.dispositivos);
-            renderChartMantenimientos(data.mantenimientos);
+            renderAlertasMantenimiento(data.alertasMantenimiento || []);
+            renderTiempoPromedio(data.promedioHorasPrestamo);
+            renderChartMasPrestados(data.masPrestados || []);
+            renderChartUsoSemana(data.usoPorDiaSemana || {});
         })
         .catch(error => console.error('Error cargando reportes:', error));
+}
+
+function renderTiempoPromedio(horas) {
+    const el = document.getElementById('reporte-tiempo-promedio');
+    if (!el) return;
+    if (horas === null || horas === undefined) {
+        el.textContent = 'Sin datos aún';
+        return;
+    }
+    if (horas < 24) {
+        el.textContent = horas.toFixed(1) + ' h';
+    } else {
+        el.textContent = (horas / 24).toFixed(1) + ' días';
+    }
+}
+
+function renderAlertasMantenimiento(alertas) {
+    const contenedor = document.getElementById('reporte-alertas-mantenimiento');
+    if (!contenedor) return;
+
+    if (!alertas.length) {
+        contenedor.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px 0;">Ningún mantenimiento lleva más de 3 días en proceso. ✓</p>';
+        return;
+    }
+
+    contenedor.innerHTML = alertas.map(a => (
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f1f5f9;">' +
+            '<span style="font-weight:600;color:#1e293b;">' + escapeHtml(a.nombreDispositivo) + '</span>' +
+            '<span style="background:#fdf2f2;color:#e74c3c;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">' + a.dias + ' días</span>' +
+        '</div>'
+    )).join('');
+}
+
+function renderChartMasPrestados(lista) {
+    const ctx = document.getElementById('chart-mas-prestados');
+    if (!ctx) return;
+
+    if (chartMasPrestados) {
+        chartMasPrestados.destroy();
+    }
+
+    if (!lista.length) {
+        return;
+    }
+
+    chartMasPrestados = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: lista.map(d => d.nombreDispositivo),
+            datasets: [{
+                label: 'Préstamos',
+                data: lista.map(d => d.cantidad),
+                backgroundColor: '#3498db'
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { ticks: { precision: 0 } }
+            }
+        }
+    });
+}
+
+function renderChartUsoSemana(dataUso) {
+    const ctx = document.getElementById('chart-uso-semana');
+    if (!ctx) return;
+
+    if (chartUsoSemana) {
+        chartUsoSemana.destroy();
+    }
+
+    const labels = Object.keys(dataUso);
+    const values = Object.values(dataUso);
+
+    chartUsoSemana = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Préstamos iniciados',
+                data: values,
+                backgroundColor: '#1cc7a5'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { ticks: { precision: 0 } }
+            }
+        }
+    });
 }
 
 function renderChartDispositivos(dataDisp) {
