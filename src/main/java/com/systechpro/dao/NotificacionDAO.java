@@ -34,6 +34,15 @@ public class NotificacionDAO {
     );
 
     public boolean crear(int idUsuario, String tipo, String mensaje) {
+        return crear(idUsuario, tipo, mensaje, null);
+    }
+
+    /**
+     * @param cuerpoEmail si no es null, se usa como cuerpo del correo en vez de "mensaje"
+     *                    (para incluir datos sensibles como una clave temporal que no deben
+     *                    quedar persistidos sin expiración en el historial de notificaciones).
+     */
+    public boolean crear(int idUsuario, String tipo, String mensaje, String cuerpoEmail) {
         String sql = "INSERT INTO notificacion (id_usuario, tipo, mensaje) VALUES (?, ?, ?)";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -42,7 +51,7 @@ public class NotificacionDAO {
             pstmt.setString(3, mensaje);
             boolean creada = pstmt.executeUpdate() > 0;
             if (creada) {
-                enviarCorreo(idUsuario, tipo, mensaje);
+                enviarCorreo(idUsuario, tipo, cuerpoEmail != null ? cuerpoEmail : mensaje);
             }
             return creada;
         } catch (SQLException e) {
@@ -51,7 +60,7 @@ public class NotificacionDAO {
         }
     }
 
-    private void enviarCorreo(int idUsuario, String tipo, String mensaje) {
+    private void enviarCorreo(int idUsuario, String tipo, String cuerpoEmail) {
         String sql = "SELECT correo FROM usuario WHERE id_usuario = ?";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -60,7 +69,7 @@ public class NotificacionDAO {
             if (rs.next()) {
                 String correo = rs.getString("correo");
                 String asunto = ASUNTOS_POR_TIPO.getOrDefault(tipo, "Nueva notificación");
-                String cuerpo = mensaje + "\n\n— SysTechPro (Fundación Universitaria de Popayán)";
+                String cuerpo = cuerpoEmail + "\n\n— SysTechPro (Fundación Universitaria de Popayán)";
                 EmailService.enviarAsync(correo, asunto, cuerpo);
             }
         } catch (SQLException e) {

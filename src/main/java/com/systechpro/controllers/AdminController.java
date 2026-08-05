@@ -133,11 +133,19 @@ public class AdminController extends HttpServlet {
 
             boolean actualizado = solicitudPasswordDAO.actualizarEstado(idSolicitud, estado, usuarioSesion.getIdUsuario(), passwordTemporal);
             if (actualizado) {
-                notificacionDAO.crear(solicitud.getIdUsuario(),
-                        estado.equals("APROBADA") ? NotificacionDAO.TIPO_PASSWORD_APROBADA : NotificacionDAO.TIPO_PASSWORD_RECHAZADA,
-                        estado.equals("APROBADA")
-                                ? "Tu solicitud de restablecimiento de contraseña fue aprobada. Consulta con un administrador tu clave temporal."
-                                : "Tu solicitud de restablecimiento de contraseña fue rechazada.");
+                if (estado.equals("APROBADA")) {
+                    notificacionDAO.crear(solicitud.getIdUsuario(),
+                            NotificacionDAO.TIPO_PASSWORD_APROBADA,
+                            "Tu solicitud de restablecimiento de contraseña fue aprobada. Consulta con un administrador tu clave temporal.",
+                            "Tu solicitud de restablecimiento de contraseña fue aprobada.\n\n" +
+                                    "Tu clave temporal es: " + passwordTemporal + "\n\n" +
+                                    "Inicia sesión con esta clave; el sistema te pedirá cambiarla de inmediato. " +
+                                    "Vence en 24 horas o al usarla, lo que ocurra primero.");
+                } else {
+                    notificacionDAO.crear(solicitud.getIdUsuario(),
+                            NotificacionDAO.TIPO_PASSWORD_RECHAZADA,
+                            "Tu solicitud de restablecimiento de contraseña fue rechazada.");
+                }
 
                 Map<String, Object> resp = new HashMap<>();
                 resp.put("success", true);

@@ -6,6 +6,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,6 +34,21 @@ public class EmailService {
             return;
         }
         EXECUTOR.submit(() -> enviar(destinatario, asunto, cuerpo));
+    }
+
+    /** Detiene el pool de envío. Se debe llamar al desplegar la aplicación (ver EmailShutdownListener). */
+    public static void shutdown() {
+        EXECUTOR.shutdown();
+        try {
+            // Espera a que un envío SMTP en curso termine antes de que Tomcat destruya el
+            // classloader de la webapp; si no termina a tiempo, se interrumpe a la fuerza.
+            if (!EXECUTOR.awaitTermination(5, TimeUnit.SECONDS)) {
+                EXECUTOR.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            EXECUTOR.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     private static void enviar(String destinatario, String asunto, String cuerpo) {
