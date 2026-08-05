@@ -134,17 +134,22 @@ public class PrestamoController extends HttpServlet {
                 return;
             }
 
-            // Verificar que el dispositivo esté disponible
             Dispositivo dispositivo = dispositivoDAO.buscarPorId(idDispositivo);
             if (dispositivo == null) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(response.getWriter(), Map.of("error", "Dispositivo no encontrado"));
                 return;
             }
-            
-            if (!EstadoDispositivo.DISPONIBLE.name().equals(dispositivo.getEstado())) {
+
+            Timestamp inicioTs = Timestamp.valueOf(inicio);
+            Timestamp finTs = Timestamp.valueOf(fin);
+
+            // No se valida dispositivo.estado aquí: que esté EN_USO ahora mismo no importa si la
+            // reserva es para más adelante. Lo que sí importa es que el horario pedido no choque
+            // con otro préstamo YA APROBADO del mismo dispositivo.
+            if (prestamoDAO.existeSolapamiento(idDispositivo, inicioTs, finTs, null)) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                objectMapper.writeValue(response.getWriter(), Map.of("error", "El dispositivo no está disponible"));
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "El dispositivo ya está reservado en ese horario"));
                 return;
             }
 
@@ -153,8 +158,8 @@ public class PrestamoController extends HttpServlet {
             prestamo.setIdUsuario(idUsuario);
             prestamo.setIdDispositivo(idDispositivo);
             prestamo.setIdSalon(idSalon);
-            prestamo.setFechaInicio(Timestamp.valueOf(inicio));
-            prestamo.setFechaFin(Timestamp.valueOf(fin));
+            prestamo.setFechaInicio(inicioTs);
+            prestamo.setFechaFin(finTs);
             prestamo.setEstado(EstadoPrestamo.PENDIENTE.name());
 
             boolean resultado = prestamoDAO.insertar(prestamo);
@@ -248,15 +253,16 @@ public class PrestamoController extends HttpServlet {
                  return;
             }
 
-            // El dispositivo pudo dejar de estar disponible entre que se creó la solicitud y que se aprueba
-            // (otra solicitud del mismo dispositivo ya fue aprobada, o entró a mantenimiento). Sin esta
-            // validación quedaban préstamos "APROBADO" duplicados o huérfanos que no coincidían con el
-            // estado real del dispositivo (visible en el corte diario y en el conteo de Dispositivos).
+            // Otra reserva pudo aprobarse para el mismo horario entre que se creó esta solicitud y
+            // que se aprueba. Se revalida el solapamiento (no el estado actual del dispositivo: que
+            // esté EN_USO ahora mismo no importa si esta reserva es para más adelante).
             if (EstadoPrestamo.APROBADO.name().equals(nuevoEstado)) {
-                Dispositivo dispositivoActual = dispositivoDAO.buscarPorId(prestamoActual.getIdDispositivo());
-                if (dispositivoActual == null || !EstadoDispositivo.DISPONIBLE.name().equals(dispositivoActual.getEstado())) {
+                boolean choca = prestamoDAO.existeSolapamiento(
+                        prestamoActual.getIdDispositivo(), prestamoActual.getFechaInicio(),
+                        prestamoActual.getFechaFin(), prestamoActual.getIdPrestamo());
+                if (choca) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    objectMapper.writeValue(response.getWriter(), Map.of("error", "El dispositivo ya no está disponible"));
+                    objectMapper.writeValue(response.getWriter(), Map.of("error", "El dispositivo ya está reservado en ese horario"));
                     return;
                 }
             }
@@ -266,11 +272,10 @@ public class PrestamoController extends HttpServlet {
                     : prestamoDAO.actualizarEstado(id, nuevoEstado);
 
             if (resultado) {
-                if (EstadoPrestamo.APROBADO.name().equals(nuevoEstado)) {
-                    dispositivoDAO.actualizarEstado(prestamoActual.getIdDispositivo(), EstadoDispositivo.EN_USO.name());
-                } else if (EstadoPrestamo.RECHAZADO.name().equals(nuevoEstado) || EstadoPrestamo.DEVUELTO.name().equals(nuevoEstado)) {
-                    dispositivoDAO.actualizarEstado(prestamoActual.getIdDispositivo(), EstadoDispositivo.DISPONIBLE.name());
-                }
+                // Recalcula el estado real del dispositivo en vez de fijarlo a ciegas: una reserva
+                // futura recién aprobada no debe bloquear el dispositivo hoy, y rechazar/devolver un
+                // préstamo no debe marcar "Disponible" si otra reserva de ese dispositivo sigue activa.
+                dispositivoDAO.sincronizarEstadoDispositivo(prestamoActual.getIdDispositivo());
 
                 notificarCambioEstado(prestamoActual, nuevoEstado);
 

@@ -44,6 +44,7 @@ public class DispositivoDAO {
     }
 
     public List<Dispositivo> listar() {
+        sincronizarPorReservas();
         List<Dispositivo> dispositivos = new ArrayList<>();
         String sql = BASE_QUERY + "ORDER BY d.id_dispositivo DESC";
 
@@ -60,7 +61,50 @@ public class DispositivoDAO {
         return dispositivos;
     }
 
+    /**
+     * Con reservas futuras, un dispositivo puede quedar "Disponible" al aprobarse (si la reserva
+     * es para más adelante) y debe pasar solo a "En uso" cuando esa reserva realmente empieza.
+     * Como no hay un job programado, se recalcula en cada lectura: barato y siempre correcto,
+     * sin tocar dispositivos en MANTENIMIENTO ni revertir EN_USO cuando el préstamo simplemente
+     * no se ha marcado como devuelto todavía (eso sigue requiriendo la acción explícita "Devolver").
+     */
+    private void sincronizarPorReservas() {
+        String sql = "UPDATE dispositivo d SET d.estado = 'EN_USO' " +
+                     "WHERE d.estado = 'DISPONIBLE' AND EXISTS (" +
+                     "  SELECT 1 FROM prestamo p WHERE p.id_dispositivo = d.id_dispositivo " +
+                     "  AND p.estado = 'APROBADO' AND NOW() BETWEEN p.fecha_inicio AND p.fecha_fin" +
+                     ")";
+        try (Connection conn = GestorJDBC.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(sql);
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Error al sincronizar dispositivos por reservas activas", e);
+        }
+    }
+
+    /**
+     * Recalcula el estado de UN dispositivo tras un cambio de préstamo (aprobar/rechazar/devolver):
+     * EN_USO si tiene un préstamo APROBADO cuya franja incluye este momento, DISPONIBLE si no.
+     * No toca dispositivos en MANTENIMIENTO.
+     */
+    public void sincronizarEstadoDispositivo(int idDispositivo) {
+        String sql = "UPDATE dispositivo SET estado = CASE WHEN EXISTS (" +
+                     "  SELECT 1 FROM prestamo p WHERE p.id_dispositivo = ? " +
+                     "  AND p.estado = 'APROBADO' AND NOW() BETWEEN p.fecha_inicio AND p.fecha_fin" +
+                     ") THEN 'EN_USO' ELSE 'DISPONIBLE' END " +
+                     "WHERE id_dispositivo = ? AND estado != 'MANTENIMIENTO'";
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idDispositivo);
+            pstmt.setInt(2, idDispositivo);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al sincronizar estado del dispositivo " + idDispositivo, e);
+        }
+    }
+
     public List<Dispositivo> listarPorFiltro(String tipo, String estado) {
+        sincronizarPorReservas();
         List<Dispositivo> dispositivos = new ArrayList<>();
         StringBuilder sql = new StringBuilder(BASE_QUERY + "WHERE 1=1 ");
 
@@ -132,6 +176,7 @@ public class DispositivoDAO {
     }
 
     public Dispositivo buscarPorId(int id) {
+        sincronizarEstadoDispositivo(id);
         String sql = BASE_QUERY + "WHERE d.id_dispositivo = ?";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

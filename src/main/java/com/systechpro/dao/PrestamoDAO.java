@@ -43,7 +43,34 @@ public class PrestamoDAO {
             return false;
         }
     }
-    
+
+    /**
+     * ¿Hay algún préstamo ya APROBADO de este dispositivo cuyo rango de fechas se cruce
+     * con [inicio, fin)? Los límites que solo se tocan (uno termina justo cuando el otro
+     * empieza) no cuentan como choque. excluirIdPrestamo permite re-chequear un préstamo
+     * al aprobarlo sin que se compare contra sí mismo.
+     */
+    public boolean existeSolapamiento(int idDispositivo, Timestamp inicio, Timestamp fin, Integer excluirIdPrestamo) {
+        String sql = "SELECT COUNT(*) FROM prestamo " +
+                     "WHERE id_dispositivo = ? AND estado = 'APROBADO' " +
+                     "AND fecha_inicio < ? AND fecha_fin > ? " +
+                     (excluirIdPrestamo != null ? "AND id_prestamo != ? " : "");
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idDispositivo);
+            pstmt.setTimestamp(2, fin);
+            pstmt.setTimestamp(3, inicio);
+            if (excluirIdPrestamo != null) {
+                pstmt.setInt(4, excluirIdPrestamo);
+            }
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al verificar solapamiento de horarios", e);
+            return true; // ante la duda, no dejar reservar (evita choques por error de validación)
+        }
+    }
+
     public List<Prestamo> listar() {
         List<Prestamo> prestamos = new ArrayList<>();
         String sql = BASE_QUERY_JOIN + "ORDER BY p.fecha_inicio DESC";
