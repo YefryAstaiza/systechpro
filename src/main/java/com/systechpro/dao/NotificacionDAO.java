@@ -13,9 +13,11 @@ import java.util.logging.Logger;
 public class NotificacionDAO {
     private static final Logger LOGGER = Logger.getLogger(NotificacionDAO.class.getName());
 
+    public static final String TIPO_PRESTAMO_SOLICITADO = "PRESTAMO_SOLICITADO";
     public static final String TIPO_PRESTAMO_APROBADO = "PRESTAMO_APROBADO";
     public static final String TIPO_PRESTAMO_RECHAZADO = "PRESTAMO_RECHAZADO";
     public static final String TIPO_PRESTAMO_DEVUELTO = "PRESTAMO_DEVUELTO";
+    public static final String TIPO_PASSWORD_SOLICITADA = "PASSWORD_SOLICITADA";
     public static final String TIPO_PASSWORD_APROBADA = "PASSWORD_APROBADA";
     public static final String TIPO_PASSWORD_RECHAZADA = "PASSWORD_RECHAZADA";
     public static final String TIPO_MANTENIMIENTO_CREADO = "MANTENIMIENTO_CREADO";
@@ -24,9 +26,11 @@ public class NotificacionDAO {
     private static final int LIMITE_LISTADO = 30;
 
     private static final Map<String, String> ASUNTOS_POR_TIPO = Map.of(
+        TIPO_PRESTAMO_SOLICITADO, "Nueva solicitud de préstamo",
         TIPO_PRESTAMO_APROBADO, "Tu préstamo fue aprobado",
         TIPO_PRESTAMO_RECHAZADO, "Tu préstamo fue rechazado",
         TIPO_PRESTAMO_DEVUELTO, "Devolución de dispositivo registrada",
+        TIPO_PASSWORD_SOLICITADA, "Nueva solicitud de restablecimiento de contraseña",
         TIPO_PASSWORD_APROBADA, "Tu solicitud de contraseña fue aprobada",
         TIPO_PASSWORD_RECHAZADA, "Tu solicitud de contraseña fue rechazada",
         TIPO_MANTENIMIENTO_CREADO, "Nuevo mantenimiento registrado",

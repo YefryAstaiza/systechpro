@@ -3,6 +3,7 @@ package com.systechpro.controllers;
 import com.systechpro.dao.PrestamoDAO;
 import com.systechpro.dao.DispositivoDAO;
 import com.systechpro.dao.NotificacionDAO;
+import com.systechpro.dao.UsuarioDAO;
 import com.systechpro.models.Prestamo;
 import com.systechpro.models.Dispositivo;
 import com.systechpro.models.EstadoDispositivo;
@@ -27,6 +28,7 @@ public class PrestamoController extends HttpServlet {
     private final PrestamoDAO prestamoDAO = new PrestamoDAO();
     private final DispositivoDAO dispositivoDAO = new DispositivoDAO();
     private final NotificacionDAO notificacionDAO = new NotificacionDAO();
+    private final UsuarioDAO usuarioDAO = new UsuarioDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private boolean tienePermisoAdmin(String rol) {
@@ -116,7 +118,8 @@ public class PrestamoController extends HttpServlet {
 
             int idDispositivo = Integer.parseInt(datos.get("idDispositivo").toString());
             int idSalon = Integer.parseInt(datos.get("idSalon").toString());
-            int idUsuario = ((com.systechpro.models.Usuario) session.getAttribute("usuario")).getIdUsuario();
+            com.systechpro.models.Usuario solicitante = (com.systechpro.models.Usuario) session.getAttribute("usuario");
+            int idUsuario = solicitante.getIdUsuario();
             
             String fechaInicioStr = (String) datos.get("fechaInicio");
             String fechaFinStr = (String) datos.get("fechaFin");
@@ -157,6 +160,10 @@ public class PrestamoController extends HttpServlet {
             boolean resultado = prestamoDAO.insertar(prestamo);
 
             if (resultado) {
+                String mensaje = solicitante.getNombre() + " solicitó el préstamo de \"" + dispositivo.getNombre() + "\".";
+                for (int idAdmin : usuarioDAO.listarIdsPorRol(Rol.ADMINISTRADOR.name())) {
+                    notificacionDAO.crear(idAdmin, NotificacionDAO.TIPO_PRESTAMO_SOLICITADO, mensaje);
+                }
                 response.setStatus(HttpServletResponse.SC_CREATED);
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Solicitud de préstamo enviada con éxito"));
             } else {

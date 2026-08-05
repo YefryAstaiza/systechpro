@@ -2,8 +2,10 @@ package com.systechpro.controllers;
 
 import com.systechpro.dao.UsuarioDAO;
 import com.systechpro.dao.AuditoriaDAO;
+import com.systechpro.dao.NotificacionDAO;
 import com.systechpro.dao.SolicitudPasswordDAO;
 import com.systechpro.models.Auditoria;
+import com.systechpro.models.Rol;
 import com.systechpro.models.Usuario;
 import com.systechpro.models.SolicitudPassword;
 import com.systechpro.utils.Encriptador;
@@ -24,6 +26,7 @@ public class AuthController extends HttpServlet {
     private final UsuarioDAO usuarioDAO = new UsuarioDAO();
     private final AuditoriaDAO auditoriaDAO = new AuditoriaDAO();
     private final SolicitudPasswordDAO solicitudPasswordDAO = new SolicitudPasswordDAO();
+    private final NotificacionDAO notificacionDAO = new NotificacionDAO();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -141,6 +144,10 @@ public class AuthController extends HttpServlet {
             sol.setIdUsuario(u.getIdUsuario());
 
             if (solicitudPasswordDAO.insertar(sol)) {
+                String mensaje = u.getNombre() + " (" + u.getCorreo() + ") solicitó restablecer su contraseña.";
+                for (int idAdmin : usuarioDAO.listarIdsPorRol(Rol.ADMINISTRADOR.name())) {
+                    notificacionDAO.crear(idAdmin, NotificacionDAO.TIPO_PASSWORD_SOLICITADA, mensaje);
+                }
                 objectMapper.writeValue(response.getWriter(), Map.of("success", true, "mensaje", "Solicitud enviada. Contacta a un administrador para la aprobación."));
             } else {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
