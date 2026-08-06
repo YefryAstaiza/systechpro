@@ -1,0 +1,12 @@
+target/
+*.class
+.idea/
+*.iml
+.vscode/
+*.log
+.git/
+HashGen.java
+setenv.bat.example
+update_db_*.sql
+usuarios_demo.sql
+datos_prueba.sql

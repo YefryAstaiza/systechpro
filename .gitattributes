@@ -1,0 +1,4 @@
+# El entrypoint corre dentro de un contenedor Linux - si Git lo convierte a CRLF al
+# hacer checkout en Windows, el shebang (#!/bin/sh) se rompe y el contenedor no arranca.
+docker-entrypoint.sh text eol=lf
+Dockerfile text eol=lf

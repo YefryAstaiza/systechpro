@@ -1,0 +1,28 @@
+-- ======================================
+-- PLANTILLA de datos minimos para arrancar produccion - NO ejecutar tal cual.
+-- ======================================
+-- database_produccion.sql solo crea las tablas, vacias. Sin esto no hay forma
+-- de entrar al sistema (no hay ningun usuario) ni de crear prestamos (no hay
+-- ninguna sede/salon). Completar con los datos REALES de la institucion antes
+-- de ejecutar - los valores de aca abajo son placeholders de ejemplo.
+
+USE systechpro3;
+
+-- --- 1) Sedes y salones reales de la Fundacion Universitaria de Popayan ---
+-- Agregar una fila por cada sede/salon real. Ejemplo (BORRAR y reemplazar):
+-- INSERT INTO sede (nombre, codigo) VALUES ('Sede Principal', 'SP');
+-- INSERT INTO salon (numero, id_sede) VALUES (101, 1), (102, 1);
+
+-- --- 2) Primer usuario ADMINISTRADOR real ---
+-- El valor de `contrasena` NO puede ser texto plano: tiene que ser un hash
+-- BCrypt. Generarlo localmente con la utilidad que ya existe en el repo:
+--
+--   javac -cp "<ruta al jar de jbcrypt>" HashGen.java
+--   java -cp ".;<ruta al jar de jbcrypt>" HashGen "la-contrasena-real-elegida"
+--
+-- (jbcrypt esta en el repo local de Maven, tipicamente en
+--  ~/.m2/repository/org/mindrot/jbcrypt/0.4/jbcrypt-0.4.jar)
+--
+-- Pegar el resultado (empieza con $2a$10$...) en el INSERT de abajo.
+INSERT INTO usuario (nombre, correo, contrasena, rol, cambio_obligatorio)
+VALUES ('NOMBRE REAL', 'correo-real@dominio.com', '$2a$10$PEGAR_HASH_BCRYPT_AQUI', 'ADMINISTRADOR', 0);
