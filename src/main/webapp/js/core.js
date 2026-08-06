@@ -417,12 +417,19 @@ function getEstadoBadge(estado) {
 }
 
 // Con reservas anticipadas, "APROBADO" ya no significa "en curso ahora" - puede ser una
-// reserva para más adelante. Distingue ambos casos comparando fechaInicio con el momento actual.
+// reserva para más adelante, estar en curso, o haber pasado su fecha_fin sin que nadie
+// lo marque devuelto (vencido). Se distinguen los tres comparando fechaInicio/fechaFin
+// con el momento actual.
 function getEstadoBadgePrestamo(prestamo) {
     if (prestamo.estado === 'APROBADO') {
         var inicio = parseFecha(prestamo.fechaInicio);
-        if (inicio && inicio.getTime() > Date.now()) {
+        var fin = parseFecha(prestamo.fechaFin);
+        var ahora = Date.now();
+        if (inicio && inicio.getTime() > ahora) {
             return '<span class="badge reserved"><span class="dot"></span>RESERVADO</span>';
+        }
+        if (fin && fin.getTime() < ahora) {
+            return '<span class="badge overdue"><span class="dot"></span>VENCIDO</span>';
         }
         return '<span class="badge approved"><span class="dot"></span>EN CURSO</span>';
     }

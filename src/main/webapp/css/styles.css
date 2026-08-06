@@ -411,6 +411,13 @@
 .badge.reserved .dot {
     background: #7c3aed;
 }
+.badge.overdue {
+    background: #ffedd5;
+    color: #c2410c;
+}
+.badge.overdue .dot {
+    background: #c2410c;
+}
 .view-btn {
     background: #f4f7f6;
     color: #14477b;
