@@ -508,13 +508,10 @@
                                 <div style="margin-bottom:14px;">
                                     <label
                                         class="form-label-sm">Estado</label>
-                                    <select id="dispositivo-estado" required
-                                        style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:14px;background:white;box-sizing:border-box;">
-                                        <option value="">Disponible, En uso, Mantenimiento</option>
-                                        <option value="DISPONIBLE">Disponible</option>
-                                        <option value="EN_USO">En uso</option>
-                                        <option value="MANTENIMIENTO">Mantenimiento</option>
-                                    </select>
+                                    <div id="dispositivo-estado-actual"
+                                        style="padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;background:#f8fafc;color:#64748b;">
+                                        Se asigna automáticamente (disponible al crear; luego lo determinan los préstamos y mantenimientos)
+                                    </div>
                                 </div>
 
                                 <div style="margin-bottom:14px;">

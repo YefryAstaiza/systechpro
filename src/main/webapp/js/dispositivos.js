@@ -8,12 +8,15 @@ function abrirFormDispositivo(dispositivo) {
     formDispositivo.reset();
     document.getElementById('dispositivo-id').value = '';
     document.getElementById('disp-form-titulo').textContent = dispositivo ? 'Editar Dispositivo' : 'Registrar Nuevo Dispositivo';
+    const estadoActual = document.getElementById('dispositivo-estado-actual');
     if (dispositivo) {
         document.getElementById('dispositivo-id').value = dispositivo.idDispositivo;
         document.getElementById('dispositivo-nombre').value = dispositivo.nombre;
         document.getElementById('dispositivo-tipo').value = dispositivo.tipo;
-        document.getElementById('dispositivo-estado').value = dispositivo.estado;
         document.getElementById('dispositivo-descripcion').value = dispositivo.descripcion || '';
+        estadoActual.innerHTML = getEstadoBadgeDisp(dispositivo.estado);
+    } else {
+        estadoActual.textContent = 'Se asigna automáticamente (disponible al crear; luego lo determinan los préstamos y mantenimientos)';
     }
 }
 
@@ -22,6 +25,7 @@ function resetFormDispositivo() {
     formDispositivo.reset();
     document.getElementById('dispositivo-id').value = '';
     document.getElementById('disp-form-titulo').textContent = 'Gestión Detallada del Dispositivo';
+    document.getElementById('dispositivo-estado-actual').textContent = 'Se asigna automáticamente (disponible al crear; luego lo determinan los préstamos y mantenimientos)';
 }
 
 function actualizarDashboard(dispositivos) {
@@ -151,10 +155,11 @@ function guardarDispositivo(e) {
         return;
     }
 
+    // El estado no se envía: es un campo derivado que solo cambian los flujos de
+    // préstamos/mantenimiento, nunca este formulario (ver DispositivoController).
     var payload = {
         nombre: nombre.trim(),
         tipo: document.getElementById('dispositivo-tipo').value,
-        estado: document.getElementById('dispositivo-estado').value,
         descripcion: descripcion.trim()
     };
     var method = id ? 'PUT' : 'POST';

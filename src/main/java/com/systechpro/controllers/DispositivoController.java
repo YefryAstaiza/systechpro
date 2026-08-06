@@ -113,9 +113,9 @@ public class DispositivoController extends HttpServlet {
             Dispositivo dispositivo = objectMapper.readValue(request.getInputStream(), Dispositivo.class);
 
             if (dispositivo.getNombre() == null || dispositivo.getNombre().trim().isEmpty() ||
-                dispositivo.getTipo() == null || dispositivo.getEstado() == null) {
+                dispositivo.getTipo() == null) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                objectMapper.writeValue(response.getWriter(), Map.of("error", "Nombre, tipo y estado son requeridos"));
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Nombre y tipo son requeridos"));
                 return;
             }
 
@@ -137,11 +137,10 @@ public class DispositivoController extends HttpServlet {
                 return;
             }
 
-            if (!EstadoDispositivo.esValido(dispositivo.getEstado())) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                objectMapper.writeValue(response.getWriter(), Map.of("error", "Estado de dispositivo inválido"));
-                return;
-            }
+            // El estado nunca lo elige quien crea el dispositivo: un dispositivo nuevo siempre
+            // empieza DISPONIBLE, y de ahí en adelante solo lo cambian los flujos de préstamos
+            // (aprobar/devolver) y mantenimiento (registrar/finalizar) - nunca este formulario.
+            dispositivo.setEstado(EstadoDispositivo.DISPONIBLE.name());
 
             boolean resultado = dispositivoDAO.insertar(dispositivo);
 
@@ -196,13 +195,20 @@ public class DispositivoController extends HttpServlet {
             String idStr = pathInfo.substring(1);
             int id = Integer.parseInt(idStr);
 
+            Dispositivo existente = dispositivoDAO.buscarPorId(id);
+            if (existente == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Dispositivo no encontrado"));
+                return;
+            }
+
             Dispositivo dispositivo = objectMapper.readValue(request.getInputStream(), Dispositivo.class);
             dispositivo.setIdDispositivo(id);
 
             if (dispositivo.getNombre() == null || dispositivo.getNombre().trim().isEmpty() ||
-                dispositivo.getTipo() == null || dispositivo.getEstado() == null) {
+                dispositivo.getTipo() == null) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                objectMapper.writeValue(response.getWriter(), Map.of("error", "Nombre, tipo y estado son requeridos"));
+                objectMapper.writeValue(response.getWriter(), Map.of("error", "Nombre y tipo son requeridos"));
                 return;
             }
 
@@ -224,11 +230,11 @@ public class DispositivoController extends HttpServlet {
                 return;
             }
 
-            if (!EstadoDispositivo.esValido(dispositivo.getEstado())) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                objectMapper.writeValue(response.getWriter(), Map.of("error", "Estado de dispositivo inválido"));
-                return;
-            }
+            // El estado se preserva tal cual está, sin importar lo que venga en el body: editar
+            // un dispositivo (nombre/tipo/descripción) nunca debe poder pisar su estado, que solo
+            // manejan los flujos de préstamos y mantenimiento. Cierra el hueco que dejaba
+            // dispositivos "huérfanos" (EN_USO/MANTENIMIENTO sin un préstamo/mantenimiento real detrás).
+            dispositivo.setEstado(existente.getEstado());
 
             boolean resultado = dispositivoDAO.actualizar(dispositivo);
 
