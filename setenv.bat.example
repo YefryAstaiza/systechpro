@@ -1,0 +1,23 @@
+@echo off
+REM Plantilla para configurar SysTechPro en un Tomcat nuevo (dev o produccion).
+REM Copiar este archivo a <CATALINA_HOME>\bin\setenv.bat y completar los valores reales.
+REM Tomcat carga setenv.bat automaticamente en startup.bat/shutdown.bat si existe ahi.
+REM NUNCA commitear el setenv.bat real (con credenciales reales) al repositorio -
+REM por eso este archivo es solo una plantilla vacia versionada, no el archivo real.
+
+REM --- Base de datos MySQL (GestorJDBC) ---
+REM Si se omiten estas variables, la app usa por defecto localhost/systechpro3 con
+REM usuario root sin contrasena (el valor tipico de un XAMPP local de desarrollo).
+REM Ese valor por defecto NUNCA debe usarse en un despliegue real - completar
+REM DB_USER y DB_PASSWORD con las credenciales reales de esa base de datos.
+set DB_URL=jdbc:mysql://localhost:3306/systechpro3?useSSL=false^&serverTimezone=America/Bogota^&allowPublicKeyRetrieval=true
+set DB_USER=
+set DB_PASSWORD=
+
+REM --- Correo saliente (EmailService, notificaciones por correo) ---
+REM Si se omiten estas variables, EmailService no falla: simplemente no envia
+REM correos (no-op silencioso) y el resto de la app sigue funcionando normal.
+set SMTP_HOST=smtp.gmail.com
+set SMTP_PORT=587
+set SMTP_USER=
+set SMTP_PASS=

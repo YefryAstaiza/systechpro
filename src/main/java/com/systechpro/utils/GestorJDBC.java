@@ -11,9 +11,18 @@ import java.util.logging.Logger;
 public class GestorJDBC {
     private static final Logger LOGGER = Logger.getLogger(GestorJDBC.class.getName());
 
-    private static final String URL = "jdbc:mysql://localhost:3306/systechpro3?useSSL=false&serverTimezone=America/Bogota&allowPublicKeyRetrieval=true";
-    private static final String USER = "root";
-    private static final String PASSWORD = "";
+    // Configurables por variables de entorno (DB_URL/DB_USER/DB_PASSWORD) para no hardcodear
+    // credenciales reales en el código - los valores por defecto son los del XAMPP local de
+    // desarrollo (root sin contraseña), que nunca deberían usarse en un despliegue real.
+    private static final String URL = getEnvOrDefault("DB_URL",
+            "jdbc:mysql://localhost:3306/systechpro3?useSSL=false&serverTimezone=America/Bogota&allowPublicKeyRetrieval=true");
+    private static final String USER = getEnvOrDefault("DB_USER", "root");
+    private static final String PASSWORD = getEnvOrDefault("DB_PASSWORD", "");
+
+    private static String getEnvOrDefault(String nombre, String porDefecto) {
+        String valor = System.getenv(nombre);
+        return (valor == null || valor.isEmpty()) ? porDefecto : valor;
+    }
 
     private static final DataSource DATA_SOURCE = crearDataSource();
 
