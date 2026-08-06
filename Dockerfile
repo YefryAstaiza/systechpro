@@ -12,6 +12,10 @@ RUN mvn -B -q clean package -DskipTests
 FROM tomcat:10.1-jdk17-temurin
 RUN rm -rf /usr/local/tomcat/webapps/*
 COPY --from=build /app/target/systechpro.war /usr/local/tomcat/webapps/systechpro.war
+# La app vive en el context path /systechpro/ (no ROOT.war, porque core.js's apiBase
+# hardcodea esa ruta) - esta pagina redirige quien entra al dominio pelado hacia ahi.
+RUN mkdir -p /usr/local/tomcat/webapps/ROOT
+COPY root-redirect.html /usr/local/tomcat/webapps/ROOT/index.html
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
