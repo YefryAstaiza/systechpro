@@ -97,7 +97,10 @@ function renderTablaPrestamosPanel(lista) {
             } else if (!esAdminTec && esPend) {
                 acciones += '<button onclick="cancelarPrestamoPanel(' + p.idPrestamo + ')" style="background:#64748b;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Cancelar</button>';
             } else if (!esAdminTec && esAprobado) {
-                acciones += '<button onclick="devolverPrestamoPanel(' + p.idPrestamo + ')" style="background:#2563eb;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Devolver</button>';
+                const inicioPrestamo = parseFecha(p.fechaInicio);
+                const esReservado = inicioPrestamo && inicioPrestamo.getTime() > Date.now();
+                const labelDevolver = esReservado ? 'Cancelar reserva' : 'Devolver';
+                acciones += '<button onclick="devolverPrestamoPanel(' + p.idPrestamo + ', ' + esReservado + ')" style="background:#2563eb;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">' + labelDevolver + '</button>';
             } else {
                 acciones = '<span style="color:#94a3b8;font-size:12px;">—</span>';
             }
@@ -217,8 +220,9 @@ window.cancelarPrestamoPanel = async function(id) {
             if (res.status < 300) cargarPrestamosPanelDedicado();
         });
 };
-window.devolverPrestamoPanel = async function(id) {
-    const confirmado = await confirmarAccion('¿Confirmas que ya devolviste este dispositivo?');
+window.devolverPrestamoPanel = async function(id, esReservado) {
+    const mensajeConfirm = esReservado ? '¿Cancelar esta reserva?' : '¿Confirmas que ya devolviste este dispositivo?';
+    const confirmado = await confirmarAccion(mensajeConfirm);
     if (!confirmado) return;
     fetch(apiBase + '/prestamos/' + id + '/estado', {
         method: 'PUT',
