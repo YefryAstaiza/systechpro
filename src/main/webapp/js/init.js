@@ -110,18 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error actualizando préstamos pendientes (monitor):', error));
     }
 
-    // TEMPORAL: botón de diagnóstico para confirmar que el deploy tiene el código de Fase 5
-    // (toast propio + modal de confirmación propio, no alert()/confirm() nativos del navegador).
-    // Quitar una vez confirmado que el navegador está sirviendo el código nuevo.
-    const btnTestDeploy = document.getElementById('btn-test-deploy');
-    if (btnTestDeploy) {
-        btnTestDeploy.addEventListener('click', async () => {
-            showToast('✅ Este toast es del código NUEVO (Fase 5). Si ves esta notificación flotante, el deploy está actualizado.', 'success');
-            const confirmado = await confirmarAccion('Este cuadro también es NUEVO (reemplaza el confirm() nativo del navegador). Si ves este recuadro blanco con botones "Cancelar"/"Confirmar" en vez del diálogo gris del navegador, el código actual sí está corriendo.');
-            showToast(confirmado ? 'Hiciste clic en Confirmar ✅' : 'Hiciste clic en Cancelar', 'info');
-        });
-    }
-
     // Lógica para cerrar sesión
     const logoutBtn = document.getElementById('btn-logout');
     if (logoutBtn) {

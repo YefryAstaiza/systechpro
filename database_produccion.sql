@@ -1,11 +1,11 @@
 -- ======================================
 -- ESQUEMA DE PRODUCCION - SOLO ESTRUCTURA, SIN DATOS
 -- ======================================
--- Generado a partir de la base de datos de desarrollo local, que ya tiene
--- aplicadas todas las migraciones de esta sesion (incluye el rol MONITOR,
--- prestamo.id_aprobador, y todos los indices de busqueda/paginacion).
--- No usar database.sql para produccion: este archivo es el que refleja el
--- estado real y probado del esquema.
+-- Generado a partir de la base de datos de desarrollo local (incluye el rol
+-- MONITOR, prestamo.id_aprobador, y todos los indices de busqueda/paginacion).
+-- Verificado columna por columna contra src/main/resources/database.sql:
+-- son equivalentes. Este archivo es solo mas comodo para importar de una vez
+-- en un proveedor nuevo (una sola sentencia por tabla, sin CREATE DATABASE).
 --
 -- Uso: crear la base vacia en el proveedor (Railway ya la crea al agregar
 -- el plugin de MySQL) e importar este archivo completo tal cual.
