@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     cargarMantenimientos();
                 } else if (rolGlobal === 'TECNICO') {
                     cargarMantenimientos();
+                } else if (rolGlobal === 'MONITOR') {
+                    actualizarTarjetasMonitor();
                 } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
                     cargarMisSolicitudes();
                 }
@@ -37,6 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 actualizarTarjetasAdmin();
             } else if (rolGlobal === 'TECNICO') {
                 actualizarTarjetasTecnico();
+            } else if (rolGlobal === 'MONITOR') {
+                actualizarTarjetasMonitor();
             } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
                 cargarMisSolicitudes();
             }
@@ -52,6 +56,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 actualizarTarjetasAdmin();
             } else if (rolGlobal === 'TECNICO') {
                 actualizarTarjetasTecnico();
+            } else if (rolGlobal === 'MONITOR') {
+                actualizarTarjetasMonitor();
             } else if (rolGlobal === 'DOCENTE' || rolGlobal === 'ADMINISTRATIVO') {
                 cargarMisSolicitudes();
             }
@@ -78,6 +84,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => console.error('Error actualizando tarjetas técnico:', error));
+    }
+
+    function actualizarTarjetasMonitor() {
+        fetch(apiBase + '/dispositivos')
+            .then(res => res.json())
+            .then(dispositivos => {
+                if (Array.isArray(dispositivos)) {
+                    const total = document.getElementById('card-monitor-total');
+                    const disponibles = document.getElementById('card-monitor-disponibles');
+                    const enUso = document.getElementById('card-monitor-en-uso');
+                    if (total) total.textContent = dispositivos.length;
+                    if (disponibles) disponibles.textContent = dispositivos.filter(d => d.estado === 'DISPONIBLE').length;
+                    if (enUso) enUso.textContent = dispositivos.filter(d => d.estado === 'EN_USO').length;
+                }
+            })
+            .catch(error => console.error('Error actualizando tarjetas de dispositivos (monitor):', error));
+
+        fetch(apiBase + '/prestamos?estado=PENDIENTE&tamano=1')
+            .then(res => res.json())
+            .then(resp => {
+                const pendientes = document.getElementById('card-monitor-prestamos-pendientes');
+                if (pendientes) pendientes.textContent = resp.total || 0;
+            })
+            .catch(error => console.error('Error actualizando préstamos pendientes (monitor):', error));
     }
 
     // TEMPORAL: botón de diagnóstico para confirmar que el deploy tiene el código de Fase 5

@@ -87,7 +87,7 @@ function renderTablaPrestamosPanel(lista) {
         tablaPrestamosPanelBody.innerHTML = '<tr><td colspan="' + colspan + '" style="text-align:center;padding:30px;color:#94a3b8;">No hay solicitudes de préstamo</td></tr>';
     } else {
         lista.forEach(function(p) {
-            const esAdminTec = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO');
+            const esAdminTec = (rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO' || rolGlobal === 'MONITOR');
             const esPend = p.estado === 'PENDIENTE';
             const esAprobado = p.estado === 'APROBADO';
             let acciones = '';
@@ -317,7 +317,7 @@ function abrirModalDetallePrestamo(id) {
     const btnAprobar = document.getElementById('btn-aprobar-prestamo');
     const btnRechazar = document.getElementById('btn-rechazar-prestamo');
 
-    if ((rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO') && prestamo.estado === 'PENDIENTE') {
+    if ((rolGlobal === 'ADMINISTRADOR' || rolGlobal === 'TECNICO' || rolGlobal === 'MONITOR') && prestamo.estado === 'PENDIENTE') {
         btnAprobar.style.display = 'inline-block';
         btnRechazar.style.display = 'inline-block';
     } else {
@@ -483,6 +483,17 @@ document.addEventListener('DOMContentLoaded', function() {
             mostrarPanel('panel-prestamos');
             if (navPrestamosBtn) navPrestamosBtn.classList.add('active');
             buscadorPrestamos.cargarInicial();
+        });
+    }
+
+    const btnMonitorVerPendientes = document.getElementById('btn-monitor-ver-pendientes');
+    if (btnMonitorVerPendientes) {
+        btnMonitorVerPendientes.addEventListener('click', () => {
+            mostrarPanel('panel-prestamos');
+            if (navPrestamosBtn) navPrestamosBtn.classList.add('active');
+            const filtroEstado = document.getElementById('prest-filtro-estado');
+            if (filtroEstado) filtroEstado.value = 'PENDIENTE';
+            buscadorPrestamos.onFiltro('estado', 'PENDIENTE');
         });
     }
 });

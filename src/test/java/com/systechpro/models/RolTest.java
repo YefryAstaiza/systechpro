@@ -10,11 +10,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RolTest {
 
     @Test
-    void losCuatroRolesDelSistemaSonValidos() {
+    void losCincoRolesDelSistemaSonValidos() {
         assertTrue(Rol.esValido("ADMINISTRADOR"));
         assertTrue(Rol.esValido("DOCENTE"));
         assertTrue(Rol.esValido("TECNICO"));
         assertTrue(Rol.esValido("ADMINISTRATIVO"));
+        assertTrue(Rol.esValido("MONITOR"));
     }
 
     @Test

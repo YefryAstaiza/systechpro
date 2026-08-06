@@ -310,6 +310,7 @@
                             <option value="DOCENTE">Docente</option>
                             <option value="TECNICO">Técnico</option>
                             <option value="ADMINISTRATIVO">Administrativo</option>
+                            <option value="MONITOR">Monitor</option>
                         </select>
                     </div>
 
@@ -372,6 +373,7 @@
                                     <option value="DOCENTE">Docente</option>
                                     <option value="TECNICO">Técnico</option>
                                     <option value="ADMINISTRATIVO">Administrativo</option>
+                                    <option value="MONITOR">Monitor</option>
                                 </select>
                             </div>
 
@@ -961,6 +963,73 @@
                                         class="pagination-btn">Siguiente</button>
                                 </div>
                                 <div id="recientes-pagina" style="font-weight:600;">Página 1</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel panel" id="panel-inicio-monitor">
+                    <div class="tecnico-header">
+                        <h2>Inicio Monitor</h2>
+                        <div class="tecnico-buttons">
+                            <button class="btn-primary" id="btn-monitor-ver-pendientes">Ver préstamos
+                                pendientes</button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-cards">
+                        <div class="dashboard-card total">
+                            <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                                    <path
+                                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                                    </path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg></div>
+                            <div class="card-info">
+                                <div class="card-label">Total de dispositivos</div>
+                                <div class="card-value" id="card-monitor-total">0</div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card available">
+                            <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg></div>
+                            <div class="card-info">
+                                <div class="card-label">Disponibles</div>
+                                <div class="card-value" id="card-monitor-disponibles">0</div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card inuse">
+                            <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15">
+                                    </path>
+                                </svg></div>
+                            <div class="card-info">
+                                <div class="card-label">En uso</div>
+                                <div class="card-value" id="card-monitor-en-uso">0</div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card maintenance">
+                            <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg></div>
+                            <div class="card-info">
+                                <div class="card-label">Préstamos pendientes por aprobar</div>
+                                <div class="card-value" id="card-monitor-prestamos-pendientes">0</div>
                             </div>
                         </div>
                     </div>

@@ -135,9 +135,9 @@ public class CorteDiarioController extends HttpServlet {
 
         Usuario usuario = (Usuario) session.getAttribute("usuario");
         String rol = (String) session.getAttribute("rol");
-        if (!Rol.ADMINISTRADOR.name().equalsIgnoreCase(rol) && !Rol.TECNICO.name().equalsIgnoreCase(rol)) {
+        if (!Rol.ADMINISTRADOR.name().equalsIgnoreCase(rol) && !Rol.TECNICO.name().equalsIgnoreCase(rol) && !Rol.MONITOR.name().equalsIgnoreCase(rol)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            objectMapper.writeValue(response.getWriter(), Map.of("error", "Solo Administrador o Técnico pueden usar el corte diario"));
+            objectMapper.writeValue(response.getWriter(), Map.of("error", "Solo Administrador, Técnico o Monitor pueden usar el corte diario"));
             return null;
         }
         return usuario;

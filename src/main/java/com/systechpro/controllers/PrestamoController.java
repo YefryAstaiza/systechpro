@@ -35,7 +35,7 @@ public class PrestamoController extends HttpServlet {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private boolean tienePermisoAdmin(String rol) {
-        return Rol.ADMINISTRADOR.name().equals(rol) || Rol.TECNICO.name().equals(rol);
+        return Rol.ADMINISTRADOR.name().equals(rol) || Rol.TECNICO.name().equals(rol) || Rol.MONITOR.name().equals(rol);
     }
 
     @Override

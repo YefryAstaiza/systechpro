@@ -4,7 +4,8 @@ public enum Rol {
     ADMINISTRADOR,
     DOCENTE,
     TECNICO,
-    ADMINISTRATIVO;
+    ADMINISTRATIVO,
+    MONITOR;
 
     public static boolean esValido(String valor) {
         return valorDe(valor) != null;

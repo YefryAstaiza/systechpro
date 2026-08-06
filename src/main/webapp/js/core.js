@@ -23,7 +23,8 @@ const permisos = {
     ADMINISTRADOR: ['inicio','usuarios','dispositivos','prestamos','mantenimientos','auditoria','reportes', 'password-requests', 'corte-diario'],
     TECNICO: ['inicio','mantenimientos','corte-diario'],
     DOCENTE: ['inicio','mis-solicitudes'],
-    ADMINISTRATIVO: ['inicio','mis-solicitudes']
+    ADMINISTRATIVO: ['inicio','mis-solicitudes'],
+    MONITOR: ['inicio','dispositivos','prestamos','corte-diario']
 };
 
 const modulos = {
@@ -44,7 +45,8 @@ const panelInicioByRol = {
     ADMINISTRADOR: 'panel-dashboard',
     TECNICO: 'panel-inicio-tecnico',
     DOCENTE: 'panel-inicio-docente',
-    ADMINISTRATIVO: 'panel-inicio-docente'
+    ADMINISTRATIVO: 'panel-inicio-docente',
+    MONITOR: 'panel-inicio-monitor'
 };
 
 function aplicarPermisosPorRol(rol) {
@@ -72,6 +74,7 @@ function getNavIdForSection(sectionId) {
         'panel-dashboard': 'nav-inicio-btn',
         'panel-inicio-tecnico': 'nav-inicio-btn',
         'panel-inicio-docente': 'nav-inicio-btn',
+        'panel-inicio-monitor': 'nav-inicio-btn',
         'panel-usuarios': 'nav-usuarios-btn',
         'panel-dispositivos': 'nav-dispositivos-btn',
         'panel-prestamos': 'nav-prestamos-btn',
@@ -101,6 +104,8 @@ function cargarPanelInicial(rol) {
         mostrarPanel('panel-dashboard');
     } else if (rol === 'TECNICO') {
         mostrarPanel('panel-inicio-tecnico');
+    } else if (rol === 'MONITOR') {
+        mostrarPanel('panel-inicio-monitor');
     } else {
         mostrarPanel('panel-inicio-docente');
     }
@@ -112,6 +117,8 @@ function actualizarTituloInicio(rol) {
 
     if (rol === 'TECNICO') {
         titulo.textContent = 'Inicio Técnico';
+    } else if (rol === 'MONITOR') {
+        titulo.textContent = 'Inicio Monitor';
     } else {
         titulo.textContent = 'Inicio';
     }
@@ -123,6 +130,11 @@ function renderLayoutByRole() {
     const passwordRequestsBtn = document.getElementById('nav-password-requests-btn');
     if (passwordRequestsBtn) {
         passwordRequestsBtn.style.display = rolGlobal === 'ADMINISTRADOR' ? 'flex' : 'none';
+    }
+    // Dispositivos es de solo lectura para cualquier rol distinto de ADMINISTRADOR (p.ej. MONITOR).
+    const btnNuevoDispositivo = document.getElementById('btn-nuevo-dispositivo');
+    if (btnNuevoDispositivo) {
+        btnNuevoDispositivo.style.display = rolGlobal === 'ADMINISTRADOR' ? 'flex' : 'none';
     }
     actualizarTituloInicio(rolGlobal);
     cargarPanelInicial(rolGlobal);

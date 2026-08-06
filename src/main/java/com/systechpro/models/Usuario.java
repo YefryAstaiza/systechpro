@@ -5,7 +5,7 @@ public class Usuario {
     private String nombre;
     private String correo;
     private String contrasena;
-    private String rol; // ADMINISTRADOR, DOCENTE, TECNICO, ADMINISTRATIVO
+    private String rol; // ADMINISTRADOR, DOCENTE, TECNICO, ADMINISTRATIVO, MONITOR
     private boolean cambioObligatorio;
 
     public Usuario() {}
