@@ -198,19 +198,61 @@ public class PrestamoDAO {
         return prestamos;
     }
     
-    public boolean actualizarEstado(int id, String estado) {
-        String sql = "UPDATE prestamo SET estado = ? WHERE id_prestamo = ?";
+    /**
+     * idAprobador queda registrado como quién aprobó el préstamo (null si se rechaza).
+     * Solo se llama para transiciones desde PENDIENTE, así que nunca pisa un id_aprobador previo.
+     */
+    public boolean actualizarEstado(int id, String estado, Integer idAprobador) {
+        String sql = "UPDATE prestamo SET estado = ?, id_aprobador = ? WHERE id_prestamo = ?";
         try (Connection conn = GestorJDBC.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, estado);
-            pstmt.setInt(2, id);
+            pstmt.setObject(2, idAprobador);
+            pstmt.setInt(3, id);
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al actualizar estado del préstamo", e);
             return false;
         }
+    }
+
+    /**
+     * El préstamo APROBADO cuya ventana [fecha_inicio, fecha_fin] contiene el momento actual para
+     * ese dispositivo, si existe (mismo criterio que DispositivoDAO usa para marcar EN_USO).
+     * Incluye quién lo solicitó y quién lo aprobó, para trazabilidad desde el panel de Dispositivos.
+     */
+    public Prestamo buscarActivoPorDispositivo(int idDispositivo) {
+        String sql = "SELECT p.*, u.nombre AS nombre_usuario, a.nombre AS nombre_aprobador " +
+                     "FROM prestamo p " +
+                     "JOIN usuario u ON p.id_usuario = u.id_usuario " +
+                     "LEFT JOIN usuario a ON p.id_aprobador = a.id_usuario " +
+                     "WHERE p.id_dispositivo = ? AND p.estado = 'APROBADO' " +
+                     "AND NOW() BETWEEN p.fecha_inicio AND p.fecha_fin " +
+                     "LIMIT 1";
+        try (Connection conn = GestorJDBC.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idDispositivo);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Prestamo p = new Prestamo();
+                p.setIdPrestamo(rs.getInt("id_prestamo"));
+                p.setIdUsuario(rs.getInt("id_usuario"));
+                p.setIdDispositivo(rs.getInt("id_dispositivo"));
+                p.setFechaInicio(rs.getTimestamp("fecha_inicio"));
+                p.setFechaFin(rs.getTimestamp("fecha_fin"));
+                p.setEstado(rs.getString("estado"));
+                Object idAprobador = rs.getObject("id_aprobador");
+                p.setIdAprobador(idAprobador != null ? rs.getInt("id_aprobador") : null);
+                p.setNombreUsuario(rs.getString("nombre_usuario"));
+                p.setNombreAprobador(rs.getString("nombre_aprobador"));
+                return p;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al buscar préstamo activo por dispositivo", e);
+        }
+        return null;
     }
 
     /** Marca un préstamo como DEVUELTO y registra el momento real de la devolución. */

@@ -83,6 +83,20 @@ public class PrestamoController extends HttpServlet {
             } else if (pathInfo.equals("/pendientes") && tienePermisoAdmin(rol)) {
                 List<Prestamo> prestamos = prestamoDAO.listarPorEstado(EstadoPrestamo.PENDIENTE.name());
                 objectMapper.writeValue(response.getWriter(), prestamos);
+            } else if (pathInfo.startsWith("/dispositivo/") && pathInfo.endsWith("/actual")) {
+                if (!tienePermisoAdmin(rol)) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    objectMapper.writeValue(response.getWriter(), Map.of("error", "No autorizado"));
+                    return;
+                }
+                String[] parts = pathInfo.split("/");
+                int idDispositivo = Integer.parseInt(parts[2]);
+                Prestamo activo = prestamoDAO.buscarActivoPorDispositivo(idDispositivo);
+
+                Map<String, Object> resp = new HashMap<>();
+                resp.put("activo", activo != null);
+                if (activo != null) resp.put("prestamo", activo);
+                objectMapper.writeValue(response.getWriter(), resp);
             } else {
                 String idStr = pathInfo.substring(1);
                 int id = Integer.parseInt(idStr);
@@ -279,9 +293,12 @@ public class PrestamoController extends HttpServlet {
                 }
             }
 
+            Integer idAprobador = EstadoPrestamo.APROBADO.name().equals(nuevoEstado)
+                    ? usuarioSesion.getIdUsuario()
+                    : null;
             boolean resultado = EstadoPrestamo.DEVUELTO.name().equals(nuevoEstado)
                     ? prestamoDAO.marcarDevuelto(id)
-                    : prestamoDAO.actualizarEstado(id, nuevoEstado);
+                    : prestamoDAO.actualizarEstado(id, nuevoEstado, idAprobador);
 
             if (resultado) {
                 // Recalcula el estado real del dispositivo en vez de fijarlo a ciegas: una reserva

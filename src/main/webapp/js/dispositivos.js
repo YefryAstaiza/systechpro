@@ -73,24 +73,33 @@ function renderTablaDispositivos() {
                 '<td style="padding:12px 14px;">' + getEstadoBadgeDisp(d.estado) + '</td>',
                 '<td style="padding:12px 14px;color:#64748b;font-size:13px;">' + (d.fechaCreacion ? formatearFecha(d.fechaCreacion) : '—') + '</td>'
             ];
+            var acciones = [
+                '  <button class="btn-info-disp" data-id="' + d.idDispositivo + '" data-nombre="' + escapeHtml(d.nombre) + '" title="Ver quién lo tiene" aria-label="Ver quién tiene el dispositivo ' + escapeHtml(d.nombre) + '" style="background:none;border:none;cursor:pointer;padding:5px;color:#2563eb;">',
+                '    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+                '  </button>'
+            ];
             if (esAdmin) {
-                fila.push(
-                    '<td style="padding:12px 14px;text-align:center;">',
+                acciones.push(
                     '  <button class="btn-editar-disp" data-id="' + d.idDispositivo + '" title="Editar" aria-label="Editar dispositivo ' + escapeHtml(d.nombre) + '" style="background:none;border:none;cursor:pointer;padding:5px;color:#f59e0b;">',
                     '    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
                     '  </button>',
                     '  <button class="btn-eliminar-disp" data-id="' + d.idDispositivo + '" title="Eliminar" aria-label="Eliminar dispositivo ' + escapeHtml(d.nombre) + '" style="background:none;border:none;cursor:pointer;padding:5px;color:#ef4444;">',
                     '    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
-                    '  </button>',
-                    '</td>'
+                    '  </button>'
                 );
-            } else {
-                fila.push('<td style="padding:12px 14px;text-align:center;color:#94a3b8;">—</td>');
             }
+            fila.push('<td style="padding:12px 14px;text-align:center;">' + acciones.join('') + '</td>');
             tr.innerHTML = fila.join('');
             tablaDispositivosBody.appendChild(tr);
         });
 
+        document.querySelectorAll('.btn-info-disp').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                var id = e.currentTarget.getAttribute('data-id');
+                var nombre = e.currentTarget.getAttribute('data-nombre');
+                abrirModalDispositivoActual(id, nombre);
+            });
+        });
         if (esAdmin) {
             document.querySelectorAll('.btn-editar-disp').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
@@ -185,12 +194,44 @@ async function eliminarDispositivo(id) {
         .catch(function() { showToast('Error de conexión con el servidor', 'error'); });
 }
 
+function abrirModalDispositivoActual(idDispositivo, nombreDispositivo) {
+    var modal = document.getElementById('modal-dispositivo-actual');
+    var sinPrestamo = document.getElementById('dispact-sin-prestamo');
+    var conPrestamo = document.getElementById('dispact-con-prestamo');
+
+    document.getElementById('dispact-nombre-dispositivo').textContent = nombreDispositivo;
+    sinPrestamo.style.display = 'none';
+    conPrestamo.style.display = 'none';
+    modal.style.display = 'flex';
+
+    fetch(apiBase + '/prestamos/dispositivo/' + idDispositivo + '/actual')
+        .then(function(res) { return res.json(); })
+        .then(function(resp) {
+            if (resp.activo && resp.prestamo) {
+                document.getElementById('dispact-solicitante').textContent = resp.prestamo.nombreUsuario || '—';
+                document.getElementById('dispact-aprobador').textContent = resp.prestamo.nombreAprobador || '—';
+                document.getElementById('dispact-inicio').textContent = formatearFecha(resp.prestamo.fechaInicio);
+                document.getElementById('dispact-fin').textContent = formatearFecha(resp.prestamo.fechaFin);
+                conPrestamo.style.display = 'block';
+            } else {
+                sinPrestamo.style.display = 'block';
+            }
+        })
+        .catch(function() {
+            modal.style.display = 'none';
+            showToast('Error al consultar la trazabilidad del dispositivo', 'error');
+        });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const formDispositivo = document.getElementById('form-dispositivo');
     formDispositivo.addEventListener('submit', guardarDispositivo);
 
     document.getElementById('btn-nuevo-dispositivo').addEventListener('click', function() { abrirFormDispositivo(null); });
     document.getElementById('btn-cancelar-dispositivo').addEventListener('click', resetFormDispositivo);
+    document.getElementById('btn-cerrar-dispositivo-actual').addEventListener('click', function() {
+        document.getElementById('modal-dispositivo-actual').style.display = 'none';
+    });
     document.getElementById('disp-buscar').addEventListener('input', aplicarFiltrosDispositivos);
     document.getElementById('disp-filtro-estado').addEventListener('change', aplicarFiltrosDispositivos);
     document.getElementById('btn-disp-prev').addEventListener('click', function() {

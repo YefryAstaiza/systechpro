@@ -96,10 +96,12 @@ CREATE TABLE IF NOT EXISTS prestamo (
     estado ENUM('PENDIENTE', 'APROBADO', 'RECHAZADO', 'DEVUELTO') DEFAULT 'PENDIENTE',
 
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_aprobador INT NULL,
 
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
     FOREIGN KEY (id_dispositivo) REFERENCES dispositivo(id_dispositivo),
-    FOREIGN KEY (id_salon) REFERENCES salon(id_salon)
+    FOREIGN KEY (id_salon) REFERENCES salon(id_salon),
+    FOREIGN KEY (id_aprobador) REFERENCES usuario(id_usuario)
 );
 
 -- Índice compuesto para PrestamoDAO.listarPorEstado (WHERE estado = ?) y para la

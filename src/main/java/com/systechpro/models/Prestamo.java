@@ -50,15 +50,23 @@ public class Prestamo {
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
 
+    private Integer idAprobador; // usuario (admin/tecnico/monitor) que aprobó el préstamo; null si sigue pendiente o fue rechazado
+    public Integer getIdAprobador() { return idAprobador; }
+    public void setIdAprobador(Integer idAprobador) { this.idAprobador = idAprobador; }
+
     // Propiedades adicionales para frontend
     private String nombreUsuario;
     private String nombreDispositivo;
     private String numeroSalon;
     private String nombreSede;
     private String codigoSede;
+    private String nombreAprobador;
 
     public String getNombreUsuario() { return nombreUsuario; }
     public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
+
+    public String getNombreAprobador() { return nombreAprobador; }
+    public void setNombreAprobador(String nombreAprobador) { this.nombreAprobador = nombreAprobador; }
 
     public String getNombreDispositivo() { return nombreDispositivo; }
     public void setNombreDispositivo(String nombreDispositivo) { this.nombreDispositivo = nombreDispositivo; }

@@ -1207,6 +1207,30 @@
                     </div>
                 </div>
 
+                <!-- Modal: trazabilidad de un dispositivo (quién lo tiene ahora mismo) -->
+                <div id="modal-dispositivo-actual" class="modal-overlay">
+                    <div class="modal-card">
+                        <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                            Trazabilidad: <span id="dispact-nombre-dispositivo"></span></h3>
+
+                        <div id="dispact-sin-prestamo" style="display:none; color:#64748b; padding: 10px 0;">
+                            Este dispositivo no tiene un préstamo activo en este momento.
+                        </div>
+
+                        <div id="dispact-con-prestamo" style="display:none; margin-bottom: 15px; line-height: 1.6;">
+                            <p><strong>Lo tiene:</strong> <span id="dispact-solicitante"></span></p>
+                            <p><strong>Prestado por:</strong> <span id="dispact-aprobador"></span></p>
+                            <p><strong>Desde:</strong> <span id="dispact-inicio"></span></p>
+                            <p><strong>Hasta:</strong> <span id="dispact-fin"></span></p>
+                        </div>
+
+                        <div class="modal-footer-actions--bordered">
+                            <button type="button" id="btn-cerrar-dispositivo-actual"
+                                class="btn-cancel">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Modal para Crear Mantenimiento -->
                 <div id="modal-crear-mantenimiento" class="modal-overlay">
                     <div
