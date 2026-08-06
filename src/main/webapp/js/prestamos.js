@@ -96,7 +96,10 @@ function renderTablaPrestamosPanel(lista) {
                 acciones += '<button onclick="rechazarPrestamoPanel(' + p.idPrestamo + ')" style="background:#ef4444;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">✕ Rechazar</button>';
             } else if (!esAdminTec && esPend) {
                 acciones += '<button onclick="cancelarPrestamoPanel(' + p.idPrestamo + ')" style="background:#64748b;color:white;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Cancelar</button>';
-            } else if (!esAdminTec && esAprobado) {
+            } else if (esAprobado && Number(p.idUsuario) === Number(idUsuarioGlobal)) {
+                // La devolución/cancelación de reserva es autoservicio de quien lo pidió, sin
+                // importar su rol - un admin o monitor que se autopresta un dispositivo también
+                // necesita poder devolverlo (el backend ya lo permite vía esAutoDevolucion).
                 const inicioPrestamo = parseFecha(p.fechaInicio);
                 const esReservado = inicioPrestamo && inicioPrestamo.getTime() > Date.now();
                 const labelDevolver = esReservado ? 'Cancelar reserva' : 'Devolver';
