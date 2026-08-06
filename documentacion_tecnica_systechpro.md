@@ -75,6 +75,106 @@ Protecciones adicionales implementadas:
 - **Cookie de sesión `SameSite=Lax`** (mitigación CSRF), configurada en `META-INF/context.xml`.
 - Contraseñas nunca se devuelven en las respuestas JSON de usuarios (se eliminan explícitamente del objeto antes de serializar).
 
+### 2.4 Diagrama de secuencia — solicitud y aprobación de un préstamo
+
+Flujo completo, desde que un Docente solicita hasta que un Administrador/Monitor aprueba, con la notificación (in-panel + correo) en ambos extremos:
+
+```mermaid
+sequenceDiagram
+    actor Docente
+    participant FE as Frontend
+    participant PC as PrestamoController
+    participant PD as PrestamoDAO
+    participant DB as MySQL
+    participant ND as NotificacionDAO
+    participant ES as EmailService
+    actor Admin as Administrador/Monitor
+
+    Docente->>FE: Completa formulario y hace clic en "Solicitar"
+    FE->>PC: POST /api/prestamos
+    PC->>PD: existeSolapamiento(dispositivo, fechas)
+    PD->>DB: SELECT ... WHERE estado='APROBADO'
+    DB-->>PD: resultado
+    alt sin solapamiento
+        PC->>PD: insertar(prestamo) [estado=PENDIENTE]
+        PD->>DB: INSERT INTO prestamo
+        PC->>ND: crear(idAdmin, PRESTAMO_SOLICITADO) por cada admin
+        ND->>DB: INSERT INTO notificacion
+        ND->>ES: enviarAsync(correoAdmin, ...)
+        PC-->>FE: 200 OK
+        FE-->>Docente: "Solicitud enviada con éxito"
+    else hay solapamiento
+        PC-->>FE: 400 Bad Request
+    end
+
+    Note over Admin: Más tarde, revisa la solicitud
+    Admin->>FE: Clic en "Aprobar"
+    FE->>PC: PUT /api/prestamos/{id}/estado
+    PC->>PC: tienePermisoAdmin(rol)?
+    PC->>PD: existeSolapamiento(dispositivo, fechas) [re-chequeo]
+    PC->>PD: actualizarEstado(id, APROBADO, idAprobador)
+    PD->>DB: UPDATE prestamo
+    PC->>DB: sincronizarEstadoDispositivo(idDispositivo)
+    PC->>ND: crear(idDocente, PRESTAMO_APROBADO)
+    ND->>DB: INSERT INTO notificacion
+    ND->>ES: enviarAsync(correoDocente, ...)
+    PC-->>FE: 200 OK
+    FE-->>Admin: Estado actualizado en la tabla
+```
+
+### 2.5 Diagrama de componentes
+
+```mermaid
+flowchart LR
+    subgraph FE["Frontend (navegador)"]
+        HTML["HTML + CSS + JS vanilla<br/>(index.html, admin.html, js/*.js)"]
+    end
+
+    subgraph BACK["Backend (Apache Tomcat)"]
+        CTRL["Controllers<br/>(16 Servlets Jakarta EE)"]
+        DAO["DAO<br/>(11 clases, SQL con PreparedStatement)"]
+        JDBC["GestorJDBC<br/>(pool de conexiones)"]
+        MAIL["EmailService<br/>(envío async por hilo daemon)"]
+    end
+
+    DB[("MySQL")]
+    SMTP{{"Servidor SMTP<br/>(Gmail)"}}
+
+    HTML -->|"fetch() → JSON"| CTRL
+    CTRL -->|"delega"| DAO
+    CTRL -.->|"dispara notificación<br/>(vía NotificacionDAO)"| MAIL
+    DAO -->|"usa"| JDBC
+    JDBC -->|"JDBC"| DB
+    MAIL -->|"SMTP"| SMTP
+```
+
+### 2.6 Diagrama de despliegue
+
+Topología real de la instancia de producción (Railway) — el desarrollo local usa el mismo esquema con Tomcat y MySQL en la misma máquina en vez de en nodos separados:
+
+```mermaid
+flowchart TB
+    subgraph N1["Nodo: Cliente"]
+        Browser["Navegador web"]
+    end
+
+    subgraph N2["Nodo: Contenedor Docker (Railway)"]
+        Tomcat["Apache Tomcat 10.1<br/>+ systechpro.war"]
+    end
+
+    subgraph N3["Nodo: MySQL (Railway)"]
+        MySQLDB[("MySQL 8.x")]
+    end
+
+    subgraph N4["Nodo externo: Gmail"]
+        SMTPServer["smtp.gmail.com : 587"]
+    end
+
+    Browser -- HTTPS --> Tomcat
+    Tomcat -- "JDBC, red privada de Railway<br/>(sin costo, sin exposición pública)" --> MySQLDB
+    Tomcat -- "SMTP, red pública" --> SMTPServer
+```
+
 ---
 
 ## 3. Stack tecnológico
