@@ -1,6 +1,6 @@
 # Documentación Técnica — SysTechPro
 
-**Versión registrada:** ver tag `v1.0-dnda` (commit `bda3b32`, 2026-08-06).
+**Versión registrada:** ver tag `v1.0-dnda` (commit `b2df426`, 2026-08-06).
 **Propósito de este documento:** describir la arquitectura, el stack tecnológico y los módulos funcionales de SysTechPro tal como existen en el código fuente depositado, como soporte técnico para el registro ante la Dirección Nacional de Derecho de Autor (DNDA) de Colombia.
 
 ---
