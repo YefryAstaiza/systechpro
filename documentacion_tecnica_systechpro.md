@@ -7,7 +7,7 @@
 
 ## 1. Descripción general
 
-SysTechPro es un sistema de gestión de dispositivos tecnológicos (HelpDesk) desarrollado para la Fundación Universitaria de Popayán. Permite administrar el inventario de dispositivos, gestionar préstamos con reserva anticipada, registrar mantenimientos, controlar usuarios y roles, generar reportes y auditar la actividad del sistema.
+SysTechPro es un sistema de gestión de dispositivos tecnológicos (HelpDesk). Permite administrar el inventario de dispositivos, gestionar préstamos con reserva anticipada, registrar mantenimientos, controlar usuarios y roles, generar reportes y auditar la actividad del sistema.
 
 Es una aplicación web Java tradicional (Jakarta EE / Servlets), sin frameworks de frontend ni de persistencia — arquitectura MVC clásica servida íntegramente por Apache Tomcat.
 

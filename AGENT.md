@@ -4,7 +4,7 @@
 
 ## Objetivo
 
-Este repositorio corresponde al proyecto **SysTechPro**, un sistema HelpDesk para la gestión de dispositivos tecnológicos dentro de la Fundación Universitaria de Popayán.
+Este repositorio corresponde al proyecto **SysTechPro**, un sistema HelpDesk para la gestión de dispositivos tecnológicos.
 
 El sistema permite administrar:
 

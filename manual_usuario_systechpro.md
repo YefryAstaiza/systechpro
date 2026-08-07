@@ -1,6 +1,6 @@
 # Manual de Usuario — SysTechPro
 
-Sistema de Gestión de Dispositivos Tecnológicos de la Fundación Universitaria de Popayán.
+Sistema de Gestión de Dispositivos Tecnológicos.
 
 Este manual explica, paso a paso y sin lenguaje técnico, qué puede hacer cada tipo de usuario dentro del sistema. SysTechPro tiene **cinco roles**: Administrador, Técnico, Docente, Administrativo y Monitor. Cada uno ve un menú distinto, adaptado a lo que necesita hacer.
 
