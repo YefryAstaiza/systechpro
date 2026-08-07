@@ -73,7 +73,7 @@ public class NotificacionDAO {
             if (rs.next()) {
                 String correo = rs.getString("correo");
                 String asunto = ASUNTOS_POR_TIPO.getOrDefault(tipo, "Nueva notificación");
-                String cuerpo = cuerpoEmail + "\n\n— SysTechPro (Fundación Universitaria de Popayán)";
+                String cuerpo = cuerpoEmail + "\n\n— SysTechPro";
                 EmailService.enviarAsync(correo, asunto, cuerpo);
             }
         } catch (SQLException e) {
